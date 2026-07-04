@@ -25,9 +25,9 @@ export async function createFilament(input: FilamentInput) {
     manufacturer: input.manufacturer,
     filamentType: input.filamentType,
     color: input.color ?? null,
-    emptySpoolWeight: input.emptySpoolWeight.toString(),
-    fullFilamentWeight: input.fullFilamentWeight.toString(),
-    measuredTotalWeight: input.measuredTotalWeight.toString(),
+    emptySpoolWeight: input.emptySpoolWeight,
+    fullFilamentWeight: input.fullFilamentWeight,
+    measuredTotalWeight: input.measuredTotalWeight,
   }
   await db.insert(filaments).values(values)
   revalidatePath("/")
@@ -41,9 +41,9 @@ export async function updateFilament(id: number, input: FilamentInput) {
       manufacturer: input.manufacturer,
       filamentType: input.filamentType,
       color: input.color ?? null,
-      emptySpoolWeight: input.emptySpoolWeight.toString(),
-      fullFilamentWeight: input.fullFilamentWeight.toString(),
-      measuredTotalWeight: input.measuredTotalWeight.toString(),
+      emptySpoolWeight: input.emptySpoolWeight,
+      fullFilamentWeight: input.fullFilamentWeight,
+      measuredTotalWeight: input.measuredTotalWeight,
       updatedAt: new Date(),
     })
     .where(eq(filaments.id, id))
@@ -55,7 +55,7 @@ export async function updateFilament(id: number, input: FilamentInput) {
 export async function setMeasuredWeight(id: number, measuredTotalWeight: number) {
   await db
     .update(filaments)
-    .set({ measuredTotalWeight: measuredTotalWeight.toString(), updatedAt: new Date() })
+    .set({ measuredTotalWeight, updatedAt: new Date() })
     .where(eq(filaments.id, id))
   revalidatePath("/")
 }

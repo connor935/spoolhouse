@@ -1,19 +1,24 @@
-import { numeric, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core"
 
-export const filaments = pgTable("filaments", {
-  id: serial("id").primaryKey(),
+export const filaments = sqliteTable("filaments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   manufacturer: text("manufacturer").notNull(),
   filamentType: text("filament_type").notNull(),
   color: text("color"),
   // Weight of the empty spool only (kg) - entered once when adding
-  emptySpoolWeight: numeric("empty_spool_weight", { precision: 8, scale: 3 }).notNull(),
+  emptySpoolWeight: real("empty_spool_weight").notNull(),
   // Nominal amount of filament on a full spool (kg) - used for % remaining
-  fullFilamentWeight: numeric("full_filament_weight", { precision: 8, scale: 3 }).notNull(),
+  fullFilamentWeight: real("full_filament_weight").notNull(),
   // Last measured total weight of spool + filament (kg) - what you put on the scale
-  measuredTotalWeight: numeric("measured_total_weight", { precision: 8, scale: 3 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  measuredTotalWeight: real("measured_total_weight").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
 })
 
 export type Filament = typeof filaments.$inferSelect

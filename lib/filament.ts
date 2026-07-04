@@ -27,9 +27,7 @@ export function computeFilamentLeft(measuredTotalWeight: number, emptySpoolWeigh
 }
 
 export function toFilamentView(f: Filament): FilamentView {
-  const emptySpoolWeight = Number(f.emptySpoolWeight)
-  const fullFilamentWeight = Number(f.fullFilamentWeight)
-  const measuredTotalWeight = Number(f.measuredTotalWeight)
+  const { emptySpoolWeight, fullFilamentWeight, measuredTotalWeight } = f
 
   const filamentLeft = computeFilamentLeft(measuredTotalWeight, emptySpoolWeight)
   const fullTotalWeight = emptySpoolWeight + fullFilamentWeight
