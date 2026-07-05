@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { markReturned, requestLend } from "@/app/actions/lends"
+import { cancelLendRequest, markReturned, requestLend } from "@/app/actions/lends"
 import { formatWeight } from "@/lib/filament"
 import type { SharedFilament } from "@/lib/sharing"
 import { toast } from "sonner"
@@ -42,6 +42,19 @@ export function GroupStock({
       router.refresh()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not mark this spool returned")
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  async function handleCancel(filamentId: number, lendId: number) {
+    setPendingId(filamentId)
+    try {
+      await cancelLendRequest(lendId)
+      toast.success("Request cancelled")
+      router.refresh()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not cancel the request")
     } finally {
       setPendingId(null)
     }
@@ -96,6 +109,10 @@ export function GroupStock({
                   Mark returned
                 </Button>
               </div>
+            ) : f.pendingRequest ? (
+              <Badge variant="outline" className="w-fit border-accent/40 text-accent">
+                Requested by {f.pendingRequest.borrowerName}
+              </Badge>
             ) : (
               <Badge variant="outline" className="w-fit text-muted-foreground">
                 Your spool
@@ -105,6 +122,26 @@ export function GroupStock({
             <Badge variant="outline" className="w-fit border-accent/40 text-accent">
               Lent to {f.lentTo.borrowerId === currentUserId ? "you" : f.lentTo.borrowerName}
             </Badge>
+          ) : f.pendingRequest ? (
+            f.pendingRequest.borrowerId === currentUserId ? (
+              <div className="flex items-center justify-between gap-2">
+                <Badge variant="outline" className="border-accent/40 text-accent">
+                  Requested — awaiting approval
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleCancel(f.id, f.pendingRequest!.lendId)}
+                  disabled={pendingId === f.id}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Badge variant="outline" className="w-fit text-muted-foreground">
+                Requested
+              </Badge>
+            )
           ) : (
             <Button size="sm" onClick={() => handleRequest(f.id)} disabled={pendingId === f.id}>
               {pendingId === f.id ? "Requesting…" : "Request to borrow"}

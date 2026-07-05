@@ -133,6 +133,26 @@ export const lends = sqliteTable("lends", {
     .default(sql`(unixepoch())`),
 })
 
+// In-app notifications (bell + /notifications). Actor/filament/group names are
+// denormalized snapshots so notifications survive deletions of their sources.
+export const notifications = sqliteTable("notifications", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  // Recipient
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // lend_requested | lend_approved | lend_declined | lend_returned | lend_request_cancelled
+  type: text("type").notNull(),
+  actorName: text("actor_name").notNull(),
+  filamentName: text("filament_name").notNull(),
+  groupName: text("group_name").notNull(),
+  lendId: integer("lend_id"),
+  readAt: integer("read_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
 export type Group = typeof groups.$inferSelect
 export type NewGroup = typeof groups.$inferInsert
 export type GroupMember = typeof groupMembers.$inferSelect
@@ -140,3 +160,5 @@ export type NewGroupMember = typeof groupMembers.$inferInsert
 export type FilamentShareOverride = typeof filamentShareOverrides.$inferSelect
 export type Lend = typeof lends.$inferSelect
 export type NewLend = typeof lends.$inferInsert
+export type Notification = typeof notifications.$inferSelect
+export type NewNotification = typeof notifications.$inferInsert

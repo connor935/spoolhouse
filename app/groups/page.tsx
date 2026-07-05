@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 import { getMyGroups } from "@/app/actions/groups"
 import { CreateGroupForm } from "@/components/create-group-form"
 import { JoinGroupForm } from "@/components/join-group-form"
+import { PageShell } from "@/components/page-shell"
 import { requireUser } from "@/lib/auth-session"
 
 export const dynamic = "force-dynamic"
@@ -12,19 +12,10 @@ export default async function GroupsPage() {
   const myGroups = await getMyGroups()
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 md:px-6">
-      <Link
-        href="/"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to dashboard
-      </Link>
-      <h1 className="text-xl font-semibold tracking-tight">Groups</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Invite-only groups for sharing and lending spools with people nearby.
-      </p>
-
+    <PageShell
+      title="Groups"
+      description="Invite-only groups for sharing and lending spools with people nearby."
+    >
       {myGroups.length === 0 ? (
         <div className="mt-6 rounded-lg border border-dashed border-border bg-card/50 px-6 py-12 text-center text-sm text-muted-foreground">
           You&apos;re not in any groups yet.
@@ -57,6 +48,6 @@ export default async function GroupsPage() {
         <p className="mt-1 text-sm text-muted-foreground">Enter an invite code you received.</p>
         <JoinGroupForm />
       </section>
-    </main>
+    </PageShell>
   )
 }

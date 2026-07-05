@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { filaments, spoolTypes, type NewFilament } from "@/lib/db/schema"
+import { filaments, lends, spoolTypes, type NewFilament } from "@/lib/db/schema"
 import { requireUser } from "@/lib/auth-session"
 import { and, desc, eq, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -78,12 +78,34 @@ export async function updateFilament(id: number, input: FilamentInput) {
 
 // Quick re-weigh: store the new measured total weight from the scale (g).
 // Filament left is derived from this minus the spool type's empty weight.
+// Allowed for the owner AND for whoever currently borrows the spool
+// (active lend) — the borrower is the one printing with it.
 export async function setMeasuredWeight(id: number, measuredTotalWeightGrams: number) {
   const user = await requireUser()
+  const [filament] = await db
+    .select({ userId: filaments.userId })
+    .from(filaments)
+    .where(eq(filaments.id, id))
+  if (!filament) throw new Error("Spool not found")
+
+  if (filament.userId !== user.id) {
+    const [activeBorrow] = await db
+      .select({ id: lends.id })
+      .from(lends)
+      .where(
+        and(
+          eq(lends.filamentId, id),
+          eq(lends.status, "active"),
+          eq(lends.borrowerId, user.id),
+        ),
+      )
+    if (!activeBorrow) throw new Error("Not authorized")
+  }
+
   await db
     .update(filaments)
     .set({ measuredTotalWeightGrams: Math.round(measuredTotalWeightGrams), updatedAt: new Date() })
-    .where(and(eq(filaments.id, id), eq(filaments.userId, user.id)))
+    .where(eq(filaments.id, id))
   revalidatePath("/")
 }
 

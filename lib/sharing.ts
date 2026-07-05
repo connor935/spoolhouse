@@ -17,6 +17,8 @@ export type SharedFilament = FilamentView & {
   ownerId: string
   ownerName: string
   lentTo: { lendId: number; borrowerId: string; borrowerName: string } | null
+  // Outstanding (not yet approved/declined) borrow request, if any
+  pendingRequest: { lendId: number; borrowerId: string; borrowerName: string } | null
 }
 
 export async function getMembership(groupId: number, userId: string): Promise<GroupMember | undefined> {
@@ -73,12 +75,17 @@ export async function getSharedFilaments(groupId: number): Promise<SharedFilamen
     overridesByMember.set(o.groupMemberId, set)
   }
 
-  const activeLends = await db
+  const openLends = await db
     .select({ lend: lends, borrowerName: user.name })
     .from(lends)
     .innerJoin(user, eq(lends.borrowerId, user.id))
-    .where(and(eq(lends.groupId, groupId), eq(lends.status, "active")))
-  const activeLendByFilamentId = new Map(activeLends.map((l) => [l.lend.filamentId, l]))
+    .where(and(eq(lends.groupId, groupId), inArray(lends.status, ["active", "requested"])))
+  const activeLendByFilamentId = new Map(
+    openLends.filter((l) => l.lend.status === "active").map((l) => [l.lend.filamentId, l]),
+  )
+  const requestedLendByFilamentId = new Map(
+    openLends.filter((l) => l.lend.status === "requested").map((l) => [l.lend.filamentId, l]),
+  )
 
   const result: SharedFilament[] = []
   for (const row of rows) {
@@ -100,6 +107,7 @@ export async function getSharedFilaments(groupId: number): Promise<SharedFilamen
     if (view.isEmpty) continue // empty spools excluded from group stock
 
     const activeLend = activeLendByFilamentId.get(f.id)
+    const requestedLend = requestedLendByFilamentId.get(f.id)
 
     result.push({
       ...view,
@@ -110,6 +118,13 @@ export async function getSharedFilaments(groupId: number): Promise<SharedFilamen
             lendId: activeLend.lend.id,
             borrowerId: activeLend.lend.borrowerId,
             borrowerName: activeLend.borrowerName,
+          }
+        : null,
+      pendingRequest: requestedLend
+        ? {
+            lendId: requestedLend.lend.id,
+            borrowerId: requestedLend.lend.borrowerId,
+            borrowerName: requestedLend.borrowerName,
           }
         : null,
     })
