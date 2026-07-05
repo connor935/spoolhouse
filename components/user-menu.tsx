@@ -1,0 +1,55 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { CircleUser, LogOut, Settings, Users } from "lucide-react"
+import { authClient } from "@/lib/auth-client"
+
+export function UserMenu({ name, isAdmin }: { name: string; isAdmin: boolean }) {
+  const router = useRouter()
+
+  async function signOut() {
+    await authClient.signOut()
+    router.push("/login")
+    router.refresh()
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground outline-none transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+        <CircleUser className="h-5 w-5" />
+        <span className="hidden sm:inline">{name}</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{name}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem render={<Link href="/account" />}>
+            <Settings className="mr-2 h-4 w-4" />
+            Account
+          </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem render={<Link href="/admin/users" />}>
+              <Users className="mr-2 h-4 w-4" />
+              Manage users
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={signOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}

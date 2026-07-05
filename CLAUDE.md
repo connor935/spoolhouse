@@ -13,9 +13,22 @@ npm run start        # serve production build
 npm run db:generate  # drizzle-kit: generate migration from schema changes
 npm run db:migrate   # drizzle-kit: apply migrations manually (usually unnecessary, see below)
 npm run db:studio    # drizzle-kit: local DB browser
+npm run admin:create -- <email> <name>   # bootstrap/promote an admin account
 ```
 
 Package manager is **npm** (`package-lock.json`).
+
+## Auth
+
+**better-auth** (email + password, Drizzle/SQLite adapter, admin plugin). Key points:
+
+- **Registration is closed by default**, toggleable via `ALLOW_SIGNUP=true` (gates the better-auth API via `disableSignUp`, the `/signup` page, and the sign-up link on `/login` — see `signupAllowed` in `lib/auth.ts`; env changes need a server restart). Regardless of the flag, admins create accounts on `/admin/users`, and the first admin is bootstrapped with `npm run admin:create -- <email> <name>` (`scripts/create-admin.ts`; also promotes an existing user to admin).
+- **Session checks:** `proxy.ts` does only an optimistic cookie-presence redirect to `/login`. The authoritative check is `requireUser()` / `requireAdmin()` from `lib/auth-session.ts` — **call one of these at the top of every protected page and every server action.** Ownership is enforced in SQL (`where userId = user.id`), never by trusting client-provided ids.
+- Auth tables live in `lib/db/auth-schema.ts` (generated via `npx @better-auth/cli generate`, re-exported from `lib/db/schema.ts`). `filaments.userId` FKs to `user.id` with cascade delete.
+- Client-side calls go through `authClient` (`lib/auth-client.ts`): sign-in/out, `changePassword`, `requestPasswordReset`/`resetPassword`, `admin.createUser`.
+- Password-reset mails: `lib/mail.ts` — SMTP when `SMTP_HOST` is set, otherwise logged to the server console (dev fallback).
+- Required env: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (see `.env.example`).
+- Pages: `/login`, `/forgot-password`, `/reset-password`, `/account` (display name + change password), `/admin/users` (admin only).
 
 ## Database setup
 
@@ -32,6 +45,7 @@ Backups: copy `data/spoolhouse.db`. Target deployment is a single self-hosted Li
 - **Tailwind CSS v4** — CSS-first config in `app/globals.css` (`@theme inline`, oklch tokens); there is no `tailwind.config.*`
 - **shadcn/ui** (style `base-nova`) built on **Base UI** (`@base-ui/react`), not Radix — primitives live in `components/ui/`
 - **Drizzle ORM + better-sqlite3** for data access (SQLite file, migrations via drizzle-kit)
+- **better-auth** for authentication (see Auth section)
 - `lucide-react` icons, `sonner` toasts, `next-themes` (installed but no ThemeProvider wired yet)
 
 ## Architecture
@@ -54,7 +68,10 @@ Mutations go through server actions in `app/actions/filaments.ts` (`createFilame
 | File | Purpose |
 |---|---|
 | `lib/filament.ts` | Domain logic: weight math, thresholds, `FilamentView`, `toFilamentView`, `formatKg`, `FILAMENT_TYPES` |
-| `lib/db/schema.ts` | Drizzle `filaments` table + `Filament`/`NewFilament` types |
+| `lib/db/schema.ts` | Drizzle `filaments` table + `Filament`/`NewFilament` types (re-exports auth schema) |
+| `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
+| `lib/auth-session.ts` | `requireUser()` / `requireAdmin()` — mandatory in protected pages & actions |
+| `proxy.ts` | Optimistic login redirect (cookie presence only) |
 | `lib/db/index.ts` | better-sqlite3 + drizzle client singleton, auto-runs migrations on startup |
 | `drizzle.config.ts` / `drizzle/` | drizzle-kit config and committed SQL migrations |
 | `app/actions/filaments.ts` | All server actions (CRUD + re-weigh) |

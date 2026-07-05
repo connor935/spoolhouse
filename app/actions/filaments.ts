@@ -2,11 +2,17 @@
 
 import { db } from "@/lib/db"
 import { filaments, type NewFilament } from "@/lib/db/schema"
-import { desc, eq } from "drizzle-orm"
+import { requireUser } from "@/lib/auth-session"
+import { and, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 export async function getFilaments() {
-  return db.select().from(filaments).orderBy(desc(filaments.createdAt))
+  const user = await requireUser()
+  return db
+    .select()
+    .from(filaments)
+    .where(eq(filaments.userId, user.id))
+    .orderBy(desc(filaments.createdAt))
 }
 
 type FilamentInput = {
@@ -20,7 +26,9 @@ type FilamentInput = {
 }
 
 export async function createFilament(input: FilamentInput) {
+  const user = await requireUser()
   const values: NewFilament = {
+    userId: user.id,
     name: input.name,
     manufacturer: input.manufacturer,
     filamentType: input.filamentType,
@@ -34,6 +42,7 @@ export async function createFilament(input: FilamentInput) {
 }
 
 export async function updateFilament(id: number, input: FilamentInput) {
+  const user = await requireUser()
   await db
     .update(filaments)
     .set({
@@ -46,21 +55,25 @@ export async function updateFilament(id: number, input: FilamentInput) {
       measuredTotalWeight: input.measuredTotalWeight,
       updatedAt: new Date(),
     })
-    .where(eq(filaments.id, id))
+    .where(and(eq(filaments.id, id), eq(filaments.userId, user.id)))
   revalidatePath("/")
 }
 
 // Quick re-weigh: store the new measured total weight from the scale.
 // Filament left is derived from this minus the empty spool weight.
 export async function setMeasuredWeight(id: number, measuredTotalWeight: number) {
+  const user = await requireUser()
   await db
     .update(filaments)
     .set({ measuredTotalWeight, updatedAt: new Date() })
-    .where(eq(filaments.id, id))
+    .where(and(eq(filaments.id, id), eq(filaments.userId, user.id)))
   revalidatePath("/")
 }
 
 export async function deleteFilament(id: number) {
-  await db.delete(filaments).where(eq(filaments.id, id))
+  const user = await requireUser()
+  await db
+    .delete(filaments)
+    .where(and(eq(filaments.id, id), eq(filaments.userId, user.id)))
   revalidatePath("/")
 }

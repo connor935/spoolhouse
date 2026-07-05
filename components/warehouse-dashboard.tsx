@@ -6,11 +6,18 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Package, Boxes, Scale } from "lucide-react"
 import { SpoolCard } from "@/components/spool-card"
 import { SpoolFormDialog } from "@/components/spool-form-dialog"
+import { UserMenu } from "@/components/user-menu"
 import { formatKg, type FilamentView } from "@/lib/filament"
 
 type Filter = "in-stock" | "empty" | "all"
 
-export function WarehouseDashboard({ filaments }: { filaments: FilamentView[] }) {
+export function WarehouseDashboard({
+  filaments,
+  user,
+}: {
+  filaments: FilamentView[]
+  user: { name: string; isAdmin: boolean }
+}) {
   const [filter, setFilter] = useState<Filter>("in-stock")
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<FilamentView | null>(null)
@@ -54,10 +61,13 @@ export function WarehouseDashboard({ filaments }: { filaments: FilamentView[] })
               <p className="text-sm text-muted-foreground">Filament warehouse management</p>
             </div>
           </div>
-          <Button onClick={openCreate} className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Plus className="mr-1 h-4 w-4" />
-            Add spool
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={openCreate} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <Plus className="mr-1 h-4 w-4" />
+              Add spool
+            </Button>
+            <UserMenu name={user.name} isAdmin={user.isAdmin} />
+          </div>
         </div>
       </header>
 

@@ -1,8 +1,14 @@
 import { sql } from "drizzle-orm"
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core"
+import { user } from "./auth-schema"
+
+export * from "./auth-schema"
 
 export const filaments = sqliteTable("filaments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   manufacturer: text("manufacturer").notNull(),
   filamentType: text("filament_type").notNull(),
