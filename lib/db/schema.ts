@@ -49,6 +49,24 @@ export const filaments = sqliteTable("filaments", {
     .default(sql`(unixepoch())`),
 })
 
+// Long-lived bearer tokens for the external REST API (/api/v1). Only the
+// SHA-256 hash is stored; the plaintext is shown once at creation on /account.
+export const apiTokens = sqliteTable("api_tokens", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  // First characters of the plaintext token, for display only (e.g. "sph_a1b2c3d4")
+  tokenPrefix: text("token_prefix").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
+})
+
+export type ApiToken = typeof apiTokens.$inferSelect
 export type Filament = typeof filaments.$inferSelect
 export type NewFilament = typeof filaments.$inferInsert
 export type SpoolType = typeof spoolTypes.$inferSelect

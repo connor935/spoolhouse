@@ -3,7 +3,8 @@
 import { db } from "@/lib/db"
 import { filaments, spoolTypes, type NewFilament } from "@/lib/db/schema"
 import { requireUser } from "@/lib/auth-session"
-import { and, desc, eq, or } from "drizzle-orm"
+import { assertSpoolTypeUsable } from "@/lib/spool-type-usable"
+import { and, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 export async function getFilaments() {
@@ -24,20 +25,6 @@ type FilamentInput = {
   spoolTypeId: number
   fullFilamentWeightGrams: number
   measuredTotalWeightGrams: number
-}
-
-// A spool type is usable if it's approved, or if the user submitted it (Q3).
-async function assertSpoolTypeUsable(spoolTypeId: number, userId: string) {
-  const [st] = await db
-    .select({ id: spoolTypes.id })
-    .from(spoolTypes)
-    .where(
-      and(
-        eq(spoolTypes.id, spoolTypeId),
-        or(eq(spoolTypes.status, "approved"), eq(spoolTypes.submittedById, userId)),
-      ),
-    )
-  if (!st) throw new Error("Unknown or unavailable spool type")
 }
 
 export async function createFilament(input: FilamentInput) {
