@@ -8,7 +8,13 @@ import { Label } from "@/components/ui/label"
 import { authClient } from "@/lib/auth-client"
 import { toast } from "sonner"
 
-export function AccountForms({ name: initialName }: { name: string }) {
+export function AccountForms({
+  name: initialName,
+  minLength,
+}: {
+  name: string
+  minLength: number
+}) {
   const router = useRouter()
   const [name, setName] = useState(initialName)
   const [namePending, setNamePending] = useState(false)
@@ -81,7 +87,7 @@ export function AccountForms({ name: initialName }: { name: string }) {
       <section className="rounded-lg border border-border bg-card p-6">
         <h2 className="font-semibold">Change password</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          At least 8 characters. Other sessions are signed out after the change.
+          At least {minLength} characters. Other sessions are signed out after the change.
         </p>
         <form onSubmit={changePassword} className="mt-4 flex flex-col gap-4 sm:max-w-sm">
           <div className="flex flex-col gap-2">
@@ -102,7 +108,7 @@ export function AccountForms({ name: initialName }: { name: string }) {
               type="password"
               autoComplete="new-password"
               required
-              minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
+              minLength={minLength}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
@@ -114,7 +120,7 @@ export function AccountForms({ name: initialName }: { name: string }) {
               type="password"
               autoComplete="new-password"
               required
-              minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
+              minLength={minLength}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
             />

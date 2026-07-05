@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { authClient } from "@/lib/auth-client"
 import { toast } from "sonner"
 
-export function CreateUserForm() {
+export function CreateUserForm({ minLength }: { minLength: number }) {
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -66,7 +66,7 @@ export function CreateUserForm() {
           id="new-user-password"
           type="text"
           required
-          minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
+          minLength={minLength}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />

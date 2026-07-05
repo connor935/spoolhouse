@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MoreVertical, Pencil, Trash2, Check, X } from "lucide-react"
 import { deleteFilament, setMeasuredWeight } from "@/app/actions/filaments"
-import { computeFilamentLeft, formatKg, type FilamentView } from "@/lib/filament"
+import { computeFilamentLeft, formatWeight, type FilamentView } from "@/lib/filament"
 import { toast } from "sonner"
 
 type Props = {
@@ -24,15 +24,15 @@ type Props = {
 
 export function SpoolCard({ filament, onEdit }: Props) {
   const [adjusting, setAdjusting] = useState(false)
-  const [value, setValue] = useState(String(filament.measuredTotalWeight))
+  const [value, setValue] = useState(String(filament.measuredTotalWeightGrams))
   const [pending, setPending] = useState(false)
 
   const swatch = filament.color ?? "#94a3b8"
 
   // Live preview while re-weighing
-  const measured = Number.parseFloat(value)
+  const measured = Number.parseInt(value, 10)
   const previewLeft = !Number.isNaN(measured)
-    ? computeFilamentLeft(measured, filament.emptySpoolWeight)
+    ? computeFilamentLeft(measured, filament.emptyWeightGrams)
     : null
 
   async function handleDelete() {
@@ -47,9 +47,11 @@ export function SpoolCard({ filament, onEdit }: Props) {
   }
 
   async function handleSaveWeight() {
-    const mtw = Number.parseFloat(value)
-    if (Number.isNaN(mtw) || mtw < filament.emptySpoolWeight - 0.001) {
-      toast.error("Measured weight can't be less than the empty spool weight")
+    const mtw = Number.parseInt(value, 10)
+    if (Number.isNaN(mtw) || mtw < filament.emptyWeightGrams) {
+      toast.error(
+        `Measured weight can't be less than the empty spool weight (${filament.emptyWeightGrams} g)`,
+      )
       return
     }
     setPending(true)
@@ -82,6 +84,7 @@ export function SpoolCard({ filament, onEdit }: Props) {
           <div className="min-w-0">
             <h3 className="truncate font-medium leading-tight text-card-foreground">{filament.name}</h3>
             <p className="truncate text-sm text-muted-foreground">{filament.manufacturer}</p>
+            <p className="truncate text-xs text-muted-foreground/80">{filament.spoolTypeLabel}</p>
           </div>
         </div>
 
@@ -122,10 +125,10 @@ export function SpoolCard({ filament, onEdit }: Props) {
       <div className="flex flex-col gap-2">
         <div className="flex items-end justify-between">
           <span className="font-mono text-2xl font-semibold tabular-nums text-card-foreground">
-            {formatKg(filament.filamentLeft)}
+            {formatWeight(filament.filamentLeftGrams)}
           </span>
           <span className="text-sm text-muted-foreground">
-            of {formatKg(filament.fullFilamentWeight)}
+            of {formatWeight(filament.fullFilamentWeightGrams)}
           </span>
         </div>
 
@@ -137,22 +140,22 @@ export function SpoolCard({ filament, onEdit }: Props) {
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{Math.round(filament.percentLeft)}% remaining</span>
-          <span className="font-mono">Weighed {formatKg(filament.measuredTotalWeight)}</span>
+          <span className="font-mono">Weighed {formatWeight(filament.measuredTotalWeightGrams)}</span>
         </div>
       </div>
 
       {adjusting ? (
         <div className="flex flex-col gap-2">
-          <Label className="text-xs text-muted-foreground">Measured total weight (kg)</Label>
+          <Label className="text-xs text-muted-foreground">Measured total weight (g)</Label>
           <div className="flex items-center gap-2">
             <Input
               type="number"
-              step="0.001"
+              step="1"
               min="0"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               className="h-9 font-mono"
-              aria-label="Measured total weight in kg"
+              aria-label="Measured total weight in grams"
             />
             <Button size="icon" className="h-9 w-9 shrink-0" onClick={handleSaveWeight} disabled={pending}>
               <Check className="h-4 w-4" />
@@ -163,7 +166,7 @@ export function SpoolCard({ filament, onEdit }: Props) {
               variant="ghost"
               className="h-9 w-9 shrink-0"
               onClick={() => {
-                setValue(String(filament.measuredTotalWeight))
+                setValue(String(filament.measuredTotalWeightGrams))
                 setAdjusting(false)
               }}
             >
@@ -172,7 +175,7 @@ export function SpoolCard({ filament, onEdit }: Props) {
             </Button>
           </div>
           <span className="text-xs text-muted-foreground">
-            {previewLeft !== null ? `= ${formatKg(previewLeft)} filament left` : "Enter the scale value"}
+            {previewLeft !== null ? `= ${formatWeight(previewLeft)} filament left` : "Enter the scale value"}
           </span>
         </div>
       ) : (

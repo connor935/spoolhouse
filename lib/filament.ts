@@ -1,4 +1,4 @@
-import type { Filament } from "@/lib/db/schema"
+import type { Filament, SpoolType } from "@/lib/db/schema"
 
 export type FilamentView = {
   id: number
@@ -6,34 +6,43 @@ export type FilamentView = {
   manufacturer: string
   filamentType: string
   color: string | null
-  emptySpoolWeight: number
-  fullFilamentWeight: number
-  measuredTotalWeight: number
-  // Computed: how much filament is actually left on the spool (kg)
-  filamentLeft: number
+  spoolTypeId: number
+  // e.g. "Prusament — Standard (216 g)"
+  spoolTypeLabel: string
+  // Weight of the bare, empty spool (g), from the spool type
+  emptyWeightGrams: number
+  fullFilamentWeightGrams: number
+  measuredTotalWeightGrams: number
+  // Computed: how much filament is actually left on the spool (g)
+  filamentLeftGrams: number
   // Computed: total weight of a brand-new full spool (empty spool + full filament)
-  fullTotalWeight: number
+  fullTotalWeightGrams: number
   percentLeft: number
   isEmpty: boolean
   isLow: boolean
 }
 
-const EMPTY_THRESHOLD_KG = 0.005 // 5 g or less counts as empty
+const EMPTY_THRESHOLD_G = 5 // 5 g or less counts as empty
 const LOW_THRESHOLD_PCT = 15
 
 // Filament left = measured total weight on the scale minus the empty spool weight.
-export function computeFilamentLeft(measuredTotalWeight: number, emptySpoolWeight: number): number {
-  return Math.max(0, measuredTotalWeight - emptySpoolWeight)
+export function computeFilamentLeft(measuredTotalGrams: number, emptyWeightGrams: number): number {
+  return Math.max(0, measuredTotalGrams - emptyWeightGrams)
 }
 
-export function toFilamentView(f: Filament): FilamentView {
-  const { emptySpoolWeight, fullFilamentWeight, measuredTotalWeight } = f
+export function spoolTypeLabel(st: Pick<SpoolType, "manufacturer" | "name" | "emptyWeightGrams">): string {
+  return `${st.manufacturer} — ${st.name} (${st.emptyWeightGrams} g)`
+}
 
-  const filamentLeft = computeFilamentLeft(measuredTotalWeight, emptySpoolWeight)
-  const fullTotalWeight = emptySpoolWeight + fullFilamentWeight
+export function toFilamentView(f: Filament, spoolType: SpoolType): FilamentView {
+  const emptyWeightGrams = spoolType.emptyWeightGrams
+  const filamentLeftGrams = computeFilamentLeft(f.measuredTotalWeightGrams, emptyWeightGrams)
+  const fullTotalWeightGrams = emptyWeightGrams + f.fullFilamentWeightGrams
   const percentLeft =
-    fullFilamentWeight > 0 ? Math.min(100, Math.max(0, (filamentLeft / fullFilamentWeight) * 100)) : 0
-  const isEmpty = filamentLeft <= EMPTY_THRESHOLD_KG
+    f.fullFilamentWeightGrams > 0
+      ? Math.min(100, Math.max(0, (filamentLeftGrams / f.fullFilamentWeightGrams) * 100))
+      : 0
+  const isEmpty = filamentLeftGrams <= EMPTY_THRESHOLD_G
 
   return {
     id: f.id,
@@ -41,20 +50,22 @@ export function toFilamentView(f: Filament): FilamentView {
     manufacturer: f.manufacturer,
     filamentType: f.filamentType,
     color: f.color,
-    emptySpoolWeight,
-    fullFilamentWeight,
-    measuredTotalWeight,
-    filamentLeft,
-    fullTotalWeight,
+    spoolTypeId: f.spoolTypeId,
+    spoolTypeLabel: spoolTypeLabel(spoolType),
+    emptyWeightGrams,
+    fullFilamentWeightGrams: f.fullFilamentWeightGrams,
+    measuredTotalWeightGrams: f.measuredTotalWeightGrams,
+    filamentLeftGrams,
+    fullTotalWeightGrams,
     percentLeft,
     isEmpty,
     isLow: !isEmpty && percentLeft <= LOW_THRESHOLD_PCT,
   }
 }
 
-export function formatKg(kg: number): string {
-  if (kg >= 1) return `${kg.toFixed(2)} kg`
-  return `${Math.round(kg * 1000)} g`
+export function formatWeight(grams: number): string {
+  if (grams >= 1000) return `${(grams / 1000).toFixed(2)} kg`
+  return `${Math.round(grams)} g`
 }
 
 export const FILAMENT_TYPES = ["PLA", "PETG", "ABS", "ASA", "TPU", "Nylon", "PC", "PVA", "HIPS", "Other"]

@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react"
 import { asc } from "drizzle-orm"
 import { Badge } from "@/components/ui/badge"
 import { CreateUserForm } from "@/components/create-user-form"
+import { passwordMinLength } from "@/lib/auth"
 import { requireAdmin } from "@/lib/auth-session"
 import { db } from "@/lib/db"
 import { user } from "@/lib/db/schema"
@@ -44,7 +45,7 @@ export default async function AdminUsersPage() {
 
       <section className="mt-6 rounded-lg border border-border bg-card p-6">
         <h2 className="font-semibold">Create user</h2>
-        <CreateUserForm />
+        <CreateUserForm minLength={passwordMinLength} />
       </section>
     </main>
   )

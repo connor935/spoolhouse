@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { AccountForms } from "@/components/account-forms"
+import { passwordMinLength } from "@/lib/auth"
 import { requireUser } from "@/lib/auth-session"
 
 export const dynamic = "force-dynamic"
@@ -18,7 +19,7 @@ export default async function AccountPage() {
       </Link>
       <h1 className="text-xl font-semibold tracking-tight">Account</h1>
       <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
-      <AccountForms name={user.name} />
+      <AccountForms name={user.name} minLength={passwordMinLength} />
     </main>
   )
 }

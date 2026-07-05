@@ -2,7 +2,7 @@
 
 Inventory manager for 3D-printer filament spools, exported from a Vercel V0 prototype.
 
-**Core concept:** instead of tracking filament usage per print, you periodically re-weigh the whole spool on a scale. Remaining filament is computed as `measuredTotalWeight − emptySpoolWeight`.
+**Core concept:** instead of tracking filament usage per print, you periodically re-weigh the whole spool on a scale. Remaining filament = measured total weight − the empty-spool weight of the filament's **spool type** (a global, admin-curated catalog).
 
 ## Commands
 
@@ -28,7 +28,8 @@ Package manager is **npm** (`package-lock.json`).
 - Client-side calls go through `authClient` (`lib/auth-client.ts`): sign-in/out, `changePassword`, `requestPasswordReset`/`resetPassword`, `admin.createUser`.
 - Password-reset mails: `lib/mail.ts` — SMTP when `SMTP_HOST` is set, otherwise logged to the server console (dev fallback).
 - Required env: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (see `.env.example`).
-- Pages: `/login`, `/forgot-password`, `/reset-password`, `/account` (display name + change password), `/admin/users` (admin only).
+- Pages: `/login`, `/signup` (only when `ALLOW_SIGNUP=true`), `/forgot-password`, `/reset-password`, `/account` (display name + change password), `/spool-types` (catalog + request), `/admin/users` + `/admin/spool-types` (admin only).
+- Password min length: `MINIMUM_PASSWORD_LENGTH` env (default 12) — exported as `passwordMinLength` from `lib/auth.ts` and passed to client forms **as a prop from server components** (plain `process.env` reads are undefined in the browser).
 
 ## Database setup
 
@@ -68,7 +69,8 @@ Mutations go through server actions in `app/actions/filaments.ts` (`createFilame
 
 | File | Purpose |
 |---|---|
-| `lib/filament.ts` | Domain logic: weight math, thresholds, `FilamentView`, `toFilamentView`, `formatKg`, `FILAMENT_TYPES` |
+| `lib/filament.ts` | Domain logic: gram math, thresholds, `FilamentView`, `toFilamentView(filament, spoolType)`, `formatWeight`, `spoolTypeLabel`, `FILAMENT_TYPES` |
+| `app/actions/spool-types.ts` | Spool-type catalog actions: usable/catalog queries, request, admin approve/reject |
 | `lib/db/schema.ts` | Drizzle `filaments` table + `Filament`/`NewFilament` types (re-exports auth schema) |
 | `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
 | `lib/auth-session.ts` | `requireUser()` / `requireAdmin()` — mandatory in protected pages & actions |
@@ -83,16 +85,16 @@ Mutations go through server actions in `app/actions/filaments.ts` (`createFilame
 
 ## Domain rules
 
-- Remaining filament: `filamentLeft = measuredTotalWeight − emptySpoolWeight` (clamped ≥ 0)
-- **Empty** when `filamentLeft ≤ 0.005` kg (5 g); **Low** when `percentLeft ≤ 15%`
-- Weights are stored in **kg** as SQLite `real` columns — plain JS numbers throughout; timestamps are `integer` unix-epoch columns surfaced as `Date` objects (Drizzle `mode: "timestamp"`)
+- **All weights are gram integers** (`emptyWeightGrams`, `fullFilamentWeightGrams`, `measuredTotalWeightGrams`); display via `formatWeight()` (g below 1 kg, kg above); timestamps are `integer` unix-epoch columns surfaced as `Date` objects (Drizzle `mode: "timestamp"`)
+- Remaining filament: `filamentLeftGrams = measuredTotalWeightGrams − spoolType.emptyWeightGrams` (clamped ≥ 0)
+- **Empty** when `filamentLeftGrams ≤ 5`; **Low** when `percentLeft ≤ 15%`
+- **Spool types** (`spool_types` table): global catalog with `status` `approved | pending | rejected`. Any user can request one (`requestSpoolType`); it's **immediately usable by its submitter** but visible to others only after admin approval (`/admin/spool-types`). Filaments reference `spoolTypeId` (no cascade); a later rejection never breaks existing filaments. The usable-by-user rule lives in `assertSpoolTypeUsable` / `getUsableSpoolTypes`.
 - Filament types: PLA, PETG, ABS, ASA, TPU, Nylon, PC, PVA, HIPS, Other (`FILAMENT_TYPES` in `lib/filament.ts`)
 
 ## Known gaps / quirks (V0 export leftovers)
 
-- No README, no seed data (fresh DB shows the empty state)
+- No README, no seed data (fresh DB shows the empty state; spool-type catalog starts empty too)
 - `npm run lint` references eslint, but eslint is not in `devDependencies`
-- Pre-existing type error in `components/spool-form-dialog.tsx` (Base UI Select nullability) — build ignores it via `ignoreBuildErrors`
 - Unused V0 placeholder assets in `public/` (`placeholder*.{svg,jpg,png}`)
 
 ## Working notes

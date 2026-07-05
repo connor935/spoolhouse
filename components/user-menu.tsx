@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import Link from "next/link"
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,19 +12,34 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { CircleUser, LogOut, Monitor, Moon, Settings, Sun, Users } from "lucide-react"
-import { useTheme } from "next-themes"
-import { authClient } from "@/lib/auth-client"
+} from "@/components/ui/dropdown-menu";
+import {
+  CircleUser,
+  ListChecks,
+  LogOut,
+  Monitor,
+  Moon,
+  Settings,
+  Sun,
+  Users,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import { authClient } from "@/lib/auth-client";
 
-export function UserMenu({ name, isAdmin }: { name: string; isAdmin: boolean }) {
-  const router = useRouter()
-  const { theme, setTheme } = useTheme()
+export function UserMenu({
+  name,
+  isAdmin,
+}: {
+  name: string;
+  isAdmin: boolean;
+}) {
+  const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   async function signOut() {
-    await authClient.signOut()
-    router.push("/login")
-    router.refresh()
+    await authClient.signOut();
+    router.push("/login");
+    router.refresh();
   }
 
   return (
@@ -41,13 +56,23 @@ export function UserMenu({ name, isAdmin }: { name: string; isAdmin: boolean }) 
             <Settings className="mr-2 h-4 w-4" />
             Account
           </DropdownMenuItem>
-          {isAdmin && (
-            <DropdownMenuItem render={<Link href="/admin/users" />}>
-              <Users className="mr-2 h-4 w-4" />
-              Manage users
-            </DropdownMenuItem>
-          )}
         </DropdownMenuGroup>
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Admin</DropdownMenuLabel>
+              <DropdownMenuItem render={<Link href="/admin/users" />}>
+                <Users className="mr-2 h-4 w-4" />
+                Manage users
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/admin/spool-types" />}>
+                <ListChecks className="mr-2 h-4 w-4" />
+                Review spool types
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup
           value={theme}
@@ -76,5 +101,5 @@ export function UserMenu({ name, isAdmin }: { name: string; isAdmin: boolean }) 
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

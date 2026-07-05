@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { authClient } from "@/lib/auth-client"
 
-export function SignupForm() {
+export function SignupForm({ minLength }: { minLength: number }) {
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -72,7 +72,7 @@ export function SignupForm() {
             type="password"
             autoComplete="new-password"
             required
-            minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
+            minLength={minLength}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -84,7 +84,7 @@ export function SignupForm() {
             type="password"
             autoComplete="new-password"
             required
-            minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
+            minLength={minLength}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
           />

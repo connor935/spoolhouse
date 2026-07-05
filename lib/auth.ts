@@ -9,12 +9,18 @@ import { sendMail } from "@/lib/mail"
 // via ALLOW_SIGNUP=true. Admins can always create users.
 export const signupAllowed = process.env.ALLOW_SIGNUP === "true"
 
+// Single source of truth for password length; client forms receive this as a
+// prop from server components (process.env is not available in the browser).
+export const passwordMinLength = process.env.MINIMUM_PASSWORD_LENGTH
+  ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH)
+  : 12
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "sqlite" }),
   emailAndPassword: {
     enabled: true,
     disableSignUp: !signupAllowed,
-    minPasswordLength: process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12,
+    minPasswordLength: passwordMinLength,
     sendResetPassword: async ({ user, url }) => {
       await sendMail({
         to: user.email,
