@@ -56,7 +56,7 @@ function ResetPasswordForm() {
           type="password"
           autoComplete="new-password"
           required
-          minLength={8}
+          minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -68,7 +68,7 @@ function ResetPasswordForm() {
           type="password"
           autoComplete="new-password"
           required
-          minLength={8}
+          minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
         />
@@ -83,7 +83,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <AuthCard title="Choose a new password" description="At least 8 characters.">
+    <AuthCard title="Choose a new password" description={`At least ${process.env.MINIMUM_PASSWORD_LENGTH || 12} characters.`}>
       <Suspense>
         <ResetPasswordForm />
       </Suspense>

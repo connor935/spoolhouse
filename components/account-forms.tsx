@@ -102,7 +102,7 @@ export function AccountForms({ name: initialName }: { name: string }) {
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
@@ -114,7 +114,7 @@ export function AccountForms({ name: initialName }: { name: string }) {
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
             />

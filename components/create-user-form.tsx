@@ -66,7 +66,7 @@ export function CreateUserForm() {
           id="new-user-password"
           type="text"
           required
-          minLength={8}
+          minLength={process.env.MINIMUM_PASSWORD_LENGTH ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH) : 12}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
