@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   CircleUser,
+  Disc3,
   ListChecks,
   LogOut,
   Monitor,
@@ -22,6 +23,7 @@ import {
   Settings,
   Sun,
   Users,
+  UsersRound,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { authClient } from "@/lib/auth-client";
@@ -54,6 +56,14 @@ export function UserMenu({
           <DropdownMenuItem render={<Link href="/account" />}>
             <Settings className="mr-2 h-4 w-4" />
             Account
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/spool-types" />}>
+            <Disc3 className="mr-2 h-4 w-4" />
+            Spool catalog
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/groups" />}>
+            <UsersRound className="mr-2 h-4 w-4" />
+            Groups
           </DropdownMenuItem>
         </DropdownMenuGroup>
         {isAdmin && (
