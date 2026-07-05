@@ -51,7 +51,6 @@ export function UserMenu({
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
           <DropdownMenuLabel>{name}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
           <DropdownMenuItem render={<Link href="/account" />}>
             <Settings className="mr-2 h-4 w-4" />
             Account
