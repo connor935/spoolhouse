@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm"
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
+import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core"
 import { user } from "./auth-schema"
 
 export * from "./auth-schema"
@@ -53,3 +53,90 @@ export type Filament = typeof filaments.$inferSelect
 export type NewFilament = typeof filaments.$inferInsert
 export type SpoolType = typeof spoolTypes.$inferSelect
 export type NewSpoolType = typeof spoolTypes.$inferInsert
+
+// Invite-only groups of nearby users that pool their (selectively) shared
+// spools into a browsable group stock — see .claude/epic-4.md.
+export const groups = sqliteTable("groups", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  ownerId: text("owner_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // Single reusable, rotatable invite code (Discord-style)
+  inviteCode: text("invite_code").notNull().unique(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+export const groupMembers = sqliteTable(
+  "group_members",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").notNull().default("member"), // owner | member
+    // Default 'all' on join (Q: decided) — all/whitelist/blacklist, see filamentShareOverrides
+    shareMode: text("share_mode").notNull().default("all"), // all | whitelist | blacklist
+    joinedAt: integer("joined_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (table) => [unique().on(table.groupId, table.userId)],
+)
+
+// Per-member override list. Meaning depends on the member's shareMode:
+// whitelist -> these ARE shared; blacklist -> these are EXCLUDED.
+export const filamentShareOverrides = sqliteTable(
+  "filament_share_overrides",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    groupMemberId: integer("group_member_id")
+      .notNull()
+      .references(() => groupMembers.id, { onDelete: "cascade" }),
+    filamentId: integer("filament_id")
+      .notNull()
+      .references(() => filaments.id, { onDelete: "cascade" }),
+  },
+  (table) => [unique().on(table.groupMemberId, table.filamentId)],
+)
+
+export const lends = sqliteTable("lends", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  filamentId: integer("filament_id")
+    .notNull()
+    .references(() => filaments.id, { onDelete: "cascade" }),
+  borrowerId: text("borrower_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  groupId: integer("group_id")
+    .notNull()
+    .references(() => groups.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("requested"), // requested | active | declined | returned
+  requestedAt: integer("requested_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  respondedAt: integer("responded_at", { mode: "timestamp" }),
+  returnedAt: integer("returned_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+export type Group = typeof groups.$inferSelect
+export type NewGroup = typeof groups.$inferInsert
+export type GroupMember = typeof groupMembers.$inferSelect
+export type NewGroupMember = typeof groupMembers.$inferInsert
+export type FilamentShareOverride = typeof filamentShareOverrides.$inferSelect
+export type Lend = typeof lends.$inferSelect
+export type NewLend = typeof lends.$inferInsert

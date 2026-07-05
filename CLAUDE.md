@@ -52,35 +52,44 @@ Backups: copy `data/spoolhouse.db`. Target deployment is a single self-hosted Li
 
 ## Architecture
 
-Single route `/`:
+Main route `/`:
 
 ```
 app/page.tsx (server component, force-dynamic)
-  └─ getFilaments() → toFilamentView() per row
+  └─ getFilaments() → toFilamentView() per row, merged with active-lend borrower names
   └─ <WarehouseDashboard>  (client)
        ├─ stat tiles, tabs: In stock / Empty / All
-       ├─ <SpoolCard> per spool  — status badge, progress bar, inline re-weigh flow, edit/delete menu
+       ├─ <SpoolCard> per spool  — status badge, "Lent to X" badge, progress bar, inline re-weigh flow, edit/delete menu
        └─ <SpoolFormDialog>      — create/edit form with live "filament left" preview
 ```
 
 Mutations go through server actions in `app/actions/filaments.ts` (`createFilament`, `updateFilament`, `setMeasuredWeight`, `deleteFilament`), each calling `revalidatePath("/")` to refresh the page data. No global state library — server is the source of truth, `useState` for UI-local state only.
 
+**Groups, sharing & lending** (`/groups`, `/groups/[id]`, `/groups/join/[code]`): invite-only groups
+pool members' (selectively) shared spools into a browsable group stock; members request to borrow,
+the owner approves/declines, and marks it returned when it's physically back. See "Groups & lending"
+below for the data model and authorization rules.
+
 ### Key files
 
 | File | Purpose |
 |---|---|
-| `lib/filament.ts` | Domain logic: gram math, thresholds, `FilamentView`, `toFilamentView(filament, spoolType)`, `formatWeight`, `spoolTypeLabel`, `FILAMENT_TYPES` |
+| `lib/filament.ts` | Domain logic: gram math, thresholds, `FilamentView` (incl. `lentToName`), `toFilamentView(filament, spoolType)`, `formatWeight`, `spoolTypeLabel`, `FILAMENT_TYPES` |
 | `app/actions/spool-types.ts` | Spool-type catalog actions: usable/catalog queries, request, admin approve/reject |
-| `lib/db/schema.ts` | Drizzle `filaments` table + `Filament`/`NewFilament` types (re-exports auth schema) |
+| `lib/db/schema.ts` | Drizzle tables (`filaments`, `spoolTypes`, `groups`, `groupMembers`, `filamentShareOverrides`, `lends`) + inferred types (re-exports auth schema) |
 | `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
 | `lib/auth-session.ts` | `requireUser()` / `requireAdmin()` — mandatory in protected pages & actions |
 | `proxy.ts` | Optimistic login redirect (cookie presence only) |
 | `lib/db/index.ts` | better-sqlite3 + drizzle client singleton, auto-runs migrations on startup |
 | `drizzle.config.ts` / `drizzle/` | drizzle-kit config and committed SQL migrations |
-| `app/actions/filaments.ts` | All server actions (CRUD + re-weigh) |
+| `app/actions/filaments.ts` | Filament server actions (CRUD + re-weigh) |
+| `lib/sharing.ts` | `getSharedFilaments(groupId)` — single source of truth resolving each member's share mode into the group's pooled stock; `getMembership(groupId, userId)` |
+| `app/actions/groups.ts` | Group CRUD, membership, invite codes, `updateShareSettings` |
+| `app/actions/lends.ts` | Lend lifecycle: `requestLend`, `approveLend`, `declineLend`, `markReturned`, `getGroupLends`, `getActiveLendsForOwner` |
 | `components/warehouse-dashboard.tsx` | Main client UI: stats, filters, dialog state |
-| `components/spool-card.tsx` | Spool display + inline re-weigh |
+| `components/spool-card.tsx` | Spool display + inline re-weigh + "Lent to X" badge |
 | `components/spool-form-dialog.tsx` | Create/edit form |
+| `components/group-stock.tsx` / `group-lend-requests.tsx` / `group-lend-history.tsx` / `group-sharing-settings.tsx` / `group-owner-tools.tsx` | `/groups/[id]` page sections |
 | `lib/utils.ts` | `cn()` (clsx + tailwind-merge) |
 
 ## Domain rules
@@ -90,6 +99,26 @@ Mutations go through server actions in `app/actions/filaments.ts` (`createFilame
 - **Empty** when `filamentLeftGrams ≤ 5`; **Low** when `percentLeft ≤ 15%`
 - **Spool types** (`spool_types` table): global catalog with `status` `approved | pending | rejected`. Any user can request one (`requestSpoolType`); it's **immediately usable by its submitter** but visible to others only after admin approval (`/admin/spool-types`). Filaments reference `spoolTypeId` (no cascade); a later rejection never breaks existing filaments. The usable-by-user rule lives in `assertSpoolTypeUsable` / `getUsableSpoolTypes`.
 - Filament types: PLA, PETG, ABS, ASA, TPU, Nylon, PC, PVA, HIPS, Other (`FILAMENT_TYPES` in `lib/filament.ts`)
+
+## Groups & lending
+
+- **Groups** (`groups` table) have one owner and a single reusable, rotatable **invite code**
+  (Discord-style — join via code entry on `/groups` or the `/groups/join/[code]` link). Rotating
+  invalidates the old code/link immediately.
+- **Membership** (`group_members`): `role` is `owner | member`; `shareMode` is `all | whitelist |
+  blacklist`, defaulting to `all` on join. `filament_share_overrides` holds the per-member override
+  list, whose meaning flips with the mode — whitelist entries **are** shared, blacklist entries are
+  **excluded**. `getSharedFilaments(groupId)` in `lib/sharing.ts` is the single place that resolves
+  this into the pooled group stock (also excludes empty spools); reuse it rather than
+  re-implementing the mode logic elsewhere (e.g. future search/filter work).
+- **Lending** (`lends` table): a request (`status='requested'`) is created by a member on a spool
+  they don't own that's actually shared in that group; the filament owner approves (→ `active`) or
+  declines. Only the **owner** marks a lend `returned` — no two-step confirmation from the borrower.
+  At most one `requested`/`active` lend per filament is enforced at request time in
+  `app/actions/lends.ts`. Lending never blocks the owner's own re-weigh/edit actions.
+- **Authorization**: every group/lend action starts with `requireUser()`; membership/ownership is
+  always re-checked in the SQL `WHERE`, never inferred from client-provided ids — same discipline as
+  the rest of the app.
 
 ## Known gaps / quirks (V0 export leftovers)
 

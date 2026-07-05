@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Package, Boxes, Scale, Disc3 } from "lucide-react";
+import { Plus, Package, Boxes, Scale, Disc3, UsersRound } from "lucide-react";
 import { SpoolCard } from "@/components/spool-card";
 import { SpoolFormDialog } from "@/components/spool-form-dialog";
 import { UserMenu } from "@/components/user-menu";
@@ -25,6 +25,8 @@ export function WarehouseDashboard({
   const [filter, setFilter] = useState<Filter>("in-stock");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FilamentView | null>(null);
+  // Bumped on every open so the dialog remounts with fresh field state
+  const [formInstance, setFormInstance] = useState(0);
 
   const inStock = useMemo(
     () => filaments.filter((f) => !f.isEmpty),
@@ -42,11 +44,13 @@ export function WarehouseDashboard({
 
   function openCreate() {
     setEditing(null);
+    setFormInstance((i) => i + 1);
     setFormOpen(true);
   }
 
   function openEdit(f: FilamentView) {
     setEditing(f);
+    setFormInstance((i) => i + 1);
     setFormOpen(true);
   }
 
@@ -89,6 +93,12 @@ export function WarehouseDashboard({
               <Button variant="outline" className="bg-transparent">
                 <Disc3 className="mr-2 h-4 w-4" />
                 Spool catalog
+              </Button>
+            </Link>
+            <Link href="/groups" className="w-fit">
+              <Button variant="outline" className="bg-transparent">
+                <UsersRound className="mr-2 h-4 w-4" />
+                Groups
               </Button>
             </Link>
             <UserMenu name={user.name} isAdmin={user.isAdmin} />
@@ -160,7 +170,7 @@ export function WarehouseDashboard({
       </main>
 
       <SpoolFormDialog
-        key={editing ? `edit-${editing.id}` : "create"}
+        key={`${editing ? `edit-${editing.id}` : "create"}-${formInstance}`}
         open={formOpen}
         onOpenChange={setFormOpen}
         filament={editing}

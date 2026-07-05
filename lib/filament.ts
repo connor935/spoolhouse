@@ -20,6 +20,8 @@ export type FilamentView = {
   percentLeft: number
   isEmpty: boolean
   isLow: boolean
+  // Name of the current borrower, if this spool has an active lend (Epic 4)
+  lentToName: string | null
 }
 
 const EMPTY_THRESHOLD_G = 5 // 5 g or less counts as empty
@@ -60,6 +62,7 @@ export function toFilamentView(f: Filament, spoolType: SpoolType): FilamentView 
     percentLeft,
     isEmpty,
     isLow: !isEmpty && percentLeft <= LOW_THRESHOLD_PCT,
+    lentToName: null,
   }
 }
 

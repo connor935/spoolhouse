@@ -120,6 +120,11 @@ export function SpoolCard({ filament, onEdit }: Props) {
         ) : (
           <Badge className="bg-accent text-accent-foreground hover:bg-accent">In stock</Badge>
         )}
+        {filament.lentToName && (
+          <Badge variant="outline" className="border-accent/40 text-accent">
+            Lent to {filament.lentToName}
+          </Badge>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
