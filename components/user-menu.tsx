@@ -8,14 +8,18 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { CircleUser, LogOut, Settings, Users } from "lucide-react"
+import { CircleUser, LogOut, Monitor, Moon, Settings, Sun, Users } from "lucide-react"
+import { useTheme } from "next-themes"
 import { authClient } from "@/lib/auth-client"
 
 export function UserMenu({ name, isAdmin }: { name: string; isAdmin: boolean }) {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
 
   async function signOut() {
     await authClient.signOut()
@@ -45,10 +49,31 @@ export function UserMenu({ name, isAdmin }: { name: string; isAdmin: boolean }) 
           )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={signOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Sign out
-        </DropdownMenuItem>
+        <DropdownMenuRadioGroup
+          value={theme}
+          onValueChange={(value) => setTheme(value as string)}
+        >
+          <DropdownMenuLabel>Theme</DropdownMenuLabel>
+          <DropdownMenuRadioItem value="light">
+            <Sun className="mr-2 h-4 w-4" />
+            Light
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="dark">
+            <Moon className="mr-2 h-4 w-4" />
+            Dark
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="system">
+            <Monitor className="mr-2 h-4 w-4" />
+            System
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={signOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )

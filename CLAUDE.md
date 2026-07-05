@@ -46,7 +46,8 @@ Backups: copy `data/spoolhouse.db`. Target deployment is a single self-hosted Li
 - **shadcn/ui** (style `base-nova`) built on **Base UI** (`@base-ui/react`), not Radix — primitives live in `components/ui/`
 - **Drizzle ORM + better-sqlite3** for data access (SQLite file, migrations via drizzle-kit)
 - **better-auth** for authentication (see Auth section)
-- `lucide-react` icons, `sonner` toasts, `next-themes` (installed but no ThemeProvider wired yet)
+- `lucide-react` icons, `sonner` toasts
+- **Theming:** `next-themes` (`components/theme-provider.tsx`, wrapped in `app/layout.tsx`, default = system, class strategy). Light/dark/system switch lives in the user menu. All colors come from the oklch tokens in `app/globals.css` (`:root` + `.dark`) — petrol/blue accent (hue ~205–210), cool neutrals; never hardcode colors in components
 
 ## Architecture
 
@@ -92,7 +93,6 @@ Mutations go through server actions in `app/actions/filaments.ts` (`createFilame
 - No README, no seed data (fresh DB shows the empty state)
 - `npm run lint` references eslint, but eslint is not in `devDependencies`
 - Pre-existing type error in `components/spool-form-dialog.tsx` (Base UI Select nullability) — build ignores it via `ignoreBuildErrors`
-- `next-themes` installed but dark mode has no provider/toggle (dark CSS variables exist in `globals.css`)
 - Unused V0 placeholder assets in `public/` (`placeholder*.{svg,jpg,png}`)
 
 ## Working notes
