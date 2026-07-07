@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -66,6 +66,10 @@ export function SpoolFormDialog({
   const [measuredGrams, setMeasuredGrams] = useState(
     spool ? String(spool.measuredTotalWeightGrams) : "1200",
   )
+  // I.2: in create mode the measured weight auto-fills as full + empty spool
+  // weight until the user edits the field manually (then their value wins).
+  // The dialog remounts on every open, so the flag resets naturally.
+  const [measuredDirty, setMeasuredDirty] = useState(false)
 
   // Requested from within this dialog (immediately usable by the requester)
   const [extraMaterials, setExtraMaterials] = useState<Material[]>([])
@@ -100,6 +104,14 @@ export function SpoolFormDialog({
 
   const selectedMaterial = allMaterials.find((m) => String(m.id) === materialId) ?? null
   const selectedType = allTypes.find((t) => String(t.id) === spoolTypeId) ?? null
+  const selectedEmptyWeight = selectedType?.emptyWeightGrams ?? null
+
+  useEffect(() => {
+    if (editing || measuredDirty || selectedEmptyWeight === null) return
+    const full = Number.parseInt(fullGrams, 10)
+    if (Number.isNaN(full)) return
+    setMeasuredGrams(String(full + selectedEmptyWeight))
+  }, [editing, measuredDirty, fullGrams, selectedEmptyWeight])
 
   // Inline "request new material" mini-form
   const [requestingMaterial, setRequestingMaterial] = useState(false)
@@ -473,10 +485,15 @@ export function SpoolFormDialog({
                 step="1"
                 min="0"
                 value={measuredGrams}
-                onChange={(e) => setMeasuredGrams(e.target.value)}
+                onChange={(e) => {
+                  setMeasuredDirty(true)
+                  setMeasuredGrams(e.target.value)
+                }}
               />
               <p className="text-xs text-muted-foreground">
-                Put the whole spool on a scale and enter the value.
+                {editing || measuredDirty
+                  ? "Put the whole spool on a scale and enter the value."
+                  : "Prefilled for a fresh spool (filament + empty spool) — adjust to your scale value."}
               </p>
             </div>
           </div>
