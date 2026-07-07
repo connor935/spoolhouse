@@ -56,9 +56,9 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0">
-            <p className="truncate font-medium leading-tight">{l.filamentName}</p>
+            <p className="truncate font-medium leading-tight">{l.materialName}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {l.filamentManufacturer} · {l.groupName} ·{" "}
+              {l.materialManufacturer} · {l.groupName} ·{" "}
               {formatWeight(computeFilamentLeft(l.measuredTotalWeightGrams, l.emptyWeightGrams))}{" "}
               left
             </p>
@@ -144,9 +144,9 @@ export function BorrowsPanel({ lends, currentUserId }: { lends: MyLend[]; curren
   function spoolLine(l: MyLend) {
     return (
       <div className="min-w-0">
-        <p className="truncate font-medium leading-tight">{l.filamentName}</p>
+        <p className="truncate font-medium leading-tight">{l.materialName}</p>
         <p className="truncate text-xs text-muted-foreground">
-          {l.filamentManufacturer} · {l.groupName}
+          {l.materialManufacturer} · {l.groupName}
         </p>
       </div>
     )
@@ -269,7 +269,7 @@ export function BorrowsPanel({ lends, currentUserId }: { lends: MyLend[]; curren
                 className="flex items-center justify-between gap-4 px-5 py-3 text-sm text-muted-foreground"
               >
                 <span className="truncate">
-                  {l.filamentName} — {l.ownerName} → {l.borrowerName} ({l.groupName})
+                  {l.materialName} — {l.ownerName} → {l.borrowerName} ({l.groupName})
                 </span>
                 <Badge variant="outline" className="shrink-0 text-muted-foreground">
                   {l.lend.status === "returned" ? "Returned" : "Declined"}

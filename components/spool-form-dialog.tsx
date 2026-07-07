@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import type React from "react";
+import type React from "react"
 
-import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useMemo, useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,178 +11,218 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Plus, X } from "lucide-react";
-import { createFilament, updateFilament } from "@/app/actions/filaments";
-import { requestSpoolType } from "@/app/actions/spool-types";
+} from "@/components/ui/select"
+import { Plus, X } from "lucide-react"
+import { createSpool, updateSpool } from "@/app/actions/filaments"
+import { requestMaterial } from "@/app/actions/materials"
+import { requestSpoolType } from "@/app/actions/spool-types"
 import {
   FILAMENT_TYPES,
   computeFilamentLeft,
   formatWeight,
+  materialLabel,
   spoolTypeLabel,
-  type FilamentView,
-} from "@/lib/filament";
-import type { SpoolType } from "@/lib/db/schema";
-import { toast } from "sonner";
+  type SpoolView,
+} from "@/lib/filament"
+import type { Material, SpoolType } from "@/lib/db/schema"
+import { toast } from "sonner"
 
 type Props = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  filament?: FilamentView | null;
-  spoolTypes: SpoolType[];
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  spool?: SpoolView | null
+  // Preselect a material ("Add spool of this material" on a MaterialCard)
+  presetMaterialId?: number | null
+  materials: Material[]
+  spoolTypes: SpoolType[]
+}
 
 export function SpoolFormDialog({
   open,
   onOpenChange,
-  filament,
+  spool,
+  presetMaterialId,
+  materials,
   spoolTypes,
 }: Props) {
-  const editing = Boolean(filament);
-  const [saving, setSaving] = useState(false);
-  const [name, setName] = useState(filament?.name ?? "");
-  const [manufacturer, setManufacturer] = useState(
-    filament?.manufacturer ?? "",
-  );
-  const [filamentType, setFilamentType] = useState(
-    filament?.filamentType ?? "PLA",
-  );
-  const [color, setColor] = useState(filament?.color ?? "#1c7ed6");
+  const editing = Boolean(spool)
+  const [saving, setSaving] = useState(false)
+  const [materialId, setMaterialId] = useState<string | null>(
+    spool ? String(spool.materialId) : presetMaterialId ? String(presetMaterialId) : null,
+  )
   const [spoolTypeId, setSpoolTypeId] = useState<string | null>(
-    filament ? String(filament.spoolTypeId) : null,
-  );
-  const [fullGrams, setFullGrams] = useState(
-    filament ? String(filament.fullFilamentWeightGrams) : "1000",
-  );
+    spool ? String(spool.spoolTypeId) : null,
+  )
+  const [fullGrams, setFullGrams] = useState(spool ? String(spool.fullFilamentWeightGrams) : "1000")
   const [measuredGrams, setMeasuredGrams] = useState(
-    filament ? String(filament.measuredTotalWeightGrams) : "1200",
-  );
+    spool ? String(spool.measuredTotalWeightGrams) : "1200",
+  )
 
-  // Spool types requested from within this dialog (immediately usable)
-  const [extraTypes, setExtraTypes] = useState<SpoolType[]>([]);
+  // Requested from within this dialog (immediately usable by the requester)
+  const [extraMaterials, setExtraMaterials] = useState<Material[]>([])
+  const [extraTypes, setExtraTypes] = useState<SpoolType[]>([])
+
+  const allMaterials = useMemo(() => {
+    const seen = new Set(materials.map((m) => m.id))
+    return [...materials, ...extraMaterials.filter((m) => !seen.has(m.id))]
+  }, [materials, extraMaterials])
   const allTypes = useMemo(() => {
-    const seen = new Set(spoolTypes.map((t) => t.id));
-    return [...spoolTypes, ...extraTypes.filter((t) => !seen.has(t.id))];
-  }, [spoolTypes, extraTypes]);
+    const seen = new Set(spoolTypes.map((t) => t.id))
+    return [...spoolTypes, ...extraTypes.filter((t) => !seen.has(t.id))]
+  }, [spoolTypes, extraTypes])
 
-  // Base UI's Select.Value renders the raw value unless the root gets an
-  // items map (value -> label) to resolve the display text from.
-  const selectItems = useMemo(
+  // Base UI Select renders raw values unless the root gets an items map
+  const materialItems = useMemo(
+    () =>
+      allMaterials.map((m) => ({
+        value: String(m.id),
+        label: `${materialLabel(m)}${m.status === "pending" ? " — pending" : ""}`,
+      })),
+    [allMaterials],
+  )
+  const typeItems = useMemo(
     () =>
       allTypes.map((t) => ({
         value: String(t.id),
         label: `${spoolTypeLabel(t)}${t.status === "pending" ? " — pending" : ""}`,
       })),
     [allTypes],
-  );
+  )
+
+  const selectedMaterial = allMaterials.find((m) => String(m.id) === materialId) ?? null
+  const selectedType = allTypes.find((t) => String(t.id) === spoolTypeId) ?? null
+
+  // Inline "request new material" mini-form
+  const [requestingMaterial, setRequestingMaterial] = useState(false)
+  const [reqMManufacturer, setReqMManufacturer] = useState("")
+  const [reqMName, setReqMName] = useState("")
+  const [reqMType, setReqMType] = useState("PLA")
+  const [reqMColor, setReqMColor] = useState("#1c7ed6")
+  const [reqMPending, setReqMPending] = useState(false)
 
   // Inline "request new spool type" mini-form
-  const [requesting, setRequesting] = useState(false);
-  const [reqManufacturer, setReqManufacturer] = useState("");
-  const [reqName, setReqName] = useState("");
-  const [reqGrams, setReqGrams] = useState("");
-  const [reqPending, setReqPending] = useState(false);
-
-  const selectedType =
-    allTypes.find((t) => String(t.id) === spoolTypeId) ?? null;
+  const [requestingType, setRequestingType] = useState(false)
+  const [reqManufacturer, setReqManufacturer] = useState("")
+  const [reqName, setReqName] = useState("")
+  const [reqGrams, setReqGrams] = useState("")
+  const [reqPending, setReqPending] = useState(false)
 
   // Live computed preview of how much filament is actually left
-  const measured = Number.parseInt(measuredGrams, 10);
+  const measured = Number.parseInt(measuredGrams, 10)
   const previewLeft =
     selectedType && !Number.isNaN(measured)
       ? computeFilamentLeft(measured, selectedType.emptyWeightGrams)
-      : null;
+      : null
 
-  async function handleRequestSpoolType() {
-    const grams = Number.parseInt(reqGrams, 10);
-    if (!reqManufacturer.trim() || !reqName.trim()) {
-      toast.error("Manufacturer and name are required");
-      return;
-    }
-    if (Number.isNaN(grams) || grams <= 0) {
-      toast.error("Empty spool weight must be greater than 0 g");
-      return;
+  async function handleRequestMaterial() {
+    if (!reqMManufacturer.trim() || !reqMName.trim()) {
+      toast.error("Manufacturer and name are required")
+      return
     }
     try {
-      setReqPending(true);
+      setReqMPending(true)
+      const created = await requestMaterial({
+        manufacturer: reqMManufacturer.trim(),
+        name: reqMName.trim(),
+        filamentType: reqMType,
+        color: reqMColor,
+      })
+      setExtraMaterials((prev) => [...prev, created])
+      setMaterialId(String(created.id))
+      setRequestingMaterial(false)
+      setReqMManufacturer("")
+      setReqMName("")
+      toast.success("Material requested — you can use it right away")
+    } catch {
+      toast.error("Could not request material")
+    } finally {
+      setReqMPending(false)
+    }
+  }
+
+  async function handleRequestSpoolType() {
+    const grams = Number.parseInt(reqGrams, 10)
+    if (!reqManufacturer.trim() || !reqName.trim()) {
+      toast.error("Manufacturer and name are required")
+      return
+    }
+    if (Number.isNaN(grams) || grams <= 0) {
+      toast.error("Empty spool weight must be greater than 0 g")
+      return
+    }
+    try {
+      setReqPending(true)
       const created = await requestSpoolType({
         manufacturer: reqManufacturer.trim(),
         name: reqName.trim(),
         emptyWeightGrams: grams,
-      });
-      setExtraTypes((prev) => [...prev, created]);
-      setSpoolTypeId(String(created.id));
-      setRequesting(false);
-      setReqManufacturer("");
-      setReqName("");
-      setReqGrams("");
-      toast.success("Spool type requested — you can use it right away");
+      })
+      setExtraTypes((prev) => [...prev, created])
+      setSpoolTypeId(String(created.id))
+      setRequestingType(false)
+      setReqManufacturer("")
+      setReqName("")
+      setReqGrams("")
+      toast.success("Spool type requested — you can use it right away")
     } catch {
-      toast.error("Could not request spool type");
+      toast.error("Could not request spool type")
     } finally {
-      setReqPending(false);
+      setReqPending(false)
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const full = Number.parseInt(fullGrams, 10);
-    const measuredTotal = Number.parseInt(measuredGrams, 10);
+    e.preventDefault()
+    const full = Number.parseInt(fullGrams, 10)
+    const measuredTotal = Number.parseInt(measuredGrams, 10)
 
-    if (!name.trim() || !manufacturer.trim()) {
-      toast.error("Name and manufacturer are required");
-      return;
+    if (!selectedMaterial) {
+      toast.error("Pick a material (or request a new one)")
+      return
     }
     if (!selectedType) {
-      toast.error("Pick a spool type (or request a new one)");
-      return;
+      toast.error("Pick a spool type (or request a new one)")
+      return
     }
     if (Number.isNaN(full) || full <= 0) {
-      toast.error("Full filament weight must be greater than 0 g");
-      return;
+      toast.error("Full filament weight must be greater than 0 g")
+      return
     }
-    if (Number.isNaN(measuredTotal) || measuredTotal < 0) {
-      toast.error("Measured weight must be 0 g or more");
-      return;
-    }
-    if (measuredTotal < selectedType.emptyWeightGrams) {
-      toast.error("Measured weight can't be less than the empty spool weight");
-      return;
+    if (Number.isNaN(measuredTotal) || measuredTotal < selectedType.emptyWeightGrams) {
+      toast.error("Measured weight can't be less than the empty spool weight")
+      return
     }
 
     const payload = {
-      name: name.trim(),
-      manufacturer: manufacturer.trim(),
-      filamentType,
-      color,
+      materialId: selectedMaterial.id,
       spoolTypeId: selectedType.id,
       fullFilamentWeightGrams: full,
       measuredTotalWeightGrams: measuredTotal,
-    };
+    }
 
     try {
-      setSaving(true);
-      if (editing && filament) {
-        await updateFilament(filament.id, payload);
-        toast.success("Spool updated");
+      setSaving(true)
+      if (editing && spool) {
+        await updateSpool(spool.id, payload)
+        toast.success("Spool updated")
       } else {
-        await createFilament(payload);
-        toast.success("Spool added to warehouse");
+        await createSpool(payload)
+        toast.success("Spool added to warehouse")
       }
-      onOpenChange(false);
+      onOpenChange(false)
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.")
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
@@ -193,81 +233,133 @@ export function SpoolFormDialog({
           <DialogTitle>{editing ? "Edit spool" : "Add new spool"}</DialogTitle>
           <DialogDescription>
             {editing
-              ? "Update the details for this filament spool."
-              : "Register a new filament spool. Remaining filament is calculated from the weighed total."}
+              ? "Update this physical spool."
+              : "Register a physical spool of a material. Remaining filament is calculated from the weighed total."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Galaxy Black"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="manufacturer">Manufacturer</Label>
-            <Input
-              id="manufacturer"
-              value={manufacturer}
-              onChange={(e) => setManufacturer(e.target.value)}
-              placeholder="e.g. Prusament"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="type">Type</Label>
-              <Select
-                value={filamentType}
-                onValueChange={(value) => value && setFilamentType(value)}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FILAMENT_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="material">Material</Label>
+              {!requestingMaterial && (
+                <button
+                  type="button"
+                  onClick={() => setRequestingMaterial(true)}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <Plus className="h-3 w-3" />
+                  Request new
+                </button>
+              )}
             </div>
+            <Select
+              items={materialItems}
+              value={materialId}
+              onValueChange={(value) => value && setMaterialId(value)}
+            >
+              <SelectTrigger id="material" className="w-full">
+                <SelectValue placeholder="Pick a material" />
+              </SelectTrigger>
+              <SelectContent>
+                {materialItems.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="color">Color</Label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="color"
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="h-9 w-12 cursor-pointer rounded-md border border-input bg-transparent p-1"
-                  aria-label="Spool color"
-                />
-                <Input
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="font-mono text-sm"
-                />
+          {requestingMaterial && (
+            <div className="flex flex-col gap-3 rounded-md border border-border bg-secondary/50 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Request new material</span>
+                <button
+                  type="button"
+                  onClick={() => setRequestingMaterial(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Close material request form"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="reqMManufacturer" className="text-xs">
+                    Manufacturer
+                  </Label>
+                  <Input
+                    id="reqMManufacturer"
+                    value={reqMManufacturer}
+                    onChange={(e) => setReqMManufacturer(e.target.value)}
+                    placeholder="e.g. Prusament"
+                    className="h-8"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="reqMName" className="text-xs">
+                    Material name
+                  </Label>
+                  <Input
+                    id="reqMName"
+                    value={reqMName}
+                    onChange={(e) => setReqMName(e.target.value)}
+                    placeholder="e.g. Galaxy Black"
+                    className="h-8"
+                  />
+                </div>
+              </div>
+              <div className="flex items-end gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="reqMType" className="text-xs">
+                    Type
+                  </Label>
+                  <Select value={reqMType} onValueChange={(v) => v && setReqMType(v)}>
+                    <SelectTrigger id="reqMType" className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FILAMENT_TYPES.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="reqMColor" className="text-xs">
+                    Color
+                  </Label>
+                  <input
+                    id="reqMColor"
+                    type="color"
+                    value={reqMColor}
+                    onChange={(e) => setReqMColor(e.target.value)}
+                    className="h-8 w-12 cursor-pointer rounded-md border border-input bg-transparent p-1"
+                    aria-label="Material color"
+                  />
+                </div>
+                <Button type="button" size="sm" onClick={handleRequestMaterial} disabled={reqMPending}>
+                  {reqMPending ? "Requesting…" : "Request"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                You can use it immediately; an admin will review it for the global catalog.
+              </p>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="spoolType">Spool type</Label>
-              {!requesting && (
+              {!requestingType && (
                 <button
                   type="button"
                   onClick={() => {
-                    setRequesting(true);
-                    setReqManufacturer(manufacturer);
+                    setRequestingType(true)
+                    setReqManufacturer(selectedMaterial?.manufacturer ?? "")
                   }}
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                 >
@@ -277,7 +369,7 @@ export function SpoolFormDialog({
               )}
             </div>
             <Select
-              items={selectItems}
+              items={typeItems}
               value={spoolTypeId}
               onValueChange={(value) => value && setSpoolTypeId(value)}
             >
@@ -285,7 +377,7 @@ export function SpoolFormDialog({
                 <SelectValue placeholder="Pick a spool type" />
               </SelectTrigger>
               <SelectContent>
-                {selectItems.map((item) => (
+                {typeItems.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>
@@ -298,15 +390,13 @@ export function SpoolFormDialog({
             </p>
           </div>
 
-          {requesting && (
+          {requestingType && (
             <div className="flex flex-col gap-3 rounded-md border border-border bg-secondary/50 p-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  Request new spool type
-                </span>
+                <span className="text-sm font-medium">Request new spool type</span>
                 <button
                   type="button"
-                  onClick={() => setRequesting(false)}
+                  onClick={() => setRequestingType(false)}
                   className="text-muted-foreground hover:text-foreground"
                   aria-label="Close request form"
                 >
@@ -354,27 +444,16 @@ export function SpoolFormDialog({
                     className="h-8"
                   />
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleRequestSpoolType}
-                  disabled={reqPending}
-                >
+                <Button type="button" size="sm" onClick={handleRequestSpoolType} disabled={reqPending}>
                   {reqPending ? "Requesting…" : "Request"}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                You can use it immediately; an admin will review it for the
-                global catalog.
-              </p>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="fullFilamentWeight">
-                Full filament weight (g)
-              </Label>
+              <Label htmlFor="fullFilamentWeight">Full filament weight (g)</Label>
               <Input
                 id="fullFilamentWeight"
                 type="number"
@@ -383,15 +462,11 @@ export function SpoolFormDialog({
                 value={fullGrams}
                 onChange={(e) => setFullGrams(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
-                Filament on a new spool, e.g. 1000 g.
-              </p>
+              <p className="text-xs text-muted-foreground">Filament on a new spool, e.g. 1000 g.</p>
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="measuredTotalWeight">
-                Measured total weight (g)
-              </Label>
+              <Label htmlFor="measuredTotalWeight">Measured total weight (g)</Label>
               <Input
                 id="measuredTotalWeight"
                 type="number"
@@ -407,20 +482,14 @@ export function SpoolFormDialog({
           </div>
 
           <div className="flex items-center justify-between rounded-md border border-border bg-secondary/50 px-4 py-3">
-            <span className="text-sm text-muted-foreground">
-              Calculated filament left
-            </span>
+            <span className="text-sm text-muted-foreground">Calculated filament left</span>
             <span className="font-mono text-lg font-semibold tabular-nums text-card-foreground">
               {previewLeft !== null ? formatWeight(previewLeft) : "—"}
             </span>
           </div>
 
           <DialogFooter className="mt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
@@ -430,5 +499,5 @@ export function SpoolFormDialog({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

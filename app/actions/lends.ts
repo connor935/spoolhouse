@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { filaments, groups, lends, spoolTypes, user } from "@/lib/db/schema"
+import { groups, lends, materials, spools, spoolTypes, user } from "@/lib/db/schema"
 import { requireUser } from "@/lib/auth-session"
 import { createNotification } from "@/lib/notifications"
 import { getMembership, getSharedFilaments } from "@/lib/sharing"
@@ -9,35 +9,39 @@ import { and, desc, eq, inArray, or } from "drizzle-orm"
 import { alias } from "drizzle-orm/sqlite-core"
 import { revalidatePath } from "next/cache"
 
-export async function requestLend(filamentId: number, groupId: number) {
+export async function requestLend(spoolId: number, groupId: number) {
   const authUser = await requireUser()
   const membership = await getMembership(groupId, authUser.id)
   if (!membership) throw new Error("Not a member of this group")
 
-  const [filament] = await db.select().from(filaments).where(eq(filaments.id, filamentId))
-  if (!filament) throw new Error("Spool not found")
-  if (filament.userId === authUser.id) throw new Error("You can't borrow your own spool")
+  const [row] = await db
+    .select({ spool: spools, materialName: materials.name })
+    .from(spools)
+    .innerJoin(materials, eq(spools.materialId, materials.id))
+    .where(eq(spools.id, spoolId))
+  if (!row) throw new Error("Spool not found")
+  if (row.spool.userId === authUser.id) throw new Error("You can't borrow your own spool")
 
   const shared = await getSharedFilaments(groupId)
-  if (!shared.some((f) => f.id === filamentId)) throw new Error("This spool isn't shared in this group")
+  if (!shared.some((f) => f.id === spoolId)) throw new Error("This spool isn't shared in this group")
 
   const [existing] = await db
     .select({ id: lends.id })
     .from(lends)
-    .where(and(eq(lends.filamentId, filamentId), inArray(lends.status, ["requested", "active"])))
+    .where(and(eq(lends.filamentId, spoolId), inArray(lends.status, ["requested", "active"])))
   if (existing) throw new Error("This spool already has a pending or active lend")
 
   const [created] = await db
     .insert(lends)
-    .values({ filamentId, groupId, borrowerId: authUser.id, status: "requested" })
+    .values({ filamentId: spoolId, groupId, borrowerId: authUser.id, status: "requested" })
     .returning()
 
   const [group] = await db.select({ name: groups.name }).from(groups).where(eq(groups.id, groupId))
   await createNotification({
-    userId: filament.userId,
+    userId: row.spool.userId,
     type: "lend_requested",
     actorName: authUser.name,
-    filamentName: filament.name,
+    filamentName: row.materialName,
     groupName: group?.name ?? "a group",
     lendId: created.id,
   })
@@ -47,16 +51,17 @@ export async function requestLend(filamentId: number, groupId: number) {
 }
 
 // Returns the lend joined with the data needed for authz + notifications.
-async function requireFilamentOwner(lendId: number, userId: string) {
+async function requireSpoolOwner(lendId: number, userId: string) {
   const [row] = await db
     .select({
       lend: lends,
-      ownerId: filaments.userId,
-      filamentName: filaments.name,
+      ownerId: spools.userId,
+      materialName: materials.name,
       groupName: groups.name,
     })
     .from(lends)
-    .innerJoin(filaments, eq(lends.filamentId, filaments.id))
+    .innerJoin(spools, eq(lends.filamentId, spools.id))
+    .innerJoin(materials, eq(spools.materialId, materials.id))
     .innerJoin(groups, eq(lends.groupId, groups.id))
     .where(eq(lends.id, lendId))
   if (!row || row.ownerId !== userId) throw new Error("Not authorized")
@@ -65,7 +70,7 @@ async function requireFilamentOwner(lendId: number, userId: string) {
 
 export async function approveLend(lendId: number) {
   const authUser = await requireUser()
-  const { lend, filamentName, groupName } = await requireFilamentOwner(lendId, authUser.id)
+  const { lend, materialName, groupName } = await requireSpoolOwner(lendId, authUser.id)
   if (lend.status !== "requested") throw new Error("Lend request already handled")
   await db
     .update(lends)
@@ -75,7 +80,7 @@ export async function approveLend(lendId: number) {
     userId: lend.borrowerId,
     type: "lend_approved",
     actorName: authUser.name,
-    filamentName,
+    filamentName: materialName,
     groupName,
     lendId,
   })
@@ -85,7 +90,7 @@ export async function approveLend(lendId: number) {
 
 export async function declineLend(lendId: number) {
   const authUser = await requireUser()
-  const { lend, filamentName, groupName } = await requireFilamentOwner(lendId, authUser.id)
+  const { lend, materialName, groupName } = await requireSpoolOwner(lendId, authUser.id)
   if (lend.status !== "requested") throw new Error("Lend request already handled")
   await db
     .update(lends)
@@ -95,7 +100,7 @@ export async function declineLend(lendId: number) {
     userId: lend.borrowerId,
     type: "lend_declined",
     actorName: authUser.name,
-    filamentName,
+    filamentName: materialName,
     groupName,
     lendId,
   })
@@ -104,7 +109,7 @@ export async function declineLend(lendId: number) {
 
 export async function markReturned(lendId: number) {
   const authUser = await requireUser()
-  const { lend, filamentName, groupName } = await requireFilamentOwner(lendId, authUser.id)
+  const { lend, materialName, groupName } = await requireSpoolOwner(lendId, authUser.id)
   if (lend.status !== "active") throw new Error("Lend is not active")
   await db
     .update(lends)
@@ -114,7 +119,7 @@ export async function markReturned(lendId: number) {
     userId: lend.borrowerId,
     type: "lend_returned",
     actorName: authUser.name,
-    filamentName,
+    filamentName: materialName,
     groupName,
     lendId,
   })
@@ -129,12 +134,13 @@ export async function cancelLendRequest(lendId: number) {
   const [row] = await db
     .select({
       lend: lends,
-      ownerId: filaments.userId,
-      filamentName: filaments.name,
+      ownerId: spools.userId,
+      materialName: materials.name,
       groupName: groups.name,
     })
     .from(lends)
-    .innerJoin(filaments, eq(lends.filamentId, filaments.id))
+    .innerJoin(spools, eq(lends.filamentId, spools.id))
+    .innerJoin(materials, eq(spools.materialId, materials.id))
     .innerJoin(groups, eq(lends.groupId, groups.id))
     .where(eq(lends.id, lendId))
   if (!row || row.lend.borrowerId !== authUser.id) throw new Error("Not authorized")
@@ -145,7 +151,7 @@ export async function cancelLendRequest(lendId: number) {
     userId: row.ownerId,
     type: "lend_request_cancelled",
     actorName: authUser.name,
-    filamentName: row.filamentName,
+    filamentName: row.materialName,
     groupName: row.groupName,
   })
   revalidatePath(`/groups/${row.lend.groupId}`)
@@ -160,11 +166,11 @@ const ownerUser = alias(user, "owner_user")
 export async function getActiveLendsForOwner() {
   const authUser = await requireUser()
   return db
-    .select({ filamentId: lends.filamentId, borrowerName: borrowerUser.name })
+    .select({ spoolId: lends.filamentId, borrowerName: borrowerUser.name })
     .from(lends)
-    .innerJoin(filaments, eq(lends.filamentId, filaments.id))
+    .innerJoin(spools, eq(lends.filamentId, spools.id))
     .innerJoin(borrowerUser, eq(lends.borrowerId, borrowerUser.id))
-    .where(and(eq(filaments.userId, authUser.id), eq(lends.status, "active")))
+    .where(and(eq(spools.userId, authUser.id), eq(lends.status, "active")))
 }
 
 // Every lend the current user is involved in (as owner or borrower),
@@ -174,22 +180,23 @@ export async function getMyLends() {
   return db
     .select({
       lend: lends,
-      filamentName: filaments.name,
-      filamentManufacturer: filaments.manufacturer,
-      measuredTotalWeightGrams: filaments.measuredTotalWeightGrams,
+      materialName: materials.name,
+      materialManufacturer: materials.manufacturer,
+      measuredTotalWeightGrams: spools.measuredTotalWeightGrams,
       emptyWeightGrams: spoolTypes.emptyWeightGrams,
-      ownerId: filaments.userId,
+      ownerId: spools.userId,
       ownerName: ownerUser.name,
       borrowerName: borrowerUser.name,
       groupName: groups.name,
     })
     .from(lends)
-    .innerJoin(filaments, eq(lends.filamentId, filaments.id))
-    .innerJoin(spoolTypes, eq(filaments.spoolTypeId, spoolTypes.id))
+    .innerJoin(spools, eq(lends.filamentId, spools.id))
+    .innerJoin(materials, eq(spools.materialId, materials.id))
+    .innerJoin(spoolTypes, eq(spools.spoolTypeId, spoolTypes.id))
     .innerJoin(borrowerUser, eq(lends.borrowerId, borrowerUser.id))
-    .innerJoin(ownerUser, eq(filaments.userId, ownerUser.id))
+    .innerJoin(ownerUser, eq(spools.userId, ownerUser.id))
     .innerJoin(groups, eq(lends.groupId, groups.id))
-    .where(or(eq(filaments.userId, authUser.id), eq(lends.borrowerId, authUser.id)))
+    .where(or(eq(spools.userId, authUser.id), eq(lends.borrowerId, authUser.id)))
     .orderBy(desc(lends.requestedAt))
 }
 

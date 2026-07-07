@@ -36,6 +36,20 @@
       "when": 1783268396224,
       "tag": "0004_good_landau",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1783446992929,
+      "tag": "0005_loving_chameleon",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1783447047084,
+      "tag": "0006_curly_firebrand",
+      "breakpoints": true
     }
   ]
 }

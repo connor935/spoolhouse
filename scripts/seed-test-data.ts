@@ -7,10 +7,11 @@ import { hashPassword } from "better-auth/crypto"
 import { db } from "../lib/db"
 import {
   account,
-  filaments,
   groupMembers,
   groups,
   lends,
+  materials,
+  spools,
   spoolTypes,
   user,
 } from "../lib/db/schema"
@@ -81,56 +82,46 @@ async function main() {
   }
   console.log(`Spool types ready: ${spoolTypeDefs.map((d) => d.name).join(", ")}`)
 
-  // Filaments for the admin user
-  const existingFilaments = await db.select().from(filaments).where(eq(filaments.userId, adminId))
-  let spoolIds: number[] = existingFilaments.map((f) => f.id)
-  if (existingFilaments.length === 0) {
-    const filamentDefs = [
-      {
-        name: "Galaxy Black PLA",
-        manufacturer: "Prusament",
-        filamentType: "PLA",
-        color: "#1a1a1a",
-        spoolTypeId: spoolTypeIds[0],
-        fullFilamentWeightGrams: 1000,
-        measuredTotalWeightGrams: 950,
-      },
-      {
-        name: "Signal White PETG",
-        manufacturer: "eSun",
-        filamentType: "PETG",
-        color: "#f5f5f0",
-        spoolTypeId: spoolTypeIds[1],
-        fullFilamentWeightGrams: 1000,
-        measuredTotalWeightGrams: 640,
-      },
-      {
-        name: "Sunset Orange ASA",
-        manufacturer: "Polymaker",
-        filamentType: "ASA",
-        color: "#e0651a",
-        spoolTypeId: spoolTypeIds[2],
-        fullFilamentWeightGrams: 1000,
-        measuredTotalWeightGrams: 220,
-      },
-      {
-        name: "Empty Test Spool",
-        manufacturer: "eSun",
-        filamentType: "PLA",
-        color: "#888888",
-        spoolTypeId: spoolTypeIds[1],
-        fullFilamentWeightGrams: 1000,
-        measuredTotalWeightGrams: 200, // == empty weight -> 0g left
-      },
+  // Materials (global catalog) + spools for the admin user
+  const materialDefs = [
+    { manufacturer: "Prusament", name: "Galaxy Black", filamentType: "PLA", color: "#1a1a1a" },
+    { manufacturer: "eSun", name: "Signal White", filamentType: "PETG", color: "#f5f5f0" },
+    { manufacturer: "Polymaker", name: "Sunset Orange", filamentType: "ASA", color: "#e0651a" },
+    { manufacturer: "eSun", name: "Empty Test Grey", filamentType: "PLA", color: "#888888" },
+  ] as const
+
+  const materialIds: number[] = []
+  for (const def of materialDefs) {
+    const existing = await db.select().from(materials).where(eq(materials.name, def.name))
+    if (existing.length > 0) {
+      materialIds.push(existing[0].id)
+      continue
+    }
+    const [inserted] = await db
+      .insert(materials)
+      .values({ ...def, status: "approved", submittedById: adminId, reviewedById: adminId })
+      .returning({ id: materials.id })
+    materialIds.push(inserted.id)
+  }
+  console.log(`Materials ready: ${materialDefs.map((d) => d.name).join(", ")}`)
+
+  const existingSpools = await db.select().from(spools).where(eq(spools.userId, adminId))
+  let spoolIds: number[] = existingSpools.map((f) => f.id)
+  if (existingSpools.length === 0) {
+    const spoolDefs = [
+      { materialId: materialIds[0], spoolTypeId: spoolTypeIds[0], fullFilamentWeightGrams: 1000, measuredTotalWeightGrams: 950 },
+      { materialId: materialIds[1], spoolTypeId: spoolTypeIds[1], fullFilamentWeightGrams: 1000, measuredTotalWeightGrams: 640 },
+      { materialId: materialIds[2], spoolTypeId: spoolTypeIds[2], fullFilamentWeightGrams: 1000, measuredTotalWeightGrams: 220 },
+      { materialId: materialIds[3], spoolTypeId: spoolTypeIds[1], fullFilamentWeightGrams: 1000, measuredTotalWeightGrams: 200 }, // == empty weight -> 0g left
     ]
     const inserted = await db
-      .insert(filaments)
-      .values(filamentDefs.map((f) => ({ ...f, userId: adminId })))
-      .returning({ id: filaments.id })
+      .insert(spools)
+      .values(spoolDefs.map((f) => ({ ...f, userId: adminId })))
+      .returning({ id: spools.id })
     spoolIds = inserted.map((r) => r.id)
-    console.log(`Filaments created: ${filamentDefs.map((f) => f.name).join(", ")}`)
+    console.log("Spools created (one per material, incl. an empty one)")
   } else {
-    console.log("Filaments already exist for admin user, skipping.")
+    console.log("Spools already exist for admin user, skipping.")
   }
 
   // Group with both users, sharing everything

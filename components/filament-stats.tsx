@@ -1,22 +1,25 @@
 "use client";
 
 import { useMemo } from "react";
-import { Package, Boxes, Scale } from "lucide-react";
-import { formatWeight, type FilamentView } from "@/lib/filament";
+import { Package, Boxes, Layers, Scale } from "lucide-react";
+import { formatWeight, type SpoolView } from "@/lib/filament";
 
 export function FilamentStats({
+  materialCount,
   inStock,
   empty,
 }: {
-  inStock: FilamentView[];
-  empty: FilamentView[];
+  materialCount: number;
+  inStock: SpoolView[];
+  empty: SpoolView[];
 }) {
   const totalRemaining = useMemo(
-    () => inStock.reduce((sum, f) => sum + f.filamentLeftGrams, 0),
+    () => inStock.reduce((sum, s) => sum + s.filamentLeftGrams, 0),
     [inStock],
   );
 
   const stats = [
+    { label: "Materials", value: String(materialCount), icon: Layers },
     { label: "Spools in stock", value: String(inStock.length), icon: Boxes },
     { label: "Empty spools", value: String(empty.length), icon: Package },
     {
@@ -27,7 +30,7 @@ export function FilamentStats({
   ];
 
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((s) => (
         <div
           key={s.label}

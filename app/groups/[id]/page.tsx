@@ -1,12 +1,12 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { getGroupDetail } from "@/app/actions/groups"
-import { getFilaments } from "@/app/actions/filaments"
+import { getInventory } from "@/app/actions/filaments"
 import { GroupSharingSettings } from "@/components/group-sharing-settings"
 import { GroupOwnerTools } from "@/components/group-owner-tools"
 import { PageShell } from "@/components/page-shell"
 import { requireUser } from "@/lib/auth-session"
-import { toFilamentView } from "@/lib/filament"
+import type { Material } from "@/lib/db/schema"
 
 export const dynamic = "force-dynamic"
 
@@ -21,8 +21,11 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
   const detail = await getGroupDetail(groupId)
   if (!detail) redirect("/groups")
 
-  const ownFilamentRows = await getFilaments()
-  const ownFilaments = ownFilamentRows.map((r) => toFilamentView(r.filaments, r.spool_types))
+  // Distinct materials the user has spools of — sharing is material-level
+  const inventoryRows = await getInventory()
+  const ownMaterials = [...new Map<number, Material>(
+    inventoryRows.map((r) => [r.material.id, r.material]),
+  ).values()]
   const isOwner = detail.myMembership.role === "owner"
 
   return (
@@ -42,13 +45,15 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
 
       <section className="mt-6 rounded-lg border border-border bg-card p-6">
         <h2 className="font-semibold">My sharing</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Control which of your spools are visible to this group.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Control which of your materials (all their spools) are visible to this group.
+        </p>
         <div className="mt-4">
           <GroupSharingSettings
             groupId={groupId}
             initialShareMode={detail.myMembership.shareMode as "all" | "whitelist" | "blacklist"}
-            initialOverrideIds={detail.myOverrideFilamentIds}
-            ownFilaments={ownFilaments}
+            initialOverrideIds={detail.myOverrideMaterialIds}
+            ownMaterials={ownMaterials}
           />
         </div>
       </section>

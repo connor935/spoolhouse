@@ -16,6 +16,7 @@ import {
 import {
   CircleUser,
   Disc3,
+  Layers,
   ListChecks,
   LogOut,
   Monitor,
@@ -57,6 +58,10 @@ export function UserMenu({
             <Settings className="mr-2 h-4 w-4" />
             Account
           </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/materials" />}>
+            <Layers className="mr-2 h-4 w-4" />
+            Materials
+          </DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/spool-types" />}>
             <Disc3 className="mr-2 h-4 w-4" />
             Spool catalog
@@ -74,6 +79,10 @@ export function UserMenu({
               <DropdownMenuItem render={<Link href="/admin/users" />}>
                 <Users className="mr-2 h-4 w-4" />
                 Manage users
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/admin/materials" />}>
+                <ListChecks className="mr-2 h-4 w-4" />
+                Review materials
               </DropdownMenuItem>
               <DropdownMenuItem render={<Link href="/admin/spool-types" />}>
                 <ListChecks className="mr-2 h-4 w-4" />
