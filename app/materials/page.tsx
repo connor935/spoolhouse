@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge"
+import { MaterialCatalogRow } from "@/components/material-catalog-row"
 import { PageShell } from "@/components/page-shell"
 import { RequestMaterialForm } from "@/components/request-material-form"
 import { getMaterialCatalog } from "@/app/actions/materials"
@@ -27,29 +27,7 @@ export default async function MaterialsPage() {
           <h2 className="border-b border-border px-6 py-3 font-semibold">{manufacturer}</h2>
           <ul className="divide-y divide-border">
             {list.map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-4 px-6 py-3">
-                <div className="flex items-center gap-3">
-                  <span
-                    className="h-5 w-5 shrink-0 rounded-full border border-border shadow-inner"
-                    style={{ backgroundColor: m.color ?? "#94a3b8" }}
-                    aria-hidden
-                  />
-                  <span>{m.name}</span>
-                  {m.status === "pending" && (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      Pending review
-                    </Badge>
-                  )}
-                  {m.status === "rejected" && m.submittedById === user.id && (
-                    <Badge variant="outline" className="border-destructive/40 text-destructive">
-                      Rejected
-                    </Badge>
-                  )}
-                </div>
-                <Badge variant="secondary" className="shrink-0 font-mono text-xs">
-                  {m.filamentType}
-                </Badge>
-              </li>
+              <MaterialCatalogRow key={m.id} material={m} currentUserId={user.id} />
             ))}
           </ul>
         </section>

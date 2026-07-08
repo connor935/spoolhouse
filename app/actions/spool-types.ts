@@ -1,9 +1,9 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { spoolTypes, type SpoolType } from "@/lib/db/schema"
+import { spoolTypes, spools, type SpoolType } from "@/lib/db/schema"
 import { requireAdmin, requireUser } from "@/lib/auth-session"
-import { and, asc, eq, ne, or } from "drizzle-orm"
+import { and, asc, count, eq, ne, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 // Spool types the current user may attach to a filament:
@@ -81,6 +81,60 @@ export async function rejectSpoolType(id: number) {
     .update(spoolTypes)
     .set({ status: "rejected", reviewedById: admin.id, updatedAt: new Date() })
     .where(and(eq(spoolTypes.id, id), ne(spoolTypes.status, "approved")))
+  revalidatePath("/spool-types")
+  revalidatePath("/admin/spool-types")
+}
+
+// --- Edit & delete (I.3) ---
+
+export type SpoolTypeWithUsage = SpoolType & { spoolCount: number }
+
+// Full catalog for the admin management list, incl. how many spools
+// reference each spool type (governs whether it can be deleted).
+export async function getAllSpoolTypesForAdmin(): Promise<SpoolTypeWithUsage[]> {
+  await requireAdmin()
+  const rows = await db
+    .select({ spoolType: spoolTypes, spoolCount: count(spools.id) })
+    .from(spoolTypes)
+    .leftJoin(spools, eq(spools.spoolTypeId, spoolTypes.id))
+    .groupBy(spoolTypes.id)
+    .orderBy(asc(spoolTypes.manufacturer), asc(spoolTypes.name))
+  return rows.map((r) => ({ ...r.spoolType, spoolCount: r.spoolCount }))
+}
+
+// Admin can edit any spool type, anytime, without changing its status.
+// The submitter can edit their own spool type while it's pending or rejected
+// (never once approved — it's global and others may reference it); editing
+// a rejected entry resubmits it as pending for re-review.
+export async function updateSpoolType(id: number, input: SpoolTypeInput) {
+  const user = await requireUser()
+  const [existing] = await db.select().from(spoolTypes).where(eq(spoolTypes.id, id))
+  if (!existing) throw new Error("Spool type not found")
+
+  const isAdmin = user.role === "admin"
+  const isOwnEditable = existing.submittedById === user.id && existing.status !== "approved"
+  if (!isAdmin && !isOwnEditable) throw new Error("Not authorized to edit this spool type")
+
+  const values = validateSpoolTypeInput(input)
+  await db
+    .update(spoolTypes)
+    .set({ ...values, status: isAdmin ? existing.status : "pending", updatedAt: new Date() })
+    .where(eq(spoolTypes.id, id))
+  revalidatePath("/spool-types")
+  revalidatePath("/admin/spool-types")
+}
+
+// Admin-only, and only when no spool references it (no data migration on
+// delete — see the DB-setup notes: FK enforcement is off, so this check is
+// the only thing preventing dangling spool.spoolTypeId references).
+export async function deleteSpoolType(id: number) {
+  await requireAdmin()
+  const [usage] = await db
+    .select({ count: count() })
+    .from(spools)
+    .where(eq(spools.spoolTypeId, id))
+  if (usage.count > 0) throw new Error("Spool type is in use by existing spools")
+  await db.delete(spoolTypes).where(eq(spoolTypes.id, id))
   revalidatePath("/spool-types")
   revalidatePath("/admin/spool-types")
 }

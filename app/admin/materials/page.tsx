@@ -1,14 +1,14 @@
 import Link from "next/link"
 import { MaterialReview } from "@/components/material-review"
 import { PageShell } from "@/components/page-shell"
-import { getPendingMaterials } from "@/app/actions/materials"
+import { getAllMaterialsForAdmin, getPendingMaterials } from "@/app/actions/materials"
 import { requireAdmin } from "@/lib/auth-session"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminMaterialsPage() {
   await requireAdmin()
-  const pending = await getPendingMaterials()
+  const [pending, all] = await Promise.all([getPendingMaterials(), getAllMaterialsForAdmin()])
 
   return (
     <PageShell
@@ -16,7 +16,7 @@ export default async function AdminMaterialsPage() {
       description={
         <>
           Pending submissions. Adjust fields before approving if needed; approved materials become
-          visible to all users. See the full catalog on{" "}
+          visible to all users. See the read-only view on{" "}
           <Link href="/materials" className="underline hover:text-foreground">
             the materials page
           </Link>
@@ -31,10 +31,20 @@ export default async function AdminMaterialsPage() {
       ) : (
         <div className="mt-6 flex flex-col gap-4">
           {pending.map((m) => (
-            <MaterialReview key={m.id} material={m} />
+            <MaterialReview key={m.id} material={m} mode="review" />
           ))}
         </div>
       )}
+
+      <h2 className="mt-10 font-semibold">Full catalog</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Edit any material or delete ones no spool references.
+      </p>
+      <div className="mt-4 flex flex-col gap-4">
+        {all.map((m) => (
+          <MaterialReview key={m.id} material={m} mode="manage" />
+        ))}
+      </div>
     </PageShell>
   )
 }

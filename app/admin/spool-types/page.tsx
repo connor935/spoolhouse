@@ -1,14 +1,14 @@
 import Link from "next/link"
 import { PageShell } from "@/components/page-shell"
 import { SpoolTypeReview } from "@/components/spool-type-review"
-import { getPendingSpoolTypes } from "@/app/actions/spool-types"
+import { getAllSpoolTypesForAdmin, getPendingSpoolTypes } from "@/app/actions/spool-types"
 import { requireAdmin } from "@/lib/auth-session"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminSpoolTypesPage() {
   await requireAdmin()
-  const pending = await getPendingSpoolTypes()
+  const [pending, all] = await Promise.all([getPendingSpoolTypes(), getAllSpoolTypesForAdmin()])
 
   return (
     <PageShell
@@ -16,7 +16,7 @@ export default async function AdminSpoolTypesPage() {
       description={
         <>
           Pending submissions. Adjust fields before approving if needed; approved types become
-          visible to all users. See the full catalog on{" "}
+          visible to all users. See the read-only view on{" "}
           <Link href="/spool-types" className="underline hover:text-foreground">
             the catalog page
           </Link>
@@ -31,10 +31,20 @@ export default async function AdminSpoolTypesPage() {
       ) : (
         <div className="mt-6 flex flex-col gap-4">
           {pending.map((t) => (
-            <SpoolTypeReview key={t.id} spoolType={t} />
+            <SpoolTypeReview key={t.id} spoolType={t} mode="review" />
           ))}
         </div>
       )}
+
+      <h2 className="mt-10 font-semibold">Full catalog</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Edit any spool type or delete ones no spool references.
+      </p>
+      <div className="mt-4 flex flex-col gap-4">
+        {all.map((t) => (
+          <SpoolTypeReview key={t.id} spoolType={t} mode="manage" />
+        ))}
+      </div>
     </PageShell>
   )
 }
