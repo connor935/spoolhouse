@@ -11,8 +11,22 @@ import { getSharedFilaments } from "@/lib/sharing"
 
 export const dynamic = "force-dynamic"
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   const user = await requireUser()
+  const params = await searchParams
+  const str = (v: string | string[] | undefined) => (typeof v === "string" ? v : "")
+  const minLeftParsed = Number.parseInt(str(params.minLeft), 10)
+  const initialTab = str(params.tab) || "in-stock"
+  const initialFilters = {
+    q: str(params.q),
+    filamentType: str(params.type) || null,
+    minLeftGrams: Number.isNaN(minLeftParsed) ? null : minLeftParsed,
+    hideLent: str(params.hideLent) === "1",
+  }
   const [rows, usableMaterials, spoolTypes, activeLends, myGroups, unreadCount, myLends] =
     await Promise.all([
       getInventory(),
@@ -41,6 +55,8 @@ export default async function Page() {
       myLends={myLends}
       unreadCount={unreadCount}
       user={{ id: user.id, name: user.name, isAdmin: user.role === "admin" }}
+      initialTab={initialTab}
+      initialFilters={initialFilters}
     />
   )
 }

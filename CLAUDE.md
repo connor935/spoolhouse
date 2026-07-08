@@ -60,6 +60,9 @@ app/page.tsx (server component, force-dynamic)
   └─ <WarehouseDashboard>  (client)
        ├─ <AppHeader> (bell + user menu), <FilamentStats>
        ├─ tabs: In stock / Empty / All / Borrows / one per group
+       ├─ <InventoryFilter>  — search + type + min-remaining (+ hide-lent on group tabs);
+       │    state mirrored to URL params (?tab,&q,&type,&minLeft,&hideLent) via
+       │    history.replaceState, parsed server-side in app/page.tsx → shareable links
        ├─ <MaterialCard> per material — aggregate line, per-spool rows (re-weigh, edit/delete, lent badge), add-spool
        └─ <SpoolFormDialog>  — material + spool-type pickers (inline request flows), weights, live preview
 ```
