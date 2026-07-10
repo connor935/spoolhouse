@@ -274,6 +274,14 @@ void setup() {
   tft.setRotation(1);       // landscape, USB to the right
   tft.invertDisplay(true);  // this CYD panel powers up inverted; correct it
 
+  // CYD gamma fix (witnessmenow's CYD guide, "the display doesn't look as
+  // good"): selecting a different gamma curve cures washed-out colours.
+  tft.writecommand(0x26);  // ILI9341_GAMMASET
+  tft.writedata(2);
+  delay(120);
+  tft.writecommand(0x26);
+  tft.writedata(1);
+
   touchSpi.begin(PIN_TOUCH_SCK, PIN_TOUCH_MISO, PIN_TOUCH_MOSI, PIN_TOUCH_CS);
   touch.begin(touchSpi);
   touch.setRotation(1);
