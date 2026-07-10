@@ -1,49 +1,22 @@
 import { FILAMENT_TYPES } from "@/lib/filament"
 
-// OpenAPI 3.0 spec for the external REST API (/api/v1). Served at
+// OpenAPI 3 spec for the external REST API (/api/v1). Served at
 // GET /api/v1/openapi.json and rendered by Swagger UI on /api-docs.
 // Keep in sync with the route handlers in app/api/v1/ and docs/api.md.
 
-const filamentInputProperties = {
-  name: { type: "string", minLength: 1, example: "Galaxy Black" },
-  manufacturer: { type: "string", minLength: 1, example: "Prusament" },
-  filamentType: { type: "string", enum: FILAMENT_TYPES, example: "PLA" },
-  color: { type: "string", nullable: true, example: "black" },
-  spoolTypeId: {
-    type: "integer",
-    minimum: 1,
-    description: "Must be usable by you — see GET /spool-types",
-    example: 1,
-  },
-  fullFilamentWeightGrams: {
-    type: "integer",
-    minimum: 1,
-    description: "Nominal amount of filament on a full spool (g)",
-    example: 1000,
-  },
-  measuredTotalWeightGrams: {
-    type: "integer",
-    minimum: 0,
-    description: "Last measured total weight of spool + filament (g)",
-    example: 1216,
-  },
-} as const
-
 const errorResponse = (description: string) => ({
   description,
-  content: {
-    "application/json": { schema: { $ref: "#/components/schemas/Error" } },
-  },
+  content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
 })
 
-const filamentResponse = (description: string) => ({
+const spoolResponse = (description: string) => ({
   description,
   content: {
     "application/json": {
       schema: {
         type: "object",
-        properties: { filament: { $ref: "#/components/schemas/Filament" } },
-        required: ["filament"],
+        properties: { spool: { $ref: "#/components/schemas/Spool" } },
+        required: ["spool"],
       },
     },
   },
@@ -54,40 +27,59 @@ const idParameter = {
   in: "path",
   required: true,
   schema: { type: "integer", minimum: 1 },
-  description: "Filament id",
+  description: "Spool id",
 }
 
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "Spoolhouse REST API",
-    version: "1.0.0",
+    version: "2.0.0",
     description:
-      "HTTP/JSON API for external clients (scripts, scale integrations, shortcuts). " +
-      "It acts on behalf of a single user with the same ownership rules as the webapp. " +
-      "Create an API token on **Account → API tokens** in the webapp; the plaintext " +
-      "token (`sph_…`) is shown exactly once. All weights are gram integers; " +
-      "fractional values are rounded. Groups and lending are not exposed in v1.",
+      "HTTP/JSON API for external clients (scripts, scale/NFC readers, shortcuts). It acts on " +
+      "behalf of a single user with the same ownership rules as the webapp. Create an API token " +
+      "on **Account → API tokens**; the plaintext token (`sph_…`) is shown once. A physical " +
+      "**spool** references a global **material** (manufacturer/name/type/colour) and a **spool " +
+      "type** (empty-spool weight). All weights are gram integers.",
   },
   servers: [{ url: "/api/v1" }],
   security: [{ bearerAuth: [] }],
   tags: [
-    { name: "auth", description: "Token owner" },
-    { name: "spool-types", description: "Global spool-type catalog" },
-    { name: "filaments", description: "Your filament spools" },
+    { name: "auth" },
+    { name: "catalog", description: "Global materials & spool types" },
+    { name: "spools", description: "Your physical spools" },
   ],
   paths: {
     "/me": {
       get: {
         tags: ["auth"],
         summary: "Identify the token owner",
-        description: "Use as a token check.",
         operationId: "getMe",
         responses: {
           "200": {
-            description: "The token owner",
+            description: "Token owner",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/User" } } },
+          },
+          "401": errorResponse("Missing or invalid API token"),
+        },
+      },
+    },
+    "/materials": {
+      get: {
+        tags: ["catalog"],
+        summary: "List usable materials",
+        operationId: "listMaterials",
+        responses: {
+          "200": {
+            description: "Approved materials + your own pending ones",
             content: {
-              "application/json": { schema: { $ref: "#/components/schemas/User" } },
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { materials: { type: "array", items: { $ref: "#/components/schemas/Material" } } },
+                  required: ["materials"],
+                },
+              },
             },
           },
           "401": errorResponse("Missing or invalid API token"),
@@ -96,24 +88,17 @@ export const openApiSpec = {
     },
     "/spool-types": {
       get: {
-        tags: ["spool-types"],
+        tags: ["catalog"],
         summary: "List usable spool types",
-        description:
-          "Spool types you may attach to a filament: all approved ones plus your own pending submissions.",
         operationId: "listSpoolTypes",
         responses: {
           "200": {
-            description: "Usable spool types",
+            description: "Approved spool types + your own pending ones",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: {
-                    spoolTypes: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/SpoolType" },
-                    },
-                  },
+                  properties: { spoolTypes: { type: "array", items: { $ref: "#/components/schemas/SpoolType" } } },
                   required: ["spoolTypes"],
                 },
               },
@@ -123,26 +108,20 @@ export const openApiSpec = {
         },
       },
     },
-    "/filaments": {
+    "/spools": {
       get: {
-        tags: ["filaments"],
-        summary: "List your filaments",
-        description: "All of your spools, newest first.",
-        operationId: "listFilaments",
+        tags: ["spools"],
+        summary: "List your spools",
+        operationId: "listSpools",
         responses: {
           "200": {
-            description: "Your filaments",
+            description: "Your spools, newest first",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: {
-                    filaments: {
-                      type: "array",
-                      items: { $ref: "#/components/schemas/Filament" },
-                    },
-                  },
-                  required: ["filaments"],
+                  properties: { spools: { type: "array", items: { $ref: "#/components/schemas/Spool" } } },
+                  required: ["spools"],
                 },
               },
             },
@@ -151,86 +130,126 @@ export const openApiSpec = {
         },
       },
       post: {
-        tags: ["filaments"],
-        summary: "Create a filament",
-        description: "Same fields and validation as the webapp form.",
-        operationId: "createFilament",
+        tags: ["spools"],
+        summary: "Create a spool",
+        description: "From existing material + spool-type ids (see /materials and /spool-types).",
+        operationId: "createSpool",
         requestBody: {
           required: true,
-          content: {
-            "application/json": { schema: { $ref: "#/components/schemas/FilamentCreate" } },
-          },
+          content: { "application/json": { schema: { $ref: "#/components/schemas/SpoolCreate" } } },
         },
         responses: {
-          "201": filamentResponse("The created filament"),
+          "201": spoolResponse("Created spool"),
           "400": errorResponse("Invalid JSON or input"),
           "401": errorResponse("Missing or invalid API token"),
         },
       },
     },
-    "/filaments/{id}": {
+    "/spools/{id}": {
       get: {
-        tags: ["filaments"],
-        summary: "Get a filament",
-        operationId: "getFilament",
+        tags: ["spools"],
+        summary: "Get a spool",
+        operationId: "getSpool",
         parameters: [idParameter],
         responses: {
-          "200": filamentResponse("The filament"),
+          "200": spoolResponse("The spool"),
           "401": errorResponse("Missing or invalid API token"),
-          "404": errorResponse("Filament not found (or not yours)"),
+          "404": errorResponse("Not found (or not yours)"),
         },
       },
       patch: {
-        tags: ["filaments"],
-        summary: "Update a filament",
-        description: "Partial update — send any subset of the create fields.",
-        operationId: "updateFilament",
+        tags: ["spools"],
+        summary: "Update a spool",
+        description: "Partial update: any subset of materialId, spoolTypeId, weights, tagUid.",
+        operationId: "updateSpool",
         parameters: [idParameter],
         requestBody: {
           required: true,
-          content: {
-            "application/json": { schema: { $ref: "#/components/schemas/FilamentUpdate" } },
-          },
+          content: { "application/json": { schema: { $ref: "#/components/schemas/SpoolUpdate" } } },
         },
         responses: {
-          "200": filamentResponse("The updated filament"),
-          "400": errorResponse("Invalid JSON, invalid input, or no updatable fields"),
+          "200": spoolResponse("Updated spool"),
+          "400": errorResponse("Invalid JSON or input"),
           "401": errorResponse("Missing or invalid API token"),
-          "404": errorResponse("Filament not found (or not yours)"),
+          "404": errorResponse("Not found (or not yours)"),
         },
       },
       delete: {
-        tags: ["filaments"],
-        summary: "Delete a filament",
-        operationId: "deleteFilament",
+        tags: ["spools"],
+        summary: "Delete a spool",
+        operationId: "deleteSpool",
         parameters: [idParameter],
         responses: {
           "204": { description: "Deleted" },
           "401": errorResponse("Missing or invalid API token"),
-          "404": errorResponse("Filament not found (or not yours)"),
+          "404": errorResponse("Not found (or not yours)"),
         },
       },
     },
-    "/filaments/{id}/weight": {
+    "/spools/{id}/weight": {
       put: {
-        tags: ["filaments"],
-        summary: "Re-weigh a filament",
-        description:
-          "Put the spool on the scale and store the total weight. Remaining filament is " +
-          "derived from this minus the spool type's empty weight. The main call for scale integrations.",
-        operationId: "setMeasuredWeight",
+        tags: ["spools"],
+        summary: "Re-weigh a spool by id",
+        operationId: "setSpoolWeight",
         parameters: [idParameter],
         requestBody: {
           required: true,
-          content: {
-            "application/json": { schema: { $ref: "#/components/schemas/WeightUpdate" } },
-          },
+          content: { "application/json": { schema: { $ref: "#/components/schemas/WeightUpdate" } } },
         },
         responses: {
-          "200": filamentResponse("The updated filament"),
+          "200": spoolResponse("Updated spool"),
           "400": errorResponse("Invalid JSON or input"),
           "401": errorResponse("Missing or invalid API token"),
-          "404": errorResponse("Filament not found (or not yours)"),
+          "404": errorResponse("Not found (or not yours)"),
+        },
+      },
+    },
+    "/spools/weigh": {
+      post: {
+        tags: ["spools"],
+        summary: "Register or refresh a spool by NFC tag",
+        description:
+          "The endpoint a scale/NFC reader calls. If a spool with this tagUid already exists " +
+          "for you, its weight is refreshed. Otherwise a new spool is registered — include at " +
+          "least manufacturer and name (the material/spool-type are created on the fly).",
+        operationId: "weighByTag",
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/WeighByTag" } } },
+        },
+        responses: {
+          "200": {
+            description: "Existing spool refreshed",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    action: { type: "string", enum: ["refreshed"] },
+                    spool: { $ref: "#/components/schemas/Spool" },
+                  },
+                  required: ["action", "spool"],
+                },
+              },
+            },
+          },
+          "201": {
+            description: "New spool registered",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    action: { type: "string", enum: ["registered"] },
+                    spool: { $ref: "#/components/schemas/Spool" },
+                  },
+                  required: ["action", "spool"],
+                },
+              },
+            },
+          },
+          "400": errorResponse("Invalid input, or tag unknown and no material fields to register"),
+          "401": errorResponse("Missing or invalid API token"),
         },
       },
     },
@@ -240,8 +259,7 @@ export const openApiSpec = {
       bearerAuth: {
         type: "http",
         scheme: "bearer",
-        description:
-          "API token created on Account → API tokens in the webapp (format `sph_…`).",
+        description: "API token created on Account → API tokens (format `sph_…`).",
       },
     },
     schemas: {
@@ -253,7 +271,7 @@ export const openApiSpec = {
             properties: {
               code: {
                 type: "string",
-                enum: ["unauthorized", "invalid_json", "invalid_input", "not_found"],
+                enum: ["unauthorized", "invalid_json", "invalid_input", "not_found", "not_registered"],
               },
               message: { type: "string" },
             },
@@ -266,111 +284,105 @@ export const openApiSpec = {
         type: "object",
         properties: {
           id: { type: "string" },
-          name: { type: "string", example: "Aaron" },
+          name: { type: "string" },
           email: { type: "string", format: "email" },
-          role: { type: "string", nullable: true, example: "user" },
+          role: { type: "string", nullable: true },
         },
         required: ["id", "name", "email"],
+      },
+      Material: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          manufacturer: { type: "string", example: "Bambu Lab" },
+          name: { type: "string", example: "PLA Matte" },
+          filamentType: { type: "string", enum: FILAMENT_TYPES },
+          color: { type: "string", nullable: true, example: "#BB3D43" },
+          status: { type: "string", enum: ["approved", "pending"] },
+        },
+        required: ["id", "manufacturer", "name", "filamentType", "status"],
       },
       SpoolType: {
         type: "object",
         properties: {
-          id: { type: "integer", example: 1 },
-          manufacturer: { type: "string", example: "Prusament" },
-          name: { type: "string", example: "Standard" },
-          emptyWeightGrams: {
-            type: "integer",
-            description: "Weight of the bare, empty spool (g)",
-            example: 216,
-          },
-          status: {
-            type: "string",
-            enum: ["approved", "pending"],
-            description: "Pending types are your own not-yet-reviewed submissions",
-          },
+          id: { type: "integer" },
+          manufacturer: { type: "string", example: "Bambu Lab" },
+          name: { type: "string", example: "Bambu Lab spool" },
+          emptyWeightGrams: { type: "integer", example: 250 },
+          status: { type: "string", enum: ["approved", "pending"] },
         },
         required: ["id", "manufacturer", "name", "emptyWeightGrams", "status"],
       },
-      Filament: {
+      Spool: {
         type: "object",
         properties: {
-          id: { type: "integer", example: 7 },
-          ...filamentInputProperties,
-          spoolTypeLabel: { type: "string", example: "Prusament — Standard (216 g)" },
-          emptyWeightGrams: {
-            type: "integer",
-            description: "Empty-spool weight from the spool type (g)",
-            example: 216,
+          id: { type: "integer" },
+          tagUid: { type: "string", nullable: true, example: "D8836C2EB0E94080AFD875E41EF80492" },
+          materialId: { type: "integer" },
+          material: {
+            type: "object",
+            properties: {
+              manufacturer: { type: "string" },
+              name: { type: "string" },
+              filamentType: { type: "string" },
+              color: { type: "string", nullable: true },
+            },
           },
-          filamentLeftGrams: {
-            type: "integer",
-            description: "Computed: measured total − empty spool weight, clamped ≥ 0",
-            example: 614,
-          },
-          fullTotalWeightGrams: {
-            type: "integer",
-            description: "Computed: empty spool + full filament weight (g)",
-            example: 1216,
-          },
-          percentLeft: { type: "number", example: 61.4 },
-          isEmpty: { type: "boolean", description: "filamentLeftGrams ≤ 5" },
-          isLow: { type: "boolean", description: "Not empty and percentLeft ≤ 15%" },
-          lentToName: {
-            type: "string",
-            nullable: true,
-            description: "Always null in API v1 (lending is webapp-only)",
-          },
+          spoolTypeId: { type: "integer" },
+          spoolTypeLabel: { type: "string" },
+          emptyWeightGrams: { type: "integer" },
+          fullFilamentWeightGrams: { type: "integer" },
+          measuredTotalWeightGrams: { type: "integer" },
+          filamentLeftGrams: { type: "integer" },
+          percentLeft: { type: "number" },
+          isEmpty: { type: "boolean" },
+          isLow: { type: "boolean" },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },
-        required: [
-          "id",
-          "name",
-          "manufacturer",
-          "filamentType",
-          "spoolTypeId",
-          "spoolTypeLabel",
-          "emptyWeightGrams",
-          "fullFilamentWeightGrams",
-          "measuredTotalWeightGrams",
-          "filamentLeftGrams",
-          "fullTotalWeightGrams",
-          "percentLeft",
-          "isEmpty",
-          "isLow",
-          "createdAt",
-          "updatedAt",
-        ],
+        required: ["id", "materialId", "spoolTypeId", "measuredTotalWeightGrams", "filamentLeftGrams"],
       },
-      FilamentCreate: {
+      SpoolCreate: {
         type: "object",
-        properties: filamentInputProperties,
-        required: [
-          "name",
-          "manufacturer",
-          "filamentType",
-          "spoolTypeId",
-          "fullFilamentWeightGrams",
-          "measuredTotalWeightGrams",
-        ],
+        properties: {
+          materialId: { type: "integer", minimum: 1 },
+          spoolTypeId: { type: "integer", minimum: 1 },
+          fullFilamentWeightGrams: { type: "integer", minimum: 1, example: 1000 },
+          measuredTotalWeightGrams: { type: "integer", minimum: 0, example: 1240 },
+          tagUid: { type: "string", nullable: true },
+        },
+        required: ["materialId", "spoolTypeId", "fullFilamentWeightGrams", "measuredTotalWeightGrams"],
       },
-      FilamentUpdate: {
+      SpoolUpdate: {
         type: "object",
-        description: "Any subset of the create fields; at least one is required.",
-        properties: filamentInputProperties,
+        description: "Any subset of the create fields; at least one required.",
+        properties: {
+          materialId: { type: "integer", minimum: 1 },
+          spoolTypeId: { type: "integer", minimum: 1 },
+          fullFilamentWeightGrams: { type: "integer", minimum: 1 },
+          measuredTotalWeightGrams: { type: "integer", minimum: 0 },
+          tagUid: { type: "string", nullable: true },
+        },
         minProperties: 1,
       },
       WeightUpdate: {
         type: "object",
-        properties: {
-          measuredTotalWeightGrams: {
-            type: "integer",
-            minimum: 0,
-            description: "New measured total weight of spool + filament (g)",
-            example: 830,
-          },
-        },
+        properties: { measuredTotalWeightGrams: { type: "integer", minimum: 0, example: 830 } },
         required: ["measuredTotalWeightGrams"],
+      },
+      WeighByTag: {
+        type: "object",
+        properties: {
+          tagUid: { type: "string", example: "D8836C2EB0E94080AFD875E41EF80492" },
+          measuredTotalWeightGrams: { type: "integer", minimum: 0, example: 830 },
+          manufacturer: { type: "string", example: "Bambu Lab", description: "for registration" },
+          name: { type: "string", example: "PLA Matte", description: "for registration" },
+          filamentType: { type: "string", enum: FILAMENT_TYPES, description: "for registration" },
+          color: { type: "string", nullable: true, example: "#BB3D43" },
+          fullFilamentWeightGrams: { type: "integer", example: 1000 },
+          emptyWeightGrams: { type: "integer", example: 250, description: "empty spool weight for registration" },
+        },
+        required: ["tagUid", "measuredTotalWeightGrams"],
       },
     },
   },

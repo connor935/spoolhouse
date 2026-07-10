@@ -1,20 +1,20 @@
 import { and, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { filaments, spoolTypes } from "@/lib/db/schema"
+import { spools } from "@/lib/db/schema"
 import { apiError, authenticateApiRequest, unauthorized } from "@/lib/api-auth"
-import { parseId, serializeFilament } from "../../shared"
+import { getOwnedSpool, parseId, serializeSpool } from "../../shared"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
-// PUT /api/v1/filaments/:id/weight — re-weigh: store the new measured total
+// PUT /api/v1/spools/:id/weight — re-weigh by id: store the measured total
 // weight from the scale (g). Filament left is derived from this minus the
-// spool type's empty weight. The core call for scale integrations.
+// spool type's empty weight.
 export async function PUT(request: Request, { params }: RouteContext) {
   const owner = await authenticateApiRequest(request)
   if (!owner) return unauthorized()
   const id = parseId((await params).id)
-  if (!id) return apiError(404, "not_found", "Filament not found")
+  if (!id) return apiError(404, "not_found", "Spool not found")
 
   let body: unknown
   try {
@@ -27,14 +27,14 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return apiError(400, "invalid_input", "measuredTotalWeightGrams must be a number ≥ 0 (grams)")
   }
 
-  const [updated] = await db
-    .update(filaments)
+  const result = await db
+    .update(spools)
     .set({ measuredTotalWeightGrams: Math.round(grams), updatedAt: new Date() })
-    .where(and(eq(filaments.id, id), eq(filaments.userId, owner.id)))
-    .returning()
-  if (!updated) return apiError(404, "not_found", "Filament not found")
+    .where(and(eq(spools.id, id), eq(spools.userId, owner.id)))
+    .returning({ id: spools.id })
+  if (result.length === 0) return apiError(404, "not_found", "Spool not found")
 
-  const [st] = await db.select().from(spoolTypes).where(eq(spoolTypes.id, updated.spoolTypeId))
   revalidatePath("/")
-  return Response.json({ filament: serializeFilament(updated, st) })
+  const row = await getOwnedSpool(id, owner.id)
+  return Response.json({ spool: serializeSpool(row!) })
 }
