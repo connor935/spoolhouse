@@ -41,6 +41,15 @@ constexpr uint32_t BUTTON_DEBOUNCE_MS = 40;
 // Ignore repeat touches within this window so one press = one tare
 constexpr uint32_t TOUCH_DEBOUNCE_MS = 400;
 
+// ---- Spoolhouse REST upload ----
+// Assumed empty-spool weight (g) sent when registering a new spool (the tag
+// doesn't carry it); edit the spool type later in the webapp for accuracy.
+constexpr int DEFAULT_EMPTY_SPOOL_G = 250;
+// Auto-send a reading once the weight has settled: stable within this many
+// grams for this long, with a recognized tag present. One send per placement.
+constexpr float SEND_STABLE_G = 3.0f;
+constexpr uint32_t SEND_STABLE_MS = 1500;
+
 // ---- Polling / display timing ----
 constexpr uint32_t NFC_POLL_INTERVAL_MS = 250;
 constexpr uint16_t NFC_POLL_TIMEOUT_MS = 50;

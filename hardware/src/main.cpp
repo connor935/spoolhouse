@@ -10,6 +10,7 @@
 #include <XPT2046_Touchscreen.h>
 
 #include "config.h"
+#include "net/spoolhouse_client.h"
 #include "nfc/nfc_reader.h"
 #include "nfc/pn532_reader.h"
 #include "scale.h"
@@ -50,6 +51,11 @@ FilamentInfo filament;  // decoded details for the current tag (valid flag insid
 bool lastButtonDown = false;
 uint32_t lastButtonChangeMs = 0;
 uint32_t lastTouchTareMs = 0;
+
+// Auto-send state: send once per spool placement, after the weight settles
+String sentTagKey;   // spoolId we've already sent for the current placement
+float settleRef = 0;
+uint32_t settleStart = 0;
 
 uint32_t lastNfcPollMs = 0;
 uint32_t lastNfcInitMs = 0;
@@ -186,8 +192,28 @@ void drawInfo() {
   }
 }
 
+void drawSendStatus(const String &s, uint16_t color) {
+  const int y = WEIGHT_TOP - 18;  // just above the weight zone
+  tft.fillRect(0, y, tft.width(), 16, TFT_BLACK);
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextColor(color, TFT_BLACK);
+  tft.drawString(s, 14, y, 2);
+}
+
+void drawWifiStatus() {
+  const bool up = spoolhouse::wifiConnected();
+  tft.fillRect(tft.width() - 60, 4, 60, 14, TFT_BLACK);
+  tft.setTextDatum(TR_DATUM);
+  tft.setTextColor(up ? TFT_GREEN : TFT_DARKGREY, TFT_BLACK);
+  tft.drawString(up ? "wifi" : "no wifi", tft.width() - 6, 5, 2);
+}
+
 void handleNewTag() {
   filament = FilamentInfo{};
+  // New placement → allow one upload once the weight settles
+  sentTagKey = "";
+  settleRef = scale.grams();
+  settleStart = millis();
   // MIFARE auth over the bit-banged SPI occasionally fails on first contact,
   // so give the decoders a few attempts before concluding "unknown".
   for (uint8_t attempt = 0; attempt < 3; attempt++) {
@@ -218,7 +244,34 @@ void pollNfc() {
     tagPresent = false;
     tagMisses = 0;
     filament = FilamentInfo{};
+    sentTagKey = "";
     Serial.println("[nfc] tag removed");
+  }
+}
+
+// Once a recognized spool's weight has settled, upload it to Spoolhouse once
+// per placement (register on first sight, refresh thereafter).
+void autoSend() {
+  if (!(tagPresent && filament.valid && filament.spoolId[0])) return;
+  if (sentTagKey == filament.spoolId) return;  // already sent this placement
+
+  const int g = (int)lroundf(scale.grams());
+  if (fabsf((float)g - settleRef) > SEND_STABLE_G) {  // still moving → restart timer
+    settleRef = g;
+    settleStart = millis();
+    return;
+  }
+  if (millis() - settleStart < SEND_STABLE_MS) return;  // not settled long enough
+
+  drawSendStatus("uploading...", TFT_YELLOW);
+  String action;
+  const auto r = spoolhouse::postWeigh(filament, g, &action);
+  if (r == spoolhouse::Result::Ok) {
+    sentTagKey = filament.spoolId;
+    drawSendStatus("uploaded (" + action + ") " + String(g) + " g", TFT_GREENYELLOW);
+  } else {
+    drawSendStatus(r == spoolhouse::Result::NoWifi ? "no wifi" : "upload failed", TFT_ORANGE);
+    settleStart = millis();  // back off, retry after the next settle window
   }
 }
 
@@ -298,6 +351,9 @@ void setup() {
   nfcOk = nfc.begin();
   Serial.printf("[nfc] %s %s\n", nfc.chipName(), nfcOk ? "ready" : "NOT FOUND");
 
+  spoolhouse::beginWifi();
+  drawWifiStatus();
+
   drawWeight();
   drawInfo();
 }
@@ -316,9 +372,11 @@ void loop() {
     lastNfcPollMs = now;
     pollNfc();
   }
+  autoSend();
   if (now - lastDrawMs >= DISPLAY_UPDATE_INTERVAL_MS) {
     lastDrawMs = now;
     drawWeight();
     drawInfo();
+    drawWifiStatus();
   }
 }
