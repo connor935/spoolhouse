@@ -9,8 +9,7 @@ services:
     env_file:
       - .env.docker
     volumes:
-      - spoolhouse-data:/data
+      # SQLite lives on the host (easy backups; also lets the admin/token
+      # scripts reach it). Swap for a named volume if you prefer.
+      - ./data:/data
     restart: unless-stopped
-
-volumes:
-  spoolhouse-data:

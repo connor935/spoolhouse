@@ -23,19 +23,25 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
-    DATABASE_PATH=/data/spoolhouse.db
+    DATABASE_PATH=/data/spoolhouse.db \
+    # The entrypoint migrates once; the app must not race it at runtime.
+    SPOOLHOUSE_SKIP_MIGRATE=1
 RUN useradd -m app && mkdir -p /data && chown app:app /data
 
 # Standalone server + assets
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-# Migrations are applied on startup from ./drizzle (lib/db/index.ts)
+# Migrations + the startup migrate script
 COPY --from=builder /app/drizzle ./drizzle
-# Ensure the native SQLite addon is present (belt-and-suspenders vs. tracing)
+COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs
+# The migrate script needs these as real packages (Next bundles them into the
+# server chunks, so they aren't otherwise present at runtime).
 COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
+COPY --from=builder /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 
 USER app
 EXPOSE 3000
 VOLUME /data
-CMD ["node", "server.js"]
+# Migrate once, then start the server.
+CMD ["sh", "-c", "node scripts/migrate.mjs && node server.js"]
