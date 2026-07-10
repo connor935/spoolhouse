@@ -2,7 +2,7 @@
 
 Inventory manager for 3D-printer filament spools, exported from a Vercel V0 prototype.
 
-**Core concept:** instead of tracking filament usage per print, you periodically re-weigh the whole spool on a scale. Remaining filament = measured total weight − the empty-spool weight of the filament's **spool type** (a global, admin-curated catalog).
+**Core concept:** a global **material** ("Prusament — Galaxy Black, PLA") is referenced by many users' physical **spools**. Instead of tracking usage per print, you periodically re-weigh a spool on a scale: remaining filament = measured total weight − the empty-spool weight of its **spool type**. Materials AND spool types are global, admin-curated catalogs with a request→review workflow.
 
 ## Commands
 
@@ -28,7 +28,7 @@ Package manager is **npm** (`package-lock.json`).
 - Client-side calls go through `authClient` (`lib/auth-client.ts`): sign-in/out, `changePassword`, `requestPasswordReset`/`resetPassword`, `admin.createUser`.
 - Password-reset mails: `lib/mail.ts` — SMTP when `SMTP_HOST` is set, otherwise logged to the server console (dev fallback).
 - Required env: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (see `.env.example`).
-- Pages: `/login`, `/signup` (only when `ALLOW_SIGNUP=true`), `/forgot-password`, `/reset-password`, `/account` (display name + change password), `/spool-types` (catalog + request), `/admin/users` + `/admin/spool-types` (admin only).
+- Pages: `/login`, `/signup` (only when `ALLOW_SIGNUP=true`), `/forgot-password`, `/reset-password`, `/account`, `/materials` + `/spool-types` (catalogs + request), `/admin/users` + `/admin/materials` + `/admin/spool-types` (admin only).
 - Password min length: `MINIMUM_PASSWORD_LENGTH` env (default 12) — exported as `passwordMinLength` from `lib/auth.ts` and passed to client forms **as a prop from server components** (plain `process.env` reads are undefined in the browser).
 
 ## Database setup
@@ -56,39 +56,60 @@ Main route `/`:
 
 ```
 app/page.tsx (server component, force-dynamic)
-  └─ getFilaments() → toFilamentView() per row, merged with active-lend borrower names
+  └─ getInventory() → groupInventory() (spools grouped by material, merged with active-lend borrowers)
   └─ <WarehouseDashboard>  (client)
-       ├─ stat tiles, tabs: In stock / Empty / All
-       ├─ <SpoolCard> per spool  — status badge, "Lent to X" badge, progress bar, inline re-weigh flow, edit/delete menu
-       └─ <SpoolFormDialog>      — create/edit form with live "filament left" preview
+       ├─ <AppHeader> (bell + user menu), <FilamentStats>
+       ├─ tabs: In stock / Empty / All / Borrows / one per group
+       ├─ <InventoryFilter>  — search + type + min-remaining (+ hide-lent on group tabs);
+       │    state mirrored to URL params (?tab,&q,&type,&minLeft,&hideLent) via
+       │    history.replaceState, parsed server-side in app/page.tsx → shareable links
+       ├─ <MaterialCard> per material — aggregate line, per-spool rows (re-weigh, edit/delete, lent badge), add-spool
+       └─ <SpoolFormDialog>  — material + spool-type pickers (inline request flows), weights, live preview
 ```
 
-Mutations go through server actions in `app/actions/filaments.ts` (`createFilament`, `updateFilament`, `setMeasuredWeight`, `deleteFilament`), each calling `revalidatePath("/")` to refresh the page data. No global state library — server is the source of truth, `useState` for UI-local state only.
+Mutations go through server actions in `app/actions/filaments.ts` (`createSpool`, `updateSpool`, `setMeasuredWeight`, `deleteSpool`), each calling `revalidatePath("/")` to refresh the page data. No global state library — server is the source of truth, `useState` for UI-local state only.
 
-**Groups, sharing & lending** (`/groups`, `/groups/[id]`, `/groups/join/[code]`): invite-only groups
-pool members' (selectively) shared spools into a browsable group stock; members request to borrow,
-the owner approves/declines, and marks it returned when it's physically back. See "Groups & lending"
-below for the data model and authorization rules.
+**Groups, sharing & lending**: invite-only groups pool members' (selectively) shared spools.
+The dashboard is the primary surface — **one tab per group** (browse + request via `GroupStock`)
+and a **"Borrows" tab** (`components/borrows-panel.tsx`, fed by `getMyLends()`) showing all lends
+across groups: incoming requests (approve/decline), own requests (cancel), lent out (mark returned),
+borrowed, history. `/groups` + `/groups/[id]` are **management only** (membership, sharing settings,
+owner tools — no stock/lend UI there). Pending requests are visible on stock cards
+("Requested — awaiting approval" for the requester, who can cancel; "Requested by X" for the owner).
+
+**In-app notifications**: lend lifecycle events write rows to the `notifications` table
+(`lib/notifications.ts` helper, called from `app/actions/lends.ts`; names are denormalized snapshots).
+Bell with unread count in the dashboard header and in every `PageShell`; `/notifications` lists them
+and marks all read on open. **Borrow-request notifications are actionable**: `getNotifications`
+joins the lend's current status, and clicking such a row opens an approve/decline dialog
+(`components/notifications-list.tsx`). No polling — counts refresh per page load.
+
+**Sub-page layout**: every page except the dashboard and `/groups/join/[code]` renders inside
+`components/page-shell.tsx` (`max-w-3xl` container, back-link, title). The notification bell lives
+in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-pages — use PageShell.**
 
 ### Key files
 
 | File | Purpose |
 |---|---|
-| `lib/filament.ts` | Domain logic: gram math, thresholds, `FilamentView` (incl. `lentToName`), `toFilamentView(filament, spoolType)`, `formatWeight`, `spoolTypeLabel`, `FILAMENT_TYPES` |
-| `app/actions/spool-types.ts` | Spool-type catalog actions: usable/catalog queries, request, admin approve/reject |
-| `lib/db/schema.ts` | Drizzle tables (`filaments`, `spoolTypes`, `groups`, `groupMembers`, `filamentShareOverrides`, `lends`) + inferred types (re-exports auth schema) |
+| `lib/filament.ts` | Domain logic: gram math, thresholds, `SpoolView`, `MaterialInventory`, `toSpoolView`, `groupInventory`, `formatWeight`, `materialLabel`, `spoolTypeLabel`, `FILAMENT_TYPES` |
+| `app/actions/spool-types.ts` / `app/actions/materials.ts` | Catalog actions (usable/catalog queries, request, admin approve/reject) — same pattern for both |
+| `lib/db/schema.ts` | Drizzle tables (`materials`, `spools` [DB: "filaments"], `spoolTypes`, `groups`, `groupMembers`, `filamentShareOverrides` [material-level], `lends`, `notifications`) + inferred types (re-exports auth schema) |
+| `components/page-shell.tsx` | Shared sub-page layout (width, back-link, title, bell) — use on every sub-page |
+| `lib/notifications.ts` / `app/actions/notifications.ts` | Notification writer helper / read actions (`getUnreadCount`, `getNotifications`, `markAllRead`) |
 | `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
 | `lib/auth-session.ts` | `requireUser()` / `requireAdmin()` — mandatory in protected pages & actions |
 | `proxy.ts` | Optimistic login redirect (cookie presence only) |
 | `lib/db/index.ts` | better-sqlite3 + drizzle client singleton, auto-runs migrations on startup |
 | `drizzle.config.ts` / `drizzle/` | drizzle-kit config and committed SQL migrations |
-| `app/actions/filaments.ts` | Filament server actions (CRUD + re-weigh) |
+| `app/actions/filaments.ts` | Spool server actions: `getInventory`, `createSpool`/`updateSpool` (usable-material/type checks), `setMeasuredWeight` (owner or active borrower), `deleteSpool` |
 | `lib/sharing.ts` | `getSharedFilaments(groupId)` — single source of truth resolving each member's share mode into the group's pooled stock; `getMembership(groupId, userId)` |
 | `app/actions/groups.ts` | Group CRUD, membership, invite codes, `updateShareSettings` |
-| `app/actions/lends.ts` | Lend lifecycle: `requestLend`, `approveLend`, `declineLend`, `markReturned`, `getGroupLends`, `getActiveLendsForOwner` |
-| `components/warehouse-dashboard.tsx` | Main client UI: stats, filters, dialog state |
-| `components/spool-card.tsx` | Spool display + inline re-weigh + "Lent to X" badge |
-| `components/spool-form-dialog.tsx` | Create/edit form |
+| `app/actions/lends.ts` | Lend lifecycle: `requestLend`, `approveLend`, `declineLend`, `markReturned`, `cancelLendRequest`, `getMyLends` (cross-group, feeds Borrows tab), `getActiveLendsForOwner` — mutations write notifications |
+| `components/borrows-panel.tsx` / `notifications-list.tsx` | Dashboard Borrows tab / actionable notification list with approve-decline dialog |
+| `components/warehouse-dashboard.tsx` | Main client UI: stats, tabs (incl. Borrows + per-group), dialog state |
+| `components/material-card.tsx` | Material card with per-spool rows (re-weigh, edit/delete, lent badge) + add-spool |
+| `components/spool-form-dialog.tsx` | Add/edit spool: material + spool-type pickers with inline request flows |
 | `components/group-stock.tsx` / `group-lend-requests.tsx` / `group-lend-history.tsx` / `group-sharing-settings.tsx` / `group-owner-tools.tsx` | `/groups/[id]` page sections |
 | `lib/api-auth.ts` | REST-API token auth: `generateApiToken`, `authenticateApiRequest(request)`, `apiError`/`unauthorized` helpers |
 | `lib/spool-type-usable.ts` | `isSpoolTypeUsable`/`assertSpoolTypeUsable` — shared by server actions and REST API |
@@ -100,8 +121,11 @@ below for the data model and authorization rules.
 
 - **All weights are gram integers** (`emptyWeightGrams`, `fullFilamentWeightGrams`, `measuredTotalWeightGrams`); display via `formatWeight()` (g below 1 kg, kg above); timestamps are `integer` unix-epoch columns surfaced as `Date` objects (Drizzle `mode: "timestamp"`)
 - Remaining filament: `filamentLeftGrams = measuredTotalWeightGrams − spoolType.emptyWeightGrams` (clamped ≥ 0)
+- Re-weigh (`setMeasuredWeight`) is allowed for the **owner and the current borrower** (active lend) — the borrower re-weighs from the Borrows tab ("Borrowed by you" section)
 - **Empty** when `filamentLeftGrams ≤ 5`; **Low** when `percentLeft ≤ 15%`
-- **Spool types** (`spool_types` table): global catalog with `status` `approved | pending | rejected`. Any user can request one (`requestSpoolType`); it's **immediately usable by its submitter** but visible to others only after admin approval (`/admin/spool-types`). Filaments reference `spoolTypeId` (no cascade); a later rejection never breaks existing filaments. The usable-by-user rule lives in `assertSpoolTypeUsable` / `getUsableSpoolTypes`.
+- **Materials & spool types** are both global catalogs with `status` `approved | pending | rejected` and identical request→review workflows (`requestMaterial`/`requestSpoolType`; review on `/admin/materials` + `/admin/spool-types`): a pending entry is **immediately usable by its submitter**, visible to others only after approval; rejection never breaks existing references. Usable-rules: `assertMaterialUsable`/`assertSpoolTypeUsable` + `getUsableMaterials`/`getUsableSpoolTypes`.
+- **Spools** (DB table still named `filaments`, TS export `spools` — deliberate, avoids SQLite rename migrations): a physical spool references `materialId` + `spoolTypeId` + weights. The dashboard groups spools by material (`groupInventory`); adding another spool of the same material is one click on the material card.
+- **Sharing is material-level**: a member's whitelist/blacklist overrides reference material ids (all their spools of it, incl. future ones). Lending stays per physical spool. Group stock is grouped by material across owners.
 - Filament types: PLA, PETG, ABS, ASA, TPU, Nylon, PC, PVA, HIPS, Other (`FILAMENT_TYPES` in `lib/filament.ts`)
 
 ## Groups & lending

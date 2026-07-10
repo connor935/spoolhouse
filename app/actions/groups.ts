@@ -2,7 +2,7 @@
 
 import { randomBytes } from "node:crypto"
 import { db } from "@/lib/db"
-import { filaments, filamentShareOverrides, groupMembers, groups, user } from "@/lib/db/schema"
+import { filamentShareOverrides, groupMembers, groups, spools, user } from "@/lib/db/schema"
 import { requireUser } from "@/lib/auth-session"
 import { getMembership } from "@/lib/sharing"
 import { and, eq, inArray, ne } from "drizzle-orm"
@@ -92,30 +92,32 @@ export async function deleteGroup(groupId: number) {
 export async function updateShareSettings(
   groupId: number,
   mode: "all" | "whitelist" | "blacklist",
-  overrideFilamentIds: number[],
+  overrideMaterialIds: number[],
 ) {
   const authUser = await requireUser()
   const membership = await getMembership(groupId, authUser.id)
   if (!membership) throw new Error("Not a member of this group")
 
-  // Only the member's own filaments can go on their override list.
-  const ownFilaments =
-    overrideFilamentIds.length > 0
+  // Overrides are material-level; only materials the member actually has
+  // spools of can go on their list.
+  const ownMaterials =
+    overrideMaterialIds.length > 0
       ? await db
-          .select({ id: filaments.id })
-          .from(filaments)
-          .where(and(eq(filaments.userId, authUser.id), inArray(filaments.id, overrideFilamentIds)))
+          .selectDistinct({ materialId: spools.materialId })
+          .from(spools)
+          .where(and(eq(spools.userId, authUser.id), inArray(spools.materialId, overrideMaterialIds)))
       : []
-  const validIds = ownFilaments.map((f) => f.id)
+  const validIds = ownMaterials.map((m) => m.materialId)
 
   await db.update(groupMembers).set({ shareMode: mode }).where(eq(groupMembers.id, membership.id))
   await db.delete(filamentShareOverrides).where(eq(filamentShareOverrides.groupMemberId, membership.id))
   if (validIds.length > 0) {
     await db
       .insert(filamentShareOverrides)
-      .values(validIds.map((filamentId) => ({ groupMemberId: membership.id, filamentId })))
+      .values(validIds.map((materialId) => ({ groupMemberId: membership.id, materialId })))
   }
   revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/")
 }
 
 // --- Queries for pages ---
@@ -144,7 +146,7 @@ export async function getGroupDetail(groupId: number) {
     .where(eq(groupMembers.groupId, groupId))
 
   const myOverrides = await db
-    .select({ filamentId: filamentShareOverrides.filamentId })
+    .select({ materialId: filamentShareOverrides.materialId })
     .from(filamentShareOverrides)
     .where(eq(filamentShareOverrides.groupMemberId, membership.id))
 
@@ -152,7 +154,7 @@ export async function getGroupDetail(groupId: number) {
     group,
     members,
     myMembership: membership,
-    myOverrideFilamentIds: myOverrides.map((o) => o.filamentId),
+    myOverrideMaterialIds: myOverrides.map((o) => o.materialId),
   }
 }
 

@@ -2,21 +2,26 @@ import "server-only"
 
 import { db } from "@/lib/db"
 import {
-  filaments,
   filamentShareOverrides,
   groupMembers,
   lends,
+  materials,
+  spools,
   spoolTypes,
   user,
   type GroupMember,
+  type Material,
 } from "@/lib/db/schema"
-import { toFilamentView, type FilamentView } from "@/lib/filament"
+import { toSpoolView, type SpoolView } from "@/lib/filament"
 import { and, eq, inArray } from "drizzle-orm"
 
-export type SharedFilament = FilamentView & {
+export type SharedSpool = SpoolView & {
+  material: Material
   ownerId: string
   ownerName: string
   lentTo: { lendId: number; borrowerId: string; borrowerName: string } | null
+  // Outstanding (not yet approved/declined) borrow request, if any
+  pendingRequest: { lendId: number; borrowerId: string; borrowerName: string } | null
 }
 
 export async function getMembership(groupId: number, userId: string): Promise<GroupMember | undefined> {
@@ -27,9 +32,10 @@ export async function getMembership(groupId: number, userId: string): Promise<Gr
   return membership
 }
 
-// Resolves every member's share mode + overrides into the group's pooled
-// stock. Single source of truth — reused by lend actions and (later) search.
-export async function getSharedFilaments(groupId: number): Promise<SharedFilament[]> {
+// Resolves every member's share mode + MATERIAL-level overrides into the
+// group's pooled stock. Single source of truth — reused by lend actions
+// and (later) search.
+export async function getSharedFilaments(groupId: number): Promise<SharedSpool[]> {
   const members = await db
     .select({
       groupMemberId: groupMembers.id,
@@ -46,12 +52,13 @@ export async function getSharedFilaments(groupId: number): Promise<SharedFilamen
   const memberByUserId = new Map(members.map((m) => [m.userId, m]))
 
   const rows = await db
-    .select()
-    .from(filaments)
-    .innerJoin(spoolTypes, eq(filaments.spoolTypeId, spoolTypes.id))
+    .select({ spool: spools, material: materials, spoolType: spoolTypes })
+    .from(spools)
+    .innerJoin(materials, eq(spools.materialId, materials.id))
+    .innerJoin(spoolTypes, eq(spools.spoolTypeId, spoolTypes.id))
     .where(
       inArray(
-        filaments.userId,
+        spools.userId,
         members.map((m) => m.userId),
       ),
     )
@@ -66,50 +73,63 @@ export async function getSharedFilaments(groupId: number): Promise<SharedFilamen
       ),
     )
 
+  // Per member: set of overridden MATERIAL ids
   const overridesByMember = new Map<number, Set<number>>()
   for (const o of overrides) {
     const set = overridesByMember.get(o.groupMemberId) ?? new Set<number>()
-    set.add(o.filamentId)
+    set.add(o.materialId)
     overridesByMember.set(o.groupMemberId, set)
   }
 
-  const activeLends = await db
+  const openLends = await db
     .select({ lend: lends, borrowerName: user.name })
     .from(lends)
     .innerJoin(user, eq(lends.borrowerId, user.id))
-    .where(and(eq(lends.groupId, groupId), eq(lends.status, "active")))
-  const activeLendByFilamentId = new Map(activeLends.map((l) => [l.lend.filamentId, l]))
+    .where(and(eq(lends.groupId, groupId), inArray(lends.status, ["active", "requested"])))
+  const activeLendBySpoolId = new Map(
+    openLends.filter((l) => l.lend.status === "active").map((l) => [l.lend.filamentId, l]),
+  )
+  const requestedLendBySpoolId = new Map(
+    openLends.filter((l) => l.lend.status === "requested").map((l) => [l.lend.filamentId, l]),
+  )
 
-  const result: SharedFilament[] = []
+  const result: SharedSpool[] = []
   for (const row of rows) {
-    const f = row.filaments
-    const st = row.spool_types
-    const member = memberByUserId.get(f.userId)
+    const member = memberByUserId.get(row.spool.userId)
     if (!member) continue
 
     const overrideSet = overridesByMember.get(member.groupMemberId) ?? new Set<number>()
     const shared =
       member.shareMode === "whitelist"
-        ? overrideSet.has(f.id)
+        ? overrideSet.has(row.material.id)
         : member.shareMode === "blacklist"
-          ? !overrideSet.has(f.id)
+          ? !overrideSet.has(row.material.id)
           : true // 'all'
     if (!shared) continue
 
-    const view = toFilamentView(f, st)
+    const view = toSpoolView(row.spool, row.spoolType)
     if (view.isEmpty) continue // empty spools excluded from group stock
 
-    const activeLend = activeLendByFilamentId.get(f.id)
+    const activeLend = activeLendBySpoolId.get(row.spool.id)
+    const requestedLend = requestedLendBySpoolId.get(row.spool.id)
 
     result.push({
       ...view,
-      ownerId: f.userId,
+      material: row.material,
+      ownerId: row.spool.userId,
       ownerName: member.userName,
       lentTo: activeLend
         ? {
             lendId: activeLend.lend.id,
             borrowerId: activeLend.lend.borrowerId,
             borrowerName: activeLend.borrowerName,
+          }
+        : null,
+      pendingRequest: requestedLend
+        ? {
+            lendId: requestedLend.lend.id,
+            borrowerId: requestedLend.lend.borrowerId,
+            borrowerName: requestedLend.borrowerName,
           }
         : null,
     })
