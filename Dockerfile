@@ -30,8 +30,10 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-# Run as the non-root user shipped in the node image.
-RUN chown node:node /app
+# Run as the non-root user shipped in the node image. Pre-create the DB dir
+# owned by node so a fresh named volume mounted at /data inherits that
+# ownership (otherwise Docker creates it root-owned and SQLite can't write).
+RUN mkdir -p /data && chown node:node /app /data
 USER node
 
 # Standalone server + its traced node_modules (includes better-sqlite3).
