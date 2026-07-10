@@ -1,11 +1,9 @@
-import type { Filament, SpoolType } from "@/lib/db/schema"
+import type { Material, Spool, SpoolType } from "@/lib/db/schema"
 
-export type FilamentView = {
+// One physical spool with computed amounts (material fields live on MaterialInventory)
+export type SpoolView = {
   id: number
-  name: string
-  manufacturer: string
-  filamentType: string
-  color: string | null
+  materialId: number
   spoolTypeId: number
   // e.g. "Prusament — Standard (216 g)"
   spoolTypeLabel: string
@@ -15,13 +13,19 @@ export type FilamentView = {
   measuredTotalWeightGrams: number
   // Computed: how much filament is actually left on the spool (g)
   filamentLeftGrams: number
-  // Computed: total weight of a brand-new full spool (empty spool + full filament)
-  fullTotalWeightGrams: number
   percentLeft: number
   isEmpty: boolean
   isLow: boolean
-  // Name of the current borrower, if this spool has an active lend (Epic 4)
+  // Name of the current borrower, if this spool has an active lend
   lentToName: string | null
+  createdAt: Date
+}
+
+// A material with all of the user's spools of it
+export type MaterialInventory = {
+  material: Material
+  spools: SpoolView[]
+  totalLeftGrams: number
 }
 
 const EMPTY_THRESHOLD_G = 5 // 5 g or less counts as empty
@@ -36,34 +40,62 @@ export function spoolTypeLabel(st: Pick<SpoolType, "manufacturer" | "name" | "em
   return `${st.manufacturer} — ${st.name} (${st.emptyWeightGrams} g)`
 }
 
-export function toFilamentView(f: Filament, spoolType: SpoolType): FilamentView {
+export function materialLabel(m: Pick<Material, "manufacturer" | "name" | "filamentType">): string {
+  return `${m.manufacturer} — ${m.name} (${m.filamentType})`
+}
+
+export function toSpoolView(s: Spool, spoolType: SpoolType): SpoolView {
   const emptyWeightGrams = spoolType.emptyWeightGrams
-  const filamentLeftGrams = computeFilamentLeft(f.measuredTotalWeightGrams, emptyWeightGrams)
-  const fullTotalWeightGrams = emptyWeightGrams + f.fullFilamentWeightGrams
+  const filamentLeftGrams = computeFilamentLeft(s.measuredTotalWeightGrams, emptyWeightGrams)
   const percentLeft =
-    f.fullFilamentWeightGrams > 0
-      ? Math.min(100, Math.max(0, (filamentLeftGrams / f.fullFilamentWeightGrams) * 100))
+    s.fullFilamentWeightGrams > 0
+      ? Math.min(100, Math.max(0, (filamentLeftGrams / s.fullFilamentWeightGrams) * 100))
       : 0
   const isEmpty = filamentLeftGrams <= EMPTY_THRESHOLD_G
 
   return {
-    id: f.id,
-    name: f.name,
-    manufacturer: f.manufacturer,
-    filamentType: f.filamentType,
-    color: f.color,
-    spoolTypeId: f.spoolTypeId,
+    id: s.id,
+    materialId: s.materialId,
+    spoolTypeId: s.spoolTypeId,
     spoolTypeLabel: spoolTypeLabel(spoolType),
     emptyWeightGrams,
-    fullFilamentWeightGrams: f.fullFilamentWeightGrams,
-    measuredTotalWeightGrams: f.measuredTotalWeightGrams,
+    fullFilamentWeightGrams: s.fullFilamentWeightGrams,
+    measuredTotalWeightGrams: s.measuredTotalWeightGrams,
     filamentLeftGrams,
-    fullTotalWeightGrams,
     percentLeft,
     isEmpty,
     isLow: !isEmpty && percentLeft <= LOW_THRESHOLD_PCT,
     lentToName: null,
+    createdAt: s.createdAt,
   }
+}
+
+// Groups inventory rows (spool + material + spool type) by material,
+// spools oldest-first (stable #1, #2 … numbering).
+export function groupInventory(
+  rows: { spool: Spool; material: Material; spoolType: SpoolType }[],
+  lentToBySpoolId?: Map<number, string>,
+): MaterialInventory[] {
+  const byMaterial = new Map<number, MaterialInventory>()
+  for (const row of rows) {
+    const view = toSpoolView(row.spool, row.spoolType)
+    view.lentToName = lentToBySpoolId?.get(row.spool.id) ?? null
+    const entry = byMaterial.get(row.material.id) ?? {
+      material: row.material,
+      spools: [],
+      totalLeftGrams: 0,
+    }
+    entry.spools.push(view)
+    entry.totalLeftGrams += view.filamentLeftGrams
+    byMaterial.set(row.material.id, entry)
+  }
+  const result = [...byMaterial.values()]
+  for (const entry of result) {
+    entry.spools.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+  }
+  // Newest material first (matches previous newest-spool-first feel)
+  result.sort((a, b) => b.material.createdAt.getTime() - a.material.createdAt.getTime())
+  return result
 }
 
 export function formatWeight(grams: number): string {

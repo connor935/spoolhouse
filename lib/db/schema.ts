@@ -24,23 +24,18 @@ export const spoolTypes = sqliteTable("spool_types", {
     .default(sql`(unixepoch())`),
 })
 
-export const filaments = sqliteTable("filaments", {
+// Global material catalog: curated exactly like spool types — users request,
+// admin approves; a pending material is immediately usable by its submitter.
+// Many users' spools can reference the same material.
+export const materials = sqliteTable("materials", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
   manufacturer: text("manufacturer").notNull(),
+  name: text("name").notNull(),
   filamentType: text("filament_type").notNull(),
   color: text("color"),
-  // Empty-spool weight comes from the referenced spool type
-  spoolTypeId: integer("spool_type_id")
-    .notNull()
-    .references(() => spoolTypes.id),
-  // Nominal amount of filament on a full spool (g) - used for % remaining
-  fullFilamentWeightGrams: integer("full_filament_weight_grams").notNull(),
-  // Last measured total weight of spool + filament (g) - what you put on the scale
-  measuredTotalWeightGrams: integer("measured_total_weight_grams").notNull(),
+  status: text("status").notNull().default("pending"), // approved | pending | rejected
+  submittedById: text("submitted_by_id").references(() => user.id, { onDelete: "set null" }),
+  reviewedById: text("reviewed_by_id").references(() => user.id, { onDelete: "set null" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -49,8 +44,57 @@ export const filaments = sqliteTable("filaments", {
     .default(sql`(unixepoch())`),
 })
 
-export type Filament = typeof filaments.$inferSelect
-export type NewFilament = typeof filaments.$inferInsert
+// A physical spool of a material. DB table name stays "filaments" (SQLite
+// table renames fight drizzle-kit's interactive prompts); TS calls it spools.
+export const spools = sqliteTable("filaments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  materialId: integer("material_id")
+    .notNull()
+    .references(() => materials.id),
+  // Empty-spool weight comes from the referenced spool type
+  spoolTypeId: integer("spool_type_id")
+    .notNull()
+    .references(() => spoolTypes.id),
+  // Nominal amount of filament on a full spool (g) - used for % remaining
+  fullFilamentWeightGrams: integer("full_filament_weight_grams").notNull(),
+  // Last measured total weight of spool + filament (g) - what you put on the scale
+  measuredTotalWeightGrams: integer("measured_total_weight_grams").notNull(),
+  // Optional NFC tag id (e.g. Bambu tray UID, hex) so an external client / scale
+  // can register-or-refresh this spool by its tag. Unique per user (enforced in SQL).
+  tagUid: text("tag_uid"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
+// Long-lived bearer tokens for the external REST API (/api/v1). Only the
+// SHA-256 hash is stored; the plaintext is shown once at creation on /account.
+export const apiTokens = sqliteTable("api_tokens", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  // First characters of the plaintext token, for display only (e.g. "sph_a1b2c3d4")
+  tokenPrefix: text("token_prefix").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
+})
+
+export type ApiToken = typeof apiTokens.$inferSelect
+export type Spool = typeof spools.$inferSelect
+export type NewSpool = typeof spools.$inferInsert
+export type Material = typeof materials.$inferSelect
+export type NewMaterial = typeof materials.$inferInsert
 export type SpoolType = typeof spoolTypes.$inferSelect
 export type NewSpoolType = typeof spoolTypes.$inferInsert
 
@@ -92,7 +136,8 @@ export const groupMembers = sqliteTable(
   (table) => [unique().on(table.groupId, table.userId)],
 )
 
-// Per-member override list. Meaning depends on the member's shareMode:
+// Per-member override list at MATERIAL granularity ("my spools of this
+// material"). Meaning depends on the member's shareMode:
 // whitelist -> these ARE shared; blacklist -> these are EXCLUDED.
 export const filamentShareOverrides = sqliteTable(
   "filament_share_overrides",
@@ -101,18 +146,19 @@ export const filamentShareOverrides = sqliteTable(
     groupMemberId: integer("group_member_id")
       .notNull()
       .references(() => groupMembers.id, { onDelete: "cascade" }),
-    filamentId: integer("filament_id")
+    materialId: integer("material_id")
       .notNull()
-      .references(() => filaments.id, { onDelete: "cascade" }),
+      .references(() => materials.id, { onDelete: "cascade" }),
   },
-  (table) => [unique().on(table.groupMemberId, table.filamentId)],
+  (table) => [unique().on(table.groupMemberId, table.materialId)],
 )
 
 export const lends = sqliteTable("lends", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  // References a physical spool (row in the "filaments" table)
   filamentId: integer("filament_id")
     .notNull()
-    .references(() => filaments.id, { onDelete: "cascade" }),
+    .references(() => spools.id, { onDelete: "cascade" }),
   borrowerId: text("borrower_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
@@ -133,6 +179,26 @@ export const lends = sqliteTable("lends", {
     .default(sql`(unixepoch())`),
 })
 
+// In-app notifications (bell + /notifications). Actor/filament/group names are
+// denormalized snapshots so notifications survive deletions of their sources.
+export const notifications = sqliteTable("notifications", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  // Recipient
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // lend_requested | lend_approved | lend_declined | lend_returned | lend_request_cancelled
+  type: text("type").notNull(),
+  actorName: text("actor_name").notNull(),
+  filamentName: text("filament_name").notNull(),
+  groupName: text("group_name").notNull(),
+  lendId: integer("lend_id"),
+  readAt: integer("read_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+})
+
 export type Group = typeof groups.$inferSelect
 export type NewGroup = typeof groups.$inferInsert
 export type GroupMember = typeof groupMembers.$inferSelect
@@ -140,3 +206,5 @@ export type NewGroupMember = typeof groupMembers.$inferInsert
 export type FilamentShareOverride = typeof filamentShareOverrides.$inferSelect
 export type Lend = typeof lends.$inferSelect
 export type NewLend = typeof lends.$inferInsert
+export type Notification = typeof notifications.$inferSelect
+export type NewNotification = typeof notifications.$inferInsert

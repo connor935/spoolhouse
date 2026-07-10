@@ -1,0 +1,15 @@
+services:
+  spoolhouse:
+    build: .
+    image: spoolhouse:latest
+    # Publishes on 0.0.0.0:3000 of the host — reachable from other devices on
+    # the LAN (e.g. the ESP32 scale). Change the left number to remap the host port.
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.docker
+    volumes:
+      # SQLite lives on the host (easy backups; also lets the admin/token
+      # scripts reach it). Swap for a named volume if you prefer.
+      - ./data:/data
+    restart: unless-stopped

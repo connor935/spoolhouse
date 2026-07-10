@@ -12,27 +12,29 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { updateShareSettings } from "@/app/actions/groups"
-import type { FilamentView } from "@/lib/filament"
+import type { Material } from "@/lib/db/schema"
 import { toast } from "sonner"
 
 type ShareMode = "all" | "whitelist" | "blacklist"
 
 const SHARE_MODE_ITEMS: { value: ShareMode; label: string }[] = [
-  { value: "all", label: "Share all spools" },
-  { value: "whitelist", label: "Share only selected spools" },
-  { value: "blacklist", label: "Share all except selected spools" },
+  { value: "all", label: "Share all materials" },
+  { value: "whitelist", label: "Share only selected materials" },
+  { value: "blacklist", label: "Share all except selected materials" },
 ]
 
+// Sharing is material-level: an override applies to all of the member's
+// spools of that material (including future ones).
 export function GroupSharingSettings({
   groupId,
   initialShareMode,
   initialOverrideIds,
-  ownFilaments,
+  ownMaterials,
 }: {
   groupId: number
   initialShareMode: ShareMode
   initialOverrideIds: number[]
-  ownFilaments: FilamentView[]
+  ownMaterials: Material[]
 }) {
   const router = useRouter()
   const [shareMode, setShareMode] = useState<ShareMode>(initialShareMode)
@@ -85,22 +87,24 @@ export function GroupSharingSettings({
 
       {shareMode !== "all" && (
         <div className="flex flex-col gap-2">
-          <Label>{shareMode === "whitelist" ? "Spools to share" : "Spools to exclude"}</Label>
-          {ownFilaments.length === 0 ? (
+          <Label>
+            {shareMode === "whitelist" ? "Materials to share" : "Materials to exclude"}
+          </Label>
+          {ownMaterials.length === 0 ? (
             <p className="text-sm text-muted-foreground">You don&apos;t have any spools yet.</p>
           ) : (
             <ul className="flex flex-col gap-1.5 rounded-lg border border-border bg-card p-3">
-              {ownFilaments.map((f) => (
-                <li key={f.id} className="flex items-center gap-2 text-sm">
+              {ownMaterials.map((m) => (
+                <li key={m.id} className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    id={`override-${f.id}`}
-                    checked={overrideIds.has(f.id)}
-                    onChange={() => toggle(f.id)}
+                    id={`override-${m.id}`}
+                    checked={overrideIds.has(m.id)}
+                    onChange={() => toggle(m.id)}
                     className="h-4 w-4 rounded border-input"
                   />
-                  <label htmlFor={`override-${f.id}`} className="cursor-pointer">
-                    {f.name} <span className="text-muted-foreground">— {f.manufacturer}</span>
+                  <label htmlFor={`override-${m.id}`} className="cursor-pointer">
+                    {m.name} <span className="text-muted-foreground">— {m.manufacturer}</span>
                   </label>
                 </li>
               ))}

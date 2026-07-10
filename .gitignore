@@ -19,4 +19,5 @@ node_modules
 data/
 
 .env
+.env.docker
 .claude/

@@ -1,131 +1,162 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Package, Boxes, Scale, Disc3, UsersRound } from "lucide-react";
-import { SpoolCard } from "@/components/spool-card";
+import { Plus, Package, UsersRound, ArrowLeftRight } from "lucide-react";
+import { BorrowsPanel } from "@/components/borrows-panel";
+import { GroupStock } from "@/components/group-stock";
+import {
+  InventoryFilter,
+  filtersActive,
+  type InventoryFilters,
+} from "@/components/inventory-filter";
+import { MaterialCard } from "@/components/material-card";
 import { SpoolFormDialog } from "@/components/spool-form-dialog";
-import { UserMenu } from "@/components/user-menu";
-import { formatWeight, type FilamentView } from "@/lib/filament";
-import type { SpoolType } from "@/lib/db/schema";
+import type { MaterialInventory, SpoolView } from "@/lib/filament";
+import type { MyLend } from "@/app/actions/lends";
+import type { Material, SpoolType } from "@/lib/db/schema";
+import type { SharedSpool } from "@/lib/sharing";
 import Link from "next/link";
+import { AppHeader } from "./app-header";
+import { FilamentStats } from "./filament-stats";
 
-type Filter = "in-stock" | "empty" | "all";
+type Filter = "in-stock" | "empty" | "all" | "borrows" | `group-${number}`;
+
+type DashboardGroup = { id: number; name: string; stock: SharedSpool[] };
+
+function materialMatches(
+  m: { name: string; manufacturer: string; filamentType: string },
+  f: InventoryFilters,
+): boolean {
+  if (f.filamentType && m.filamentType !== f.filamentType) return false;
+  const q = f.q.trim().toLowerCase();
+  if (q === "") return true;
+  return (
+    m.name.toLowerCase().includes(q) || m.manufacturer.toLowerCase().includes(q)
+  );
+}
 
 export function WarehouseDashboard({
-  filaments,
+  inventory,
+  usableMaterials,
   spoolTypes,
+  groups,
+  myLends,
+  unreadCount,
   user,
+  initialTab,
+  initialFilters,
 }: {
-  filaments: FilamentView[];
+  inventory: MaterialInventory[];
+  usableMaterials: Material[];
   spoolTypes: SpoolType[];
-  user: { name: string; isAdmin: boolean };
+  groups: DashboardGroup[];
+  myLends: MyLend[];
+  unreadCount: number;
+  user: { id: string; name: string; isAdmin: boolean };
+  initialTab: string;
+  initialFilters: InventoryFilters;
 }) {
-  const [filter, setFilter] = useState<Filter>("in-stock");
+  const validTabs = new Set<string>([
+    "in-stock",
+    "empty",
+    "all",
+    "borrows",
+    ...groups.map((g) => `group-${g.id}`),
+  ]);
+  const [filter, setFilter] = useState<Filter>(
+    validTabs.has(initialTab) ? (initialTab as Filter) : "in-stock",
+  );
+  const [filters, setFilters] = useState<InventoryFilters>(initialFilters);
+
+  // Mirror tab + filters into the URL (replaceState: shareable links, no
+  // navigation/server round-trip per keystroke, back button stays sane).
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filter !== "in-stock") params.set("tab", filter);
+    if (filters.q.trim() !== "") params.set("q", filters.q.trim());
+    if (filters.filamentType) params.set("type", filters.filamentType);
+    if (filters.minLeftGrams !== null) params.set("minLeft", String(filters.minLeftGrams));
+    if (filters.hideLent) params.set("hideLent", "1");
+    const qs = params.toString();
+    window.history.replaceState(null, "", qs ? `/?${qs}` : "/");
+  }, [filter, filters]);
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<FilamentView | null>(null);
+  const [editingSpool, setEditingSpool] = useState<SpoolView | null>(null);
+  const [presetMaterialId, setPresetMaterialId] = useState<number | null>(null);
   // Bumped on every open so the dialog remounts with fresh field state
   const [formInstance, setFormInstance] = useState(0);
 
-  const inStock = useMemo(
-    () => filaments.filter((f) => !f.isEmpty),
-    [filaments],
+  const allSpools: SpoolView[] = useMemo(
+    () => inventory.flatMap((m) => m.spools),
+    [inventory],
   );
-  const empty = useMemo(() => filaments.filter((f) => f.isEmpty), [filaments]);
+  const inStock = useMemo(() => allSpools.filter((s) => !s.isEmpty), [allSpools]);
+  const empty = useMemo(() => allSpools.filter((s) => s.isEmpty), [allSpools]);
 
-  const totalRemaining = useMemo(
-    () => inStock.reduce((sum, f) => sum + f.filamentLeftGrams, 0),
-    [inStock],
-  );
+  const activeGroup: DashboardGroup | null = filter.startsWith("group-")
+    ? (groups.find((g) => `group-${g.id}` === filter) ?? null)
+    : null;
 
-  const visible =
-    filter === "in-stock" ? inStock : filter === "empty" ? empty : filaments;
+  const openBorrows: number = myLends.filter(
+    (l) => l.lend.status === "requested" || l.lend.status === "active",
+  ).length;
 
-  function openCreate() {
-    setEditing(null);
+  // Which spools are visible under the current tab (per material),
+  // combined with the search/filter bar (Epic 5)
+  const visibleByMaterial = useMemo(() => {
+    const spoolFilter = (s: SpoolView) => {
+      if (filter === "in-stock" && s.isEmpty) return false;
+      if (filter === "empty" && !s.isEmpty) return false;
+      if (filters.minLeftGrams !== null && s.filamentLeftGrams < filters.minLeftGrams)
+        return false;
+      return true;
+    };
+    return inventory
+      .filter((m) => materialMatches(m.material, filters))
+      .map((m) => ({
+        inventory: m,
+        visibleIds: new Set(m.spools.filter(spoolFilter).map((s) => s.id)),
+      }))
+      .filter((entry) => entry.visibleIds.size > 0);
+  }, [inventory, filter, filters]);
+
+  // Group stock filtered by the same bar (+ hide-lent)
+  const filteredGroupStock = useMemo(() => {
+    if (!activeGroup) return [];
+    return activeGroup.stock.filter((s) => {
+      if (!materialMatches(s.material, filters)) return false;
+      if (filters.minLeftGrams !== null && s.filamentLeftGrams < filters.minLeftGrams)
+        return false;
+      if (filters.hideLent && s.lentTo) return false;
+      return true;
+    });
+  }, [activeGroup, filters]);
+
+  function openCreate(materialId: number | null = null) {
+    setEditingSpool(null);
+    setPresetMaterialId(materialId);
     setFormInstance((i) => i + 1);
     setFormOpen(true);
   }
 
-  function openEdit(f: FilamentView) {
-    setEditing(f);
+  function openEdit(s: SpoolView) {
+    setEditingSpool(s);
+    setPresetMaterialId(null);
     setFormInstance((i) => i + 1);
     setFormOpen(true);
   }
-
-  const stats = [
-    { label: "Spools in stock", value: String(inStock.length), icon: Boxes },
-    { label: "Empty spools", value: String(empty.length), icon: Package },
-    {
-      label: "Total filament left",
-      value: formatWeight(totalRemaining),
-      icon: Scale,
-    },
-  ];
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between md:px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-accent text-accent-foreground">
-              <Boxes className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold leading-tight tracking-tight">
-                Spoolhouse
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Filament warehouse management
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={openCreate}
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              Add spool
-            </Button>
-            <Link href="/spool-types" className="w-fit">
-              <Button variant="outline" className="bg-transparent">
-                <Disc3 className="mr-2 h-4 w-4" />
-                Spool catalog
-              </Button>
-            </Link>
-            <Link href="/groups" className="w-fit">
-              <Button variant="outline" className="bg-transparent">
-                <UsersRound className="mr-2 h-4 w-4" />
-                Groups
-              </Button>
-            </Link>
-            <UserMenu name={user.name} isAdmin={user.isAdmin} />
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="flex items-center gap-4 rounded-lg border border-border bg-card p-5"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-md bg-secondary text-foreground">
-                <s.icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-mono text-2xl font-semibold tabular-nums">
-                  {s.value}
-                </p>
-                <p className="text-sm text-muted-foreground">{s.label}</p>
-              </div>
-            </div>
-          ))}
-        </section>
-
+      <AppHeader user={user} unreadCount={unreadCount} />
+      <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+        <FilamentStats
+          materialCount={inventory.length}
+          inStock={inStock}
+          empty={empty}
+        />
         <div className="mt-8 flex items-center justify-between gap-4">
           <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
             <TabsList>
@@ -133,26 +164,91 @@ export function WarehouseDashboard({
                 In stock ({inStock.length})
               </TabsTrigger>
               <TabsTrigger value="empty">Empty ({empty.length})</TabsTrigger>
-              <TabsTrigger value="all">All ({filaments.length})</TabsTrigger>
+              <TabsTrigger value="all">All ({allSpools.length})</TabsTrigger>
+              {groups.length > 0 && (
+                <TabsTrigger value="borrows">
+                  <ArrowLeftRight className="mr-1 h-3.5 w-3.5" />
+                  Borrows ({openBorrows})
+                </TabsTrigger>
+              )}
+              {groups.map((g) => (
+                <TabsTrigger key={g.id} value={`group-${g.id}`}>
+                  <UsersRound className="mr-1 h-3.5 w-3.5" />
+                  {g.name} ({g.stock.length})
+                </TabsTrigger>
+              ))}
             </TabsList>
           </Tabs>
+          <Button
+            onClick={() => openCreate()}
+            className="bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            Add spool
+          </Button>
         </div>
 
-        {visible.length === 0 ? (
+        {filter !== "borrows" && (
+          <div className="mt-4">
+            <InventoryFilter
+              value={filters}
+              onChange={setFilters}
+              showHideLent={activeGroup !== null}
+            />
+          </div>
+        )}
+
+        {filter === "borrows" ? (
+          <section className="mt-6">
+            <BorrowsPanel lends={myLends} currentUserId={user.id} />
+          </section>
+        ) : activeGroup ? (
+          <section className="mt-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground">
+                Spools shared in {activeGroup.name}
+                {filtersActive(filters)
+                  ? ` — ${filteredGroupStock.length} of ${activeGroup.stock.length} match`
+                  : "."}
+              </p>
+              <Link
+                href={`/groups/${activeGroup.id}`}
+                className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Manage group →
+              </Link>
+            </div>
+            {filteredGroupStock.length === 0 && filtersActive(filters) ? (
+              <div className="rounded-lg border border-dashed border-border bg-card/50 px-6 py-10 text-center text-sm text-muted-foreground">
+                No shared spools match the current filters.
+              </div>
+            ) : (
+              <GroupStock
+                groupId={activeGroup.id}
+                spools={filteredGroupStock}
+                currentUserId={user.id}
+              />
+            )}
+          </section>
+        ) : visibleByMaterial.length === 0 ? (
           <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border bg-card/50 px-6 py-16 text-center">
             <Package className="h-8 w-8 text-muted-foreground" />
             <div>
-              <p className="font-medium">No spools here</p>
+              <p className="font-medium">
+                {filtersActive(filters) ? "No matches" : "No spools here"}
+              </p>
               <p className="text-sm text-muted-foreground">
-                {filter === "empty"
-                  ? "You haven't used up any spools yet."
-                  : "Add your first spool to start tracking inventory."}
+                {filtersActive(filters)
+                  ? "No materials match the current filters."
+                  : filter === "empty"
+                    ? "You haven't used up any spools yet."
+                    : "Add your first spool to start tracking inventory."}
               </p>
             </div>
-            {filter !== "empty" && (
+            {filter !== "empty" && !filtersActive(filters) && (
               <Button
                 variant="outline"
-                onClick={openCreate}
+                onClick={() => openCreate()}
                 className="bg-transparent"
               >
                 <Plus className="mr-1 h-4 w-4" />
@@ -162,18 +258,26 @@ export function WarehouseDashboard({
           </div>
         ) : (
           <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map((f) => (
-              <SpoolCard key={f.id} filament={f} onEdit={openEdit} />
+            {visibleByMaterial.map(({ inventory: m, visibleIds }) => (
+              <MaterialCard
+                key={m.material.id}
+                inventory={m}
+                visibleSpoolIds={visibleIds}
+                onEditSpool={openEdit}
+                onAddSpool={openCreate}
+              />
             ))}
           </section>
         )}
       </main>
 
       <SpoolFormDialog
-        key={`${editing ? `edit-${editing.id}` : "create"}-${formInstance}`}
+        key={`${editingSpool ? `edit-${editingSpool.id}` : "create"}-${formInstance}`}
         open={formOpen}
         onOpenChange={setFormOpen}
-        filament={editing}
+        spool={editingSpool}
+        presetMaterialId={presetMaterialId}
+        materials={usableMaterials}
         spoolTypes={spoolTypes}
       />
     </div>
