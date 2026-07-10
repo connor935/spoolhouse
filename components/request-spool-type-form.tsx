@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { requestSpoolType } from "@/app/actions/spool-types"
 import { toast } from "sonner"
 
-export function RequestSpoolTypeForm() {
+export function RequestSpoolTypeForm({ isAdmin = false }: { isAdmin?: boolean }) {
   const router = useRouter()
   const [manufacturer, setManufacturer] = useState("")
   const [name, setName] = useState("")
@@ -24,8 +24,12 @@ export function RequestSpoolTypeForm() {
     }
     setPending(true)
     try {
-      await requestSpoolType({ manufacturer: manufacturer.trim(), name: name.trim(), emptyWeightGrams })
-      toast.success("Spool type requested — you can use it right away")
+      const created = await requestSpoolType({ manufacturer: manufacturer.trim(), name: name.trim(), emptyWeightGrams })
+      toast.success(
+        created.status === "approved"
+          ? "Spool type added to the catalog"
+          : "Spool type requested — you can use it right away",
+      )
       setManufacturer("")
       setName("")
       setGrams("")
@@ -72,7 +76,13 @@ export function RequestSpoolTypeForm() {
         />
       </div>
       <Button type="submit" disabled={pending} className="self-start">
-        {pending ? "Requesting…" : "Request spool type"}
+        {pending
+          ? isAdmin
+            ? "Adding…"
+            : "Requesting…"
+          : isAdmin
+            ? "Add spool type"
+            : "Request spool type"}
       </Button>
     </form>
   )

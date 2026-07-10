@@ -39,13 +39,21 @@ function validateMaterialInput(input: MaterialInput) {
 }
 
 // Any user can request a new material; it lands as `pending` and is
-// immediately usable by the submitter. Returns the created row.
+// immediately usable by the submitter. Admins skip the review queue — their
+// submissions are auto-approved (self-reviewed) and instantly global.
+// Inspect the returned row's `status` for the outcome.
 export async function requestMaterial(input: MaterialInput): Promise<Material> {
   const user = await requireUser()
   const values = validateMaterialInput(input)
+  const isAdmin = user.role === "admin"
   const [created] = await db
     .insert(materials)
-    .values({ ...values, status: "pending", submittedById: user.id })
+    .values({
+      ...values,
+      status: isAdmin ? "approved" : "pending",
+      submittedById: user.id,
+      reviewedById: isAdmin ? user.id : undefined,
+    })
     .returning()
   revalidatePath("/materials")
   revalidatePath("/admin/materials")

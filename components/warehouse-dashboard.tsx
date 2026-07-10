@@ -279,6 +279,7 @@ export function WarehouseDashboard({
         presetMaterialId={presetMaterialId}
         materials={usableMaterials}
         spoolTypes={spoolTypes}
+        isAdmin={user.isAdmin}
       />
     </div>
   );

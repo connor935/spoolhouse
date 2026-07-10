@@ -44,6 +44,9 @@ type Props = {
   presetMaterialId?: number | null
   materials: Material[]
   spoolTypes: SpoolType[]
+  // Admins skip the review queue — their inline requests are auto-approved,
+  // so the copy switches from "requested for review" to "added".
+  isAdmin?: boolean
 }
 
 export function SpoolFormDialog({
@@ -53,6 +56,7 @@ export function SpoolFormDialog({
   presetMaterialId,
   materials,
   spoolTypes,
+  isAdmin = false,
 }: Props) {
   const editing = Boolean(spool)
   const [saving, setSaving] = useState(false)
@@ -153,7 +157,11 @@ export function SpoolFormDialog({
       setRequestingMaterial(false)
       setReqMManufacturer("")
       setReqMName("")
-      toast.success("Material requested — you can use it right away")
+      toast.success(
+        created.status === "approved"
+          ? "Material added to the catalog"
+          : "Material requested — you can use it right away",
+      )
     } catch {
       toast.error("Could not request material")
     } finally {
@@ -184,7 +192,11 @@ export function SpoolFormDialog({
       setReqManufacturer("")
       setReqName("")
       setReqGrams("")
-      toast.success("Spool type requested — you can use it right away")
+      toast.success(
+        created.status === "approved"
+          ? "Spool type added to the catalog"
+          : "Spool type requested — you can use it right away",
+      )
     } catch {
       toast.error("Could not request spool type")
     } finally {
@@ -358,7 +370,9 @@ export function SpoolFormDialog({
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                You can use it immediately; an admin will review it for the global catalog.
+                {isAdmin
+                  ? "As an admin, this is added to the global catalog straight away."
+                  : "You can use it immediately; an admin will review it for the global catalog."}
               </p>
             </div>
           )}
