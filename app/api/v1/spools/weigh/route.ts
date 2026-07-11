@@ -1,4 +1,4 @@
-import { and, eq, or } from "drizzle-orm"
+import { and, eq, isNull, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { materials, spools, spoolTypes } from "@/lib/db/schema"
@@ -90,6 +90,9 @@ async function findOrCreateMaterial(
   owner: ApiUser,
   m: { manufacturer: string; name: string; filamentType: string; color: string | null },
 ): Promise<number> {
+  // A material's identity includes its colour (e.g. "Galaxy Black"), so a
+  // different colour of the same product is a different material — match on
+  // colour too (NULL-safe) rather than lumping all colours together.
   const [found] = await db
     .select({ id: materials.id })
     .from(materials)
@@ -98,6 +101,7 @@ async function findOrCreateMaterial(
         or(eq(materials.status, "approved"), eq(materials.submittedById, owner.id)),
         eq(materials.manufacturer, m.manufacturer),
         eq(materials.name, m.name),
+        m.color === null ? isNull(materials.color) : eq(materials.color, m.color),
       ),
     )
   if (found) return found.id
