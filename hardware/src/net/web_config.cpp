@@ -14,6 +14,7 @@ namespace {
 WebServer server(80);
 Scale *g_scale = nullptr;
 StatusFn g_status = nullptr;
+bool g_updateRejected = false;  // set when an /update POST fails the CSRF check
 // Random per-boot CSRF token: embedded as a hidden field in every form and
 // re-checked on POST, so a page on another origin can't silently submit here
 // (it can't read this token due to the same-origin policy). No login is
@@ -85,11 +86,12 @@ String page() {
   h += csrfField();
   h += F("<button type=submit>Save</button></form>");
 
-  // Firmware upload (browser OTA). File inputs can't be populated cross-origin
-  // by script, so this isn't CSRF-able and needs no token.
+  // Firmware upload (browser OTA). The CSRF field comes FIRST so it is parsed
+  // before the file part and is available when the upload handler starts.
   h += F("<form method=post action=/update enctype='multipart/form-data'>"
-         "<h2>Firmware update</h2>"
-         "<label>Upload a .bin (pio: .pio/build/cyd/firmware.bin). The device "
+         "<h2>Firmware update</h2>");
+  h += csrfField();
+  h += F("<label>Upload a .bin (pio: .pio/build/cyd/firmware.bin). The device "
          "reboots when done.</label>"
          "<input type=file name=firmware accept='.bin'>"
          "<button type=submit>Upload &amp; flash</button></form>");
@@ -144,10 +146,18 @@ void handleSave() {
 void handleUpdateUpload() {
   HTTPUpload &up = server.upload();
   if (up.status == UPLOAD_FILE_START) {
+    // The csrf field precedes the file part, so it's parsed by now. Reject
+    // cross-origin uploads (which can't read this boot's token).
+    g_updateRejected = (server.arg("csrf") != g_csrf);
+    if (g_updateRejected) {
+      Serial.println("[update] rejected: bad csrf");
+      return;
+    }
     if (g_status) g_status("Firmware update", "receiving...");
     Serial.printf("[update] start: %s\n", up.filename.c_str());
     if (!Update.begin(UPDATE_SIZE_UNKNOWN)) Update.printError(Serial);
   } else if (up.status == UPLOAD_FILE_WRITE) {
+    if (g_updateRejected) return;
     if (Update.write(up.buf, up.currentSize) != up.currentSize) Update.printError(Serial);
     if (g_status) {
       char b[24];
@@ -155,6 +165,7 @@ void handleUpdateUpload() {
       g_status("Firmware update", b);
     }
   } else if (up.status == UPLOAD_FILE_END) {
+    if (g_updateRejected) return;
     if (Update.end(true)) {
       Serial.printf("[update] ok: %u bytes\n", (unsigned)up.totalSize);
       if (g_status) g_status("Update complete", "rebooting");
@@ -166,6 +177,11 @@ void handleUpdateUpload() {
 }
 
 void handleUpdateDone() {
+  if (g_updateRejected) {
+    g_updateRejected = false;
+    server.send(403, "text/plain", "bad csrf token");
+    return;
+  }
   const bool ok = !Update.hasError();
   server.send(200, "text/html",
               ok ? F("<!doctype html><meta charset=utf-8><body style='font-family:sans-serif'>"
