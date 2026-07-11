@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic"
 
 export default async function SpoolTypesPage() {
   const user = await requireUser()
+  const isAdmin = user.role === "admin"
   const types = await getSpoolTypeCatalog()
 
   const byManufacturer = new Map<string, typeof types>()
@@ -20,7 +21,11 @@ export default async function SpoolTypesPage() {
   return (
     <PageShell
       title="Spool catalog"
-      description="Global spool types and their empty weights. Missing one? Request it below — you can use it immediately while an admin reviews it."
+      description={
+        isAdmin
+          ? "Global spool types and their empty weights. Missing one? Add it below — as an admin it's published straight away."
+          : "Global spool types and their empty weights. Missing one? Request it below — you can use it immediately while an admin reviews it."
+      }
     >
       {[...byManufacturer.entries()].map(([manufacturer, list]) => (
         <section key={manufacturer} className="mt-6 rounded-lg border border-border bg-card">
@@ -34,11 +39,11 @@ export default async function SpoolTypesPage() {
       ))}
 
       <section className="mt-6 rounded-lg border border-border bg-card p-6">
-        <h2 className="font-semibold">Request a new spool type</h2>
+        <h2 className="font-semibold">{isAdmin ? "Add a new spool type" : "Request a new spool type"}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Weigh a bare, empty spool and enter its details.
         </p>
-        <RequestSpoolTypeForm />
+        <RequestSpoolTypeForm isAdmin={isAdmin} />
       </section>
     </PageShell>
   )

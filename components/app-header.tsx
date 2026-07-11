@@ -15,7 +15,7 @@ export function AppHeader({
 }) {
   return (
     <header className="border-b border-border bg-card">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between md:px-6">
+      <div className="mx-auto flex max-w-7xl gap-4 px-4 py-6 sm:items-center justify-between md:px-6">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-accent text-accent-foreground">
             <Boxes className="h-5 w-5" />
@@ -24,7 +24,7 @@ export function AppHeader({
             <h1 className="text-xl font-semibold leading-tight tracking-tight">
               Spoolhouse
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="hidden md:block text-sm text-muted-foreground">
               Filament warehouse management
             </p>
           </div>

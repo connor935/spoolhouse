@@ -1,47 +1,52 @@
 # syntax=docker/dockerfile:1
 
-# ---- deps: install node_modules (build tools for the better-sqlite3 addon) ----
-FROM node:22-bookworm-slim AS deps
+# ---- base -------------------------------------------------------------------
+# Debian (glibc) — NOT Alpine (musl): the runner must share a libc with the
+# stage that compiles the native better-sqlite3 binding.
+# Node 24 to match the version pinned in .node-version (fnm) for local dev.
+FROM node:24-bookworm-slim AS base
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
+
+# ---- deps -------------------------------------------------------------------
+# Install ALL deps (incl. dev) and compile native modules (better-sqlite3).
+FROM base AS deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# ---- builder: produce the standalone Next.js server ----
-FROM node:22-bookworm-slim AS builder
-WORKDIR /app
+# ---- builder ----------------------------------------------------------------
+# Build the standalone Next.js output. This stage keeps full deps + source +
+# tsx, so it doubles as the image for the "admin" tools service (see compose).
+FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# ---- runner: minimal runtime image ----
-FROM node:22-bookworm-slim AS runner
-WORKDIR /app
+# ---- runner -----------------------------------------------------------------
+# Slim runtime: only the standalone server, static assets, and migrations.
+FROM base AS runner
 ENV NODE_ENV=production \
-    NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
-    HOSTNAME=0.0.0.0 \
-    DATABASE_PATH=/data/spoolhouse.db \
-    # The entrypoint migrates once; the app must not race it at runtime.
-    SPOOLHOUSE_SKIP_MIGRATE=1
-RUN useradd -m app && mkdir -p /data && chown app:app /data
+    HOSTNAME=0.0.0.0
 
-# Standalone server + assets
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-# Migrations + the startup migrate script
-COPY --from=builder /app/drizzle ./drizzle
-COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs
-# The migrate script needs these as real packages (Next bundles them into the
-# server chunks, so they aren't otherwise present at runtime).
-COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
-COPY --from=builder /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+# Run as the non-root user shipped in the node image. Pre-create the DB dir
+# owned by node so a fresh named volume mounted at /data inherits that
+# ownership (otherwise Docker creates it root-owned and SQLite can't write).
+RUN mkdir -p /data && chown node:node /app /data
+USER node
 
-USER app
+# Standalone server + its traced node_modules (includes better-sqlite3).
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+# Static assets and public/ are NOT included in standalone output — copy them.
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+COPY --from=builder --chown=node:node /app/public ./public
+# Migrations are auto-applied on startup from process.cwd()/drizzle.
+COPY --from=builder --chown=node:node /app/drizzle ./drizzle
+# Note: better-sqlite3's native binding (node_modules/better-sqlite3/build/
+# Release/better_sqlite3.node) is traced into .next/standalone by Next's file
+# tracing (verified), so no separate COPY of it is needed.
+
 EXPOSE 3000
-VOLUME /data
-# Migrate once, then start the server.
-CMD ["sh", "-c", "node scripts/migrate.mjs && node server.js"]
+CMD ["node", "server.js"]
