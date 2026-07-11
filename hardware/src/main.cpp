@@ -558,6 +558,15 @@ void setup() {
   spoolRegistry.add(&crealityDecoder);
   spoolRegistry.add(&openTagDecoder);
 
+  // Paint a boot screen NOW: tft.init() leaves the panel as uninitialised GRAM
+  // (fuzzy noise), and provision() below blocks for seconds while WiFi connects.
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
+  tft.drawString("SPOOLHOUSE", tft.width() / 2, tft.height() / 2 - 16, 4);
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("connecting to WiFi...", tft.width() / 2, tft.height() / 2 + 16, 2);
+
   // Connect to WiFi, or open the setup AP portal (shows drawSetupScreen). This
   // blocks until connected; the portal reboots the device once provisioned.
   spoolhouse::provision(drawSetupScreen);

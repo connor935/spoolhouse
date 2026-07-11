@@ -45,6 +45,10 @@ bool secretsHaveWifi() {
 
 void provision(void (*onPortalStart)(const char *apName)) {
   WiFi.mode(WIFI_STA);
+  // Cap TX power: the CYD's USB power can be marginal, and the radio's current
+  // spike at connect can brown out the board (garbled/white screen). 13 dBm is
+  // plenty for a home network and much gentler on the supply than the default.
+  WiFi.setTxPower(WIFI_POWER_13dBm);
 
   // 1) Saved credentials (from a previous connect or the portal).
   WiFi.begin();
