@@ -1,11 +1,8 @@
-# Spoolhouse app stack. Traefik (see deploy/traefik/) terminates TLS and routes
+# Spoolhouse app stack. Traefik terminates TLS and routes
 # spoolhouse.felixkratz.de to this service over the shared external "web" network.
 services:
   app:
-    build:
-      context: .
-      target: runner
-    image: spoolhouse
+    image: ghcr.io/your-github-username/spoolhouse:latest
     restart: unless-stopped
     env_file: .env
     environment:
@@ -25,19 +22,16 @@ services:
 
   # One-off tools (admin bootstrap, future tsx scripts). Not started by `up`.
   # Uses the builder stage (full deps + source + tsx) against the same DB volume.
-  #   docker compose run --rm admin <email> "<Full Name>"
+  #   docker compose run --rm admin
   admin:
-    build:
-      context: .
-      target: builder
-    image: spoolhouse-tools
-    profiles: ["tools"]
+    image: ghcr.io/your-github-username/spoolhouse-tools:latest
+    profiles: ['tools']
     env_file: .env
     environment:
       DATABASE_PATH: /data/spoolhouse.db
     volumes:
       - spoolhouse-data:/data
-    entrypoint: ["npx", "tsx", "scripts/create-admin.ts"]
+    entrypoint: ['npx', 'tsx', 'scripts/create-admin.ts']
 
 volumes:
   spoolhouse-data:
