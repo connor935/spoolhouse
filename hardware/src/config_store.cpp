@@ -2,6 +2,7 @@
 
 #include <Preferences.h>
 
+#include "config.h"   // HX711_COUNTS_PER_GRAM default
 #include "secrets.h"
 
 namespace config_store {
@@ -29,6 +30,21 @@ String serverUrl() { return getStr("url", SPOOLHOUSE_URL); }
 
 void setToken(const String &t) { putStr("token", t); }
 void setServerUrl(const String &u) { putStr("url", u); }
+
+float countsPerGram() {
+  Preferences p;
+  p.begin(NS, true);
+  float v = p.getFloat("cpg", HX711_COUNTS_PER_GRAM);
+  p.end();
+  return v;
+}
+
+void setCountsPerGram(float v) {
+  Preferences p;
+  p.begin(NS, false);
+  p.putFloat("cpg", v);
+  p.end();
+}
 
 bool forcePortal() {
   Preferences p;

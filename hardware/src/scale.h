@@ -20,11 +20,21 @@ public:
   // unsmoothed, for averaging during an upload measurement.
   float readInstant();
 
+  // Set the calibration factor (raw counts per gram) at runtime.
+  void setCountsPerGram(float countsPerGram);
+  float countsPerGram() const { return _cpg; }
+
+  // Calibrate against a known weight currently on the (already-tared) scale:
+  // computes and applies counts-per-gram, returns the new factor. Tare with an
+  // empty scale first, then place the known weight and call this.
+  float calibrate(float knownGrams);
+
   float grams() const { return _grams; }
   bool ready() const { return _ready; }
 
 private:
   HX711 _hx711;
+  float _cpg = 1.0f;
   float _grams = 0.0f;
   bool _ready = false;
   bool _hasFirstSample = false;

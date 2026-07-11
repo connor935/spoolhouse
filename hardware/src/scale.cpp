@@ -5,11 +5,29 @@
 bool Scale::begin(uint8_t dtPin, uint8_t sckPin, float countsPerGram) {
   _hx711.begin(dtPin, sckPin);
   if (!_hx711.wait_ready_timeout(1000)) return false;
-  _hx711.set_scale(countsPerGram);
+  _cpg = countsPerGram;
+  _hx711.set_scale(_cpg);
   // Zero on boot: current load (empty plate, holder, …) becomes the baseline
   _hx711.tare(10);
   _ready = true;
   return true;
+}
+
+void Scale::setCountsPerGram(float countsPerGram) {
+  _cpg = countsPerGram;
+  if (_ready) _hx711.set_scale(_cpg);
+}
+
+float Scale::calibrate(float knownGrams) {
+  if (!_ready || knownGrams <= 0.0f) return _cpg;
+  // Raw counts (already minus tare offset) for the known weight → counts/gram.
+  const long raw = _hx711.get_value(10);
+  const float factor = (float)raw / knownGrams;
+  if (isfinite(factor) && factor != 0.0f) {
+    _cpg = factor;
+    _hx711.set_scale(_cpg);
+  }
+  return _cpg;
 }
 
 void Scale::tare() {

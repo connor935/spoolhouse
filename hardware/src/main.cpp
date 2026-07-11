@@ -16,6 +16,7 @@
 #include "config.h"
 #include "config_store.h"
 #include "net/spoolhouse_client.h"
+#include "net/web_config.h"
 #include "secrets.h"  // OTA_PASSWORD
 #include "nfc/nfc_reader.h"
 #include "nfc/pn532_reader.h"
@@ -578,7 +579,7 @@ void setup() {
   touch.begin(touchSpi);
   touch.setRotation(1);
 
-  scaleOk = scale.begin(PIN_HX711_DT, PIN_HX711_SCK, HX711_COUNTS_PER_GRAM);
+  scaleOk = scale.begin(PIN_HX711_DT, PIN_HX711_SCK, config_store::countsPerGram());
   Serial.printf("[scale] HX711 %s\n", scaleOk ? "ready, tared" : "NOT FOUND");
 
   spoolRegistry.add(&bambuDecoder);
@@ -598,7 +599,8 @@ void setup() {
   // blocks until connected; the portal reboots the device once provisioned.
   spoolhouse::provision(drawSetupScreen);
 
-  setupOta();  // wireless firmware updates (WiFi is up now)
+  setupOta();          // wireless firmware updates (WiFi is up now)
+  web_config::begin(&scale);  // http://spoolhouse-scale.local/ config page
 
   drawStaticUi();
   drawWifiStatus();
@@ -614,7 +616,8 @@ void setup() {
 
 void loop() {
   ArduinoOTA.handle();  // service wireless firmware updates
-  syncNfcState();       // pick up the latest NFC result from core 0
+  web_config::handle();  // service the device config web page
+  syncNfcState();        // pick up the latest NFC result from core 0
   if (scaleOk) scale.update();
   pollInputs();
 
