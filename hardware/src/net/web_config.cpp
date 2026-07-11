@@ -6,7 +6,6 @@
 
 #include "config_store.h"
 #include "scale.h"
-#include "secrets.h"  // OTA_PASSWORD (reused for the config page login)
 
 namespace web_config {
 namespace {
@@ -15,19 +14,9 @@ WebServer server(80);
 Scale *g_scale = nullptr;
 // Random per-boot CSRF token: embedded as a hidden field in every form and
 // re-checked on POST, so a page on another origin can't silently submit here
-// (it can't read this token due to the same-origin policy).
+// (it can't read this token due to the same-origin policy). No login is
+// required — the page is open on the LAN by design.
 String g_csrf;
-
-// Require HTTP Basic auth when a password is configured (user "admin").
-bool requireAuth() {
-#ifdef OTA_PASSWORD
-  if (strlen(OTA_PASSWORD) > 0 && !server.authenticate("admin", OTA_PASSWORD)) {
-    server.requestAuthentication();
-    return false;
-  }
-#endif
-  return true;
-}
 
 // Reject POSTs whose CSRF token doesn't match this boot's token.
 bool checkCsrf() {
@@ -105,24 +94,20 @@ void redirectHome() {
   server.send(303, "text/plain", "");
 }
 
-void handleRoot() {
-  if (!requireAuth()) return;
-  server.send(200, "text/html", page());
-}
+void handleRoot() { server.send(200, "text/html", page()); }
 
 void handleWeight() {
-  if (!requireAuth()) return;
   server.send(200, "text/plain", g_scale ? String((int)lroundf(g_scale->grams())) : "0");
 }
 
 void handleTare() {
-  if (!requireAuth() || !checkCsrf()) return;
+  if (!checkCsrf()) return;
   if (g_scale) g_scale->tare();
   redirectHome();
 }
 
 void handleCalibrate() {
-  if (!requireAuth() || !checkCsrf()) return;
+  if (!checkCsrf()) return;
   const float known = server.arg("known").toFloat();
   if (g_scale && known > 0.0f) {
     const float factor = g_scale->calibrate(known);
@@ -132,7 +117,7 @@ void handleCalibrate() {
 }
 
 void handleSave() {
-  if (!requireAuth() || !checkCsrf()) return;
+  if (!checkCsrf()) return;
   if (server.hasArg("url")) {
     const String u = server.arg("url");
     if (u.length()) config_store::setServerUrl(u);
