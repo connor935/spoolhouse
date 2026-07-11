@@ -41,12 +41,21 @@ OpenTagDecoder openTagDecoder;
 SpoolRegistry spoolRegistry;
 
 bool scaleOk = false;
-bool nfcOk = false;
 
-// Tag / filament state
+// NFC (reader + decode) runs on core 0 because the bit-banged SPI polling and
+// the multi-block MIFARE decode are slow and would otherwise stutter the
+// display/scale loop on core 1. The task publishes results here under a mutex;
+// the main loop copies them into the `filament`/`tagPresent`/… locals below.
+SemaphoreHandle_t nfcMutex;
+bool pubNfcOk = false;
+bool pubTagPresent = false;
+NfcUid pubUid;
+FilamentInfo pubFilament;
+
+// Main-loop snapshot of the NFC state (refreshed each loop by syncNfcState).
+bool nfcOk = false;
 NfcUid currentUid;
 bool tagPresent = false;
-uint8_t tagMisses = 0;
 FilamentInfo filament;  // decoded details for the current tag (valid flag inside)
 
 // Tap input edge detection (BOOT button + touchscreen)
@@ -54,8 +63,6 @@ bool lastButtonDown = false;
 uint32_t lastButtonChangeMs = 0;
 uint32_t lastTouchMs = 0;
 
-uint32_t lastNfcPollMs = 0;
-uint32_t lastNfcInitMs = 0;
 uint32_t lastDrawMs = 0;
 
 // Cached last-drawn values so unchanged frames are skipped
@@ -202,39 +209,87 @@ void drawWifiStatus() {
   tft.drawString(up ? "wifi" : "no wifi", tft.width() - 6, 5, 2);
 }
 
-void handleNewTag() {
-  filament = FilamentInfo{};
-  // MIFARE auth over the bit-banged SPI occasionally fails on first contact,
-  // so give the decoders a few attempts before concluding "unknown".
+// Publish the NFC task's current state for the main loop to read.
+void publishNfc(bool ok, bool present, const NfcUid &uid, const FilamentInfo &fil) {
+  xSemaphoreTake(nfcMutex, portMAX_DELAY);
+  pubNfcOk = ok;
+  pubTagPresent = present;
+  pubUid = uid;
+  pubFilament = fil;
+  xSemaphoreGive(nfcMutex);
+}
+
+// Copy the published NFC state into the main-loop locals (called from loop()).
+void syncNfcState() {
+  xSemaphoreTake(nfcMutex, portMAX_DELAY);
+  nfcOk = pubNfcOk;
+  tagPresent = pubTagPresent;
+  currentUid = pubUid;
+  filament = pubFilament;
+  xSemaphoreGive(nfcMutex);
+}
+
+// Decode a freshly-detected tag (retries: MIFARE auth over bit-banged SPI can
+// miss on first contact). Fills `fil`.
+void decodeTag(const NfcUid &uid, FilamentInfo &fil) {
+  fil = FilamentInfo{};
   for (uint8_t attempt = 0; attempt < 3; attempt++) {
-    if (spoolRegistry.identify(nfc, currentUid, filament)) {
-      Serial.printf("[spool] %s / %s", filament.manufacturer, filament.material);
-      if (filament.hasColor) Serial.printf(" %s", filament.color);
-      if (filament.nominalWeightGrams) Serial.printf(" %ug", filament.nominalWeightGrams);
-      if (filament.spoolId[0]) Serial.printf(" id=%s", filament.spoolId);
+    if (spoolRegistry.identify(nfc, uid, fil)) {
+      Serial.printf("[spool] %s / %s", fil.manufacturer, fil.material);
+      if (fil.hasColor) Serial.printf(" %s", fil.color);
+      if (fil.nominalWeightGrams) Serial.printf(" %ug", fil.nominalWeightGrams);
+      if (fil.spoolId[0]) Serial.printf(" id=%s", fil.spoolId);
       Serial.println();
       return;
     }
     delay(40);
   }
-  Serial.printf("[spool] tag %s not recognized\n", currentUid.toHexString().c_str());
+  Serial.printf("[spool] tag %s not recognized\n", uid.toHexString().c_str());
 }
 
-void pollNfc() {
+// Core-0 task: owns the NFC reader entirely (init, poll, decode) so its slow
+// blocking work never stalls the display/scale loop on core 1.
+void nfcTask(void *) {
+  bool ok = nfc.begin();
+  Serial.printf("[nfc] %s %s (core %d)\n", nfc.chipName(), ok ? "ready" : "NOT FOUND", xPortGetCoreID());
+
   NfcUid uid;
-  if (nfc.readUid(uid, NFC_POLL_TIMEOUT_MS)) {
-    tagMisses = 0;
-    if (!tagPresent || uid != currentUid) {
-      currentUid = uid;
-      tagPresent = true;
-      Serial.printf("[nfc] tag present: %s\n", currentUid.toHexString().c_str());
-      handleNewTag();
+  bool present = false;
+  uint8_t misses = 0;
+  FilamentInfo fil;
+  publishNfc(ok, false, uid, fil);
+  uint32_t lastInit = millis();
+
+  for (;;) {
+    if (!ok) {
+      if (millis() - lastInit >= NFC_REINIT_INTERVAL_MS) {
+        lastInit = millis();
+        ok = nfc.begin();
+        if (ok) Serial.printf("[nfc] %s ready\n", nfc.chipName());
+        publishNfc(ok, present, uid, fil);
+      }
+      vTaskDelay(pdMS_TO_TICKS(200));
+      continue;
     }
-  } else if (tagPresent && ++tagMisses >= NFC_MISSES_UNTIL_GONE) {
-    tagPresent = false;
-    tagMisses = 0;
-    filament = FilamentInfo{};
-    Serial.println("[nfc] tag removed");
+
+    NfcUid u;
+    if (nfc.readUid(u, NFC_POLL_TIMEOUT_MS)) {
+      misses = 0;
+      if (!present || u != uid) {
+        uid = u;
+        present = true;
+        Serial.printf("[nfc] tag present: %s\n", uid.toHexString().c_str());
+        decodeTag(uid, fil);
+        publishNfc(ok, present, uid, fil);
+      }
+    } else if (present && ++misses >= NFC_MISSES_UNTIL_GONE) {
+      present = false;
+      misses = 0;
+      fil = FilamentInfo{};
+      Serial.println("[nfc] tag removed");
+      publishNfc(ok, present, uid, fil);
+    }
+    vTaskDelay(pdMS_TO_TICKS(NFC_POLL_INTERVAL_MS));
   }
 }
 
@@ -387,34 +442,29 @@ void setup() {
   spoolRegistry.add(&crealityDecoder);
   spoolRegistry.add(&openTagDecoder);
 
-  nfcOk = nfc.begin();
-  Serial.printf("[nfc] %s %s\n", nfc.chipName(), nfcOk ? "ready" : "NOT FOUND");
-
   spoolhouse::beginWifi();
   drawWifiStatus();
+
+  // Run the NFC reader/decoder on core 0 so it never stutters the UI (the
+  // Arduino loop runs on core 1). Results are shared via nfcMutex.
+  nfcMutex = xSemaphoreCreateMutex();
+  xTaskCreatePinnedToCore(nfcTask, "nfc", 8192, nullptr, 1, nullptr, 0);
 
   drawWeight();
   drawInfo();
 }
 
 void loop() {
+  syncNfcState();  // pick up the latest NFC result from core 0
   if (scaleOk) scale.update();
   pollInputs();
 
   const uint32_t now = millis();
-  if (!nfcOk && now - lastNfcInitMs >= NFC_REINIT_INTERVAL_MS) {
-    lastNfcInitMs = now;
-    nfcOk = nfc.begin();
-    if (nfcOk) Serial.printf("[nfc] %s ready\n", nfc.chipName());
-  }
-  if (nfcOk && now - lastNfcPollMs >= NFC_POLL_INTERVAL_MS) {
-    lastNfcPollMs = now;
-    pollNfc();
-  }
   if (now - lastDrawMs >= DISPLAY_UPDATE_INTERVAL_MS) {
     lastDrawMs = now;
     drawWeight();
     drawInfo();
     drawWifiStatus();
   }
+  delay(5);  // yield to the idle task (NFC no longer blocks this loop)
 }
