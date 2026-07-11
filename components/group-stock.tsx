@@ -30,7 +30,7 @@ export function GroupStock({
       entry.spools.push(s)
       map.set(s.material.id, entry)
     }
-    return [...map.values()].toSorted((a, b) =>
+    return [...map.values()].sort((a, b) =>
       `${a.material.manufacturer} ${a.material.name}`.localeCompare(
         `${b.material.manufacturer} ${b.material.name}`,
       ),
@@ -43,8 +43,8 @@ export function GroupStock({
       await fn()
       toast.success(success)
       router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Action failed")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Action failed")
     } finally {
       setPendingId(null)
     }

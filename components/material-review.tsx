@@ -81,14 +81,14 @@ export function MaterialReview({ material, mode = "review" }: Props) {
   }
 
   async function handleDelete() {
-    if (!globalThis.confirm(`Delete "${manufacturer} — ${name}"? This can't be undone.`)) return
+    if (!window.confirm(`Delete "${manufacturer} — ${name}"? This can't be undone.`)) return
     setPending(true)
     try {
       await deleteMaterial(material.id)
       toast.success("Material deleted")
       router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not delete material")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not delete material")
       setPending(false)
     }
   }

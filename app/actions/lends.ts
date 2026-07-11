@@ -23,7 +23,7 @@ export async function requestLend(spoolId: number, groupId: number) {
   if (row.spool.userId === authUser.id) throw new Error("You can't borrow your own spool")
 
   const shared = await getSharedFilaments(groupId)
-  if (shared.every((f) => f.id !== spoolId)) throw new Error("This spool isn't shared in this group")
+  if (!shared.some((f) => f.id === spoolId)) throw new Error("This spool isn't shared in this group")
 
   const [existing] = await db
     .select({ id: lends.id })

@@ -18,53 +18,47 @@ import { toast } from "sonner"
 
 function notificationText(n: Notification) {
   switch (n.type) {
-    case "lend_requested": {
+    case "lend_requested":
       return (
         <>
           <strong>{n.actorName}</strong> requested to borrow <strong>{n.filamentName}</strong> in{" "}
           <strong>{n.groupName}</strong>
         </>
       )
-    }
-    case "lend_approved": {
+    case "lend_approved":
       return (
         <>
           <strong>{n.actorName}</strong> approved your request for{" "}
           <strong>{n.filamentName}</strong> in <strong>{n.groupName}</strong>
         </>
       )
-    }
-    case "lend_declined": {
+    case "lend_declined":
       return (
         <>
           <strong>{n.actorName}</strong> declined your request for{" "}
           <strong>{n.filamentName}</strong> in <strong>{n.groupName}</strong>
         </>
       )
-    }
-    case "lend_returned": {
+    case "lend_returned":
       return (
         <>
           <strong>{n.actorName}</strong> marked <strong>{n.filamentName}</strong> as returned in{" "}
           <strong>{n.groupName}</strong>
         </>
       )
-    }
-    case "lend_request_cancelled": {
+    case "lend_request_cancelled":
       return (
         <>
           <strong>{n.actorName}</strong> cancelled their request for{" "}
           <strong>{n.filamentName}</strong> in <strong>{n.groupName}</strong>
         </>
       )
-    }
-    default: {
+    default:
       return (
         <>
           {n.actorName} — {n.filamentName} ({n.groupName})
         </>
       )
-    }
   }
 }
 
@@ -106,8 +100,8 @@ export function NotificationsList({ items }: { items: NotificationWithStatus[] }
       }
       setActive(null)
       router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Action failed")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Action failed")
     } finally {
       setPending(false)
     }

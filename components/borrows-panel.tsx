@@ -28,9 +28,9 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
   const [pending, setPending] = useState(false)
 
   const measured = Number.parseInt(value, 10)
-  const previewLeft = Number.isNaN(measured)
-    ? null
-    : computeFilamentLeft(measured, l.emptyWeightGrams)
+  const previewLeft = !Number.isNaN(measured)
+    ? computeFilamentLeft(measured, l.emptyWeightGrams)
+    : null
 
   async function save() {
     const grams = Number.parseInt(value, 10)
@@ -44,8 +44,8 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
       toast.success("Weight updated")
       setAdjusting(false)
       router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not update weight")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update weight")
     } finally {
       setPending(false)
     }
@@ -108,9 +108,9 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
             </Button>
           </div>
           <span className="text-xs text-muted-foreground">
-            {previewLeft === null
-              ? "Enter the scale value (g)"
-              : `= ${formatWeight(previewLeft)} filament left`}
+            {previewLeft !== null
+              ? `= ${formatWeight(previewLeft)} filament left`
+              : "Enter the scale value (g)"}
           </span>
         </div>
       )}
@@ -134,8 +134,8 @@ export function BorrowsPanel({ lends, currentUserId }: { lends: MyLend[]; curren
       await fn(lendId)
       toast.success(success)
       router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Action failed")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Action failed")
     } finally {
       setPendingId(null)
     }
@@ -152,12 +152,12 @@ export function BorrowsPanel({ lends, currentUserId }: { lends: MyLend[]; curren
     )
   }
 
-  const isEmpty =
+  const empty =
     incoming.length === 0 && outgoing.length === 0 && lentOut.length === 0 && borrowed.length === 0
 
   return (
     <div className="flex flex-col gap-6">
-      {isEmpty && (
+      {empty && (
         <div className="rounded-lg border border-dashed border-border bg-card/50 px-6 py-10 text-center text-sm text-muted-foreground">
           No open borrows — request a spool from a group tab and it will show up here.
         </div>

@@ -52,7 +52,7 @@ async function main() {
   console.log(`Admin account created:\n  email:    ${normalizedEmail}\n  password: ${password}\nSign in and change the password on /account.`)
 }
 
-main().catch((error) => {
-  console.error(error)
+main().catch((err) => {
+  console.error(err)
   process.exit(1)
 })
