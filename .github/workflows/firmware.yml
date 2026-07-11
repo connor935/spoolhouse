@@ -1,0 +1,47 @@
+name: Firmware CI
+
+# Build the ESP32 scale firmware (PlatformIO) whenever firmware sources change.
+on:
+  push:
+    paths:
+      - "hardware/**"
+      - ".github/workflows/firmware.yml"
+  pull_request:
+    paths:
+      - "hardware/**"
+      - ".github/workflows/firmware.yml"
+
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build firmware (PlatformIO)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('hardware/platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      # secrets.h is git-ignored; a placeholder from the example is enough to
+      # compile (the values are only defaults/fallbacks, resolved at runtime).
+      - name: Provide placeholder secrets.h
+        run: cp hardware/include/secrets.h.example hardware/include/secrets.h
+
+      - name: Build firmware
+        run: pio run -d hardware -e cyd
