@@ -117,11 +117,16 @@ Result postWeigh(const FilamentInfo &f, int grams, String *action) {
   if (f.manufacturer[0]) body += ",\"manufacturer\":\"" + jsonEscape(f.manufacturer) + "\"";
   if (f.material[0]) {
     body += ",\"name\":\"" + jsonEscape(f.material) + "\"";
-    body += ",\"filamentType\":\"" + jsonEscape(baseType(f.material).c_str()) + "\"";
+    // Prefer the tag's explicit type (e.g. Spoolhouse custom tags); otherwise
+    // derive it from the material name ("PLA Matte" -> "PLA").
+    const String type = f.filamentType[0] ? String(f.filamentType) : baseType(f.material);
+    body += ",\"filamentType\":\"" + jsonEscape(type.c_str()) + "\"";
   }
   if (f.hasColor) body += ",\"color\":\"" + jsonEscape(f.color) + "\"";
   if (f.nominalWeightGrams) body += ",\"fullFilamentWeightGrams\":" + String(f.nominalWeightGrams);
-  body += ",\"emptyWeightGrams\":" + String(DEFAULT_EMPTY_SPOOL_G);
+  // Empty-spool weight from the tag when known, else the assumed default.
+  const int emptyG = f.emptyWeightGrams > 0 ? f.emptyWeightGrams : DEFAULT_EMPTY_SPOOL_G;
+  body += ",\"emptyWeightGrams\":" + String(emptyG);
   body += "}";
 
   HTTPClient http;

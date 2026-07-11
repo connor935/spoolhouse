@@ -15,6 +15,7 @@
 
 #include "config.h"
 #include "config_store.h"
+#include "debuglog.h"
 #include "net/spoolhouse_client.h"
 #include "net/web_config.h"
 #include "secrets.h"  // OTA_PASSWORD
@@ -26,6 +27,7 @@
 #include "spool/filament_info.h"
 #include "spool/opentag_decoder.h"
 #include "spool/spool_registry.h"
+#include "tag_write.h"
 
 namespace {
 
@@ -250,10 +252,13 @@ void decodeTag(const NfcUid &uid, FilamentInfo &fil) {
       if (fil.nominalWeightGrams) Serial.printf(" %ug", fil.nominalWeightGrams);
       if (fil.spoolId[0]) Serial.printf(" id=%s", fil.spoolId);
       Serial.println();
+      debuglog::add("read " + String(fil.manufacturer) + " / " + String(fil.material) +
+                    " (" + String(fil.filamentType) + ")");
       return;
     }
     delay(40);
   }
+  debuglog::add("read UNKNOWN uid=" + uid.toHexString());
   Serial.printf("[spool] tag %s not recognized\n", uid.toHexString().c_str());
 }
 
@@ -273,6 +278,7 @@ void nfcTask(void *) {
   FilamentInfo cacheFil;
   publishNfc(ok, false, uid, fil);
   uint32_t lastInit = millis();
+  uint32_t writeWaitStart = 0;
 
   for (;;) {
     if (!ok) {
@@ -285,6 +291,56 @@ void nfcTask(void *) {
       vTaskDelay(pdMS_TO_TICKS(200));
       continue;
     }
+
+    // A tag-write was queued from the config page: instead of decoding, wait
+    // for a tag to be presented and write the Spoolhouse format onto it.
+    const tag_write::Status ws = tag_write::status();
+    if (ws == tag_write::Status::Waiting || ws == tag_write::Status::Writing) {
+      if (writeWaitStart == 0) writeWaitStart = millis();
+      if (millis() - writeWaitStart > TAG_WRITE_TIMEOUT_MS) {
+        tag_write::setStatus(tag_write::Status::Idle);  // gave up waiting
+        writeWaitStart = 0;
+      } else {
+        NfcUid wu;
+        if (nfc.readUid(wu, NFC_POLL_TIMEOUT_MS)) {
+          tag_write::setStatus(tag_write::Status::Writing);
+          opentag::TagData td;
+          tag_write::copyData(td);
+          // Size the OpenTag3D record to the tag: read its capability container
+          // (page 3, byte 2 ×8 = user bytes) so big tags get the full record.
+          uint8_t cc[4] = {0};
+          uint16_t capacity = 144;
+          if (nfc.readNtagPages(wu, 3, 1, cc) && cc[2]) capacity = (uint16_t)cc[2] * 8;
+          uint8_t img[opentag::MAX_IMAGE];
+          const size_t len = opentag::buildImage(td, capacity, img);
+          bool wrote = false;
+          if (len > 0) {
+            wrote = nfc.writeNtagPages(wu, opentag::START_PAGE, (uint8_t)(len / 4), img);
+          }
+          if (wrote) {
+            tag_write::setStatus(tag_write::Status::Done);
+            debuglog::add("write ok uid=" + wu.toHexString() + " len=" + len + " cap=" + capacity);
+          } else {
+            // Figure out why. A blank MIFARE Classic answers auth with the
+            // default key but rejects NTAG writes — the most common mistake.
+            String why = len == 0 ? "tag too small - use NTAG215" : "write failed";
+            const uint8_t defKey[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+            uint8_t blk[16];
+            if (nfc.supportsMifareClassic() && nfc.mifareReadBlock(wu, 4, MIFARE_KEY_A, defKey, blk)) {
+              why = "MIFARE Classic tag - use a blank NTAG213/215";
+            }
+            tag_write::fail(why);
+            debuglog::add("write FAILED uid=" + wu.toHexString() + " (" + why + ")");
+          }
+          writeWaitStart = 0;
+          present = false;  // force a fresh read/decode of the just-written tag
+          misses = 0;
+        }
+      }
+      vTaskDelay(pdMS_TO_TICKS(NFC_POLL_INTERVAL_MS));
+      continue;
+    }
+    writeWaitStart = 0;
 
     NfcUid u;
     if (nfc.readUid(u, NFC_POLL_TIMEOUT_MS)) {
@@ -336,6 +392,78 @@ void restoreUi() {
   drawWifiStatus();
   drawWeight();
   drawInfo();
+}
+
+// Bring up the TFT: init + rotation + inversion + the CYD gamma tweak. Called
+// at boot and again if the panel is re-initialised from the config page.
+void initDisplay() {
+  tft.init();
+  tft.setRotation(1);       // landscape, USB to the right
+  tft.invertDisplay(true);  // this CYD panel powers up inverted; correct it
+  // CYD gamma fix (witnessmenow's CYD guide): a different gamma curve cures
+  // washed-out colours.
+  tft.writecommand(0x26);  // ILI9341_GAMMASET
+  tft.writedata(2);
+  delay(120);
+  tft.writecommand(0x26);
+  tft.writedata(1);
+}
+
+// Re-initialise the panel (config-page "Reset display"): the ILI9341 has no
+// wired reset line, so a power/SPI glitch can leave it white while the ESP32
+// keeps running — this recovers it without a reboot.
+void resetDisplay() {
+  Serial.println("[display] re-init requested");
+  initDisplay();
+  restoreUi();
+}
+
+// Show the tag-write flow as a full-screen overlay (the write itself runs on
+// the NFC task, core 0). Returns true while an overlay is up, so the normal UI
+// and tap handling are suppressed. Auto-clears a few seconds after done/failed.
+int writeShownState = -1;  // last tag_write::Status drawn (-1 = none)
+uint32_t writeSettledAt = 0;
+
+bool serviceTagWrite() {
+  const tag_write::Status s = tag_write::status();
+  if (s == tag_write::Status::Idle) {
+    if (writeShownState != -1) {  // just finished/cancelled → repaint normal UI
+      writeShownState = -1;
+      restoreUi();
+    }
+    return false;
+  }
+  if ((int)s != writeShownState) {
+    writeShownState = (int)s;
+    switch (s) {
+      case tag_write::Status::Waiting:
+        overlayMessage("Hold blank tag", "to the reader", TFT_SKYBLUE);
+        tft.setTextDatum(BC_DATUM);
+        tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+        tft.drawString("writing: " + tag_write::label(), tft.width() / 2, tft.height() - 6, 2);
+        break;
+      case tag_write::Status::Writing:
+        overlayMessage("Writing tag...", "hold still", TFT_YELLOW);
+        break;
+      case tag_write::Status::Done:
+        overlayMessage("Tag written!", tag_write::label(), TFT_GREENYELLOW);
+        writeSettledAt = millis();
+        break;
+      case tag_write::Status::Failed: {
+        String why = tag_write::reason();
+        overlayMessage("Write failed", why.length() ? why : "use a blank NTAG", TFT_RED);
+        writeSettledAt = millis();
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  if ((s == tag_write::Status::Done || s == tag_write::Status::Failed) &&
+      millis() - writeSettledAt > 2500) {
+    tag_write::setStatus(tag_write::Status::Idle);  // next loop repaints normal UI
+  }
+  return true;
 }
 
 // Measure the weight for 5 s, average the middle 5–95 % of the sorted samples
@@ -566,17 +694,7 @@ void setup() {
   pinMode(PIN_LED_BLUE, OUTPUT);
   digitalWrite(PIN_LED_BLUE, HIGH);
 
-  tft.init();
-  tft.setRotation(1);       // landscape, USB to the right
-  tft.invertDisplay(true);  // this CYD panel powers up inverted; correct it
-
-  // CYD gamma fix (witnessmenow's CYD guide, "the display doesn't look as
-  // good"): selecting a different gamma curve cures washed-out colours.
-  tft.writecommand(0x26);  // ILI9341_GAMMASET
-  tft.writedata(2);
-  delay(120);
-  tft.writecommand(0x26);
-  tft.writedata(1);
+  initDisplay();
 
   touchSpi.begin(PIN_TOUCH_SCK, PIN_TOUCH_MISO, PIN_TOUCH_MOSI, PIN_TOUCH_CS);
   touch.begin(touchSpi);
@@ -588,6 +706,7 @@ void setup() {
   spoolRegistry.add(&bambuDecoder);
   spoolRegistry.add(&crealityDecoder);
   spoolRegistry.add(&openTagDecoder);
+  tag_write::begin();
 
   // Paint a boot screen NOW: tft.init() leaves the panel as uninitialised GRAM
   // (fuzzy noise), and provision() below blocks for seconds while WiFi connects.
@@ -602,8 +721,9 @@ void setup() {
   // blocks until connected; the portal reboots the device once provisioned.
   spoolhouse::provision(drawSetupScreen);
 
-  setupOta();                            // wireless firmware updates (WiFi is up now)
-  web_config::begin(&scale, webStatus);  // http://spoolhouse-scale.local/ config + upload
+  setupOta();  // wireless firmware updates (WiFi is up now)
+  // http://spoolhouse-scale.local/ — config, tag writing, upload, display reset
+  web_config::begin(&scale, webStatus, resetDisplay);
 
   drawStaticUi();
   drawWifiStatus();
@@ -622,13 +742,17 @@ void loop() {
   web_config::handle();  // service the device config web page
   syncNfcState();        // pick up the latest NFC result from core 0
   if (scaleOk) scale.update();
-  pollInputs();
+
+  // A tag write (config page) takes over the screen and NFC reader; suppress
+  // the normal UI and tap handling while it's in progress.
+  const bool writeActive = serviceTagWrite();
+  if (!writeActive) pollInputs();
 
   const uint32_t now = millis();
   // Don't repaint the normal UI while a factory-reset warning/countdown overlay
-  // is showing (resetCountdownSec >= 0) — otherwise the weight reading pops
-  // through over it.
-  if (resetCountdownSec < 0 && now - lastDrawMs >= DISPLAY_UPDATE_INTERVAL_MS) {
+  // is showing (resetCountdownSec >= 0) or a tag-write overlay is up — otherwise
+  // the weight reading pops through over it.
+  if (!writeActive && resetCountdownSec < 0 && now - lastDrawMs >= DISPLAY_UPDATE_INTERVAL_MS) {
     lastDrawMs = now;
     drawWeight();
     drawInfo();

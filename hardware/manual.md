@@ -72,8 +72,29 @@ the spool type in the web app for exact "filament remaining".
 ### Supported filament tags
 - **Bambu Lab** — fully supported and verified (MIFARE Classic; keys derived from the
   tag UID).
-- **Creality** and **OpenTag3D / OpenPrintTag** — decoders are implemented but **not
-  yet verified on real tags**; treat as experimental.
+- **OpenTag3D** ([opentag3d.info](https://opentag3d.info/spec)) — the device both
+  **reads and writes** this open format (NDEF on NTAG21x). This is what
+  [writing a tag](#35-writing-a-tag-for-a-spool-without-one) produces.
+- **Creality** and **OpenPrintTag** — decoders are implemented but **not yet verified
+  on real tags**; treat as experimental.
+
+### 3.5 Writing a tag for a spool without one
+Give a "dumb" (tag-less) spool its own NFC tag so the scale recognises it like a smart
+spool. You need a **blank NFC tag** (NTAG21x — see the note below).
+
+1. Open the [config page](#5-the-config-page) → **Write custom tag**.
+2. Fill in manufacturer, material name, filament type (e.g. `PLA`), colour, nominal
+   filament weight, and empty-spool weight.
+3. Press **Write tag**. The device screen shows **"Hold blank tag to the reader"**.
+4. Hold the blank tag against the NFC reader. It writes an **OpenTag3D** record and shows
+   **"Tag written"**; the page confirms too. (Press *cancel* on the page to abort.)
+5. Stick the tag on the spool. From now on, placing it on the scale identifies it and
+   uploads its weight like any smart spool — its NFC UID becomes the spool's unique id.
+
+> **Tag type:** any **NTAG213/215/216** works. The **empty-spool weight** lives at a
+> high offset in the OpenTag3D layout that only fits **NTAG215/216**; on a smaller
+> **NTAG213** everything else is written and the empty weight falls back to the 250 g
+> default (adjust the spool type in the web app). MIFARE Classic tags can't be written.
 
 ---
 
@@ -105,6 +126,10 @@ Sections:
 - **Calibrate** — guided calibration (see [above](#4-calibrating-the-weight)).
 - **Spoolhouse server** — change the **base URL** and **API token** (leave the token
   blank to keep the current one).
+- **Write custom tag** — encode a blank NFC tag for a tag-less spool
+  (see [3.5](#35-writing-a-tag-for-a-spool-without-one)).
+- **Display** — **Reset display** re-initialises the screen if it has gone blank/white
+  (see the troubleshooting note); the device keeps running on WiFi meanwhile.
 - **Firmware update** — upload a new `.bin` (see below).
 
 The page follows the Spoolhouse web-app design and your phone's light/dark theme.
@@ -189,7 +214,8 @@ Notes:
 | Tag shows "Unknown tag" | Not a supported tag (only Bambu Lab is verified), or a transient read — re-seat the spool. |
 | Colours look wrong on the display | The panel runs inverted + a gamma tweak is applied in firmware; if a swatch still looks off, it's the tag's actual (often muted) colour. |
 | Weight is negative or wildly off | Re-calibrate (Section 4). The load-cell polarity sets the sign automatically during calibration. |
-| Screen shows noise on boot, then whites out | Almost always **marginal power** (thin/long USB VCC line) causing a brownout when WiFi powers up. Use a solid 5 V source / good cable. The serial log reset reason (`RTCWDT_BROWN_OUT_RESET`) confirms brownout. |
+| Screen goes white but the device still responds on WiFi | The ILI9341 has no wired reset line, so a brief power/SPI glitch can blank it while the ESP32 keeps running. Hit **Reset display** on the config page to recover without a reboot (or just power-cycle). The firmware runs the panel at a conservative 40 MHz SPI clock to reduce this; a solid 5 V supply / good cable helps most (the CYD's USB VCC is often marginal). |
+| Screen shows noise on boot, then whites out and the device drops off WiFi too | A full **brownout** (thin/long USB VCC line) resetting the whole board when WiFi powers up. Use a solid 5 V source / good cable; the serial reset reason `RTCWDT_BROWN_OUT_RESET` confirms it. |
 | Serial port keeps dropping when flashing | Flaky USB **data** lines — use OTA/browser updates instead, or a known-good cable/port. |
 
 ---

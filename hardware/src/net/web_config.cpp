@@ -6,7 +6,9 @@
 #include <esp_random.h>
 
 #include "config_store.h"
+#include "debuglog.h"
 #include "scale.h"
+#include "tag_write.h"  // pulls in opentag::TagData
 
 namespace web_config {
 namespace {
@@ -14,6 +16,7 @@ namespace {
 WebServer server(80);
 Scale *g_scale = nullptr;
 StatusFn g_status = nullptr;
+ResetDisplayFn g_resetDisplay = nullptr;
 bool g_updateRejected = false;  // set when an /update POST fails the CSRF check
 // Random per-boot CSRF token: embedded as a hidden field in every form and
 // re-checked on POST, so a page on another origin can't silently submit here
@@ -115,6 +118,30 @@ String page() {
   h += csrfField();
   h += F("<button type=submit>Save</button></form>");
 
+  // Write a custom tag for a "dumb" (tag-less) spool. Fills a blank NTAG so the
+  // scale recognises it like a smart spool. JS-driven: POST /write-tag, then
+  // poll /write-status while the device waits for a tag to be presented.
+  h += F("<div class=card><h2>Write custom tag</h2>"
+         "<p class=muted>Encode a blank NFC tag (NTAG21x) for a spool that has none. "
+         "Fill in the details, press Write, then hold the tag to the reader.</p>"
+         "<label>Manufacturer</label><input id=t_manu placeholder='e.g. Generic'>"
+         "<label>Material name</label><input id=t_name placeholder='e.g. PLA Matte'>"
+         "<label>Filament type</label><input id=t_type placeholder='e.g. PLA'>"
+         "<label>Colour</label><input id=t_color type=color value='#3366aa'>"
+         "<label>Nominal filament weight (g)</label>"
+         "<input id=t_nominal type=number step=1 value=1000>"
+         "<label>Empty-spool weight (g)</label>"
+         "<input id=t_empty type=number step=1 value=250>"
+         "<button type=button id=t_btn onclick='writeTag()'>Write tag</button>"
+         "<p id=t_status class=muted style='margin-top:.7rem'></p></div>");
+
+  // Recover a glitched/white display without a power cycle (the ESP32 keeps
+  // running on WiFi even when the panel drops out).
+  h += F("<form class=card action=/reset-display method=post><h2>Display</h2>"
+         "<p class=muted>Re-initialise the screen if it has gone blank or white.</p>");
+  h += csrfField();
+  h += F("<button type=submit>Reset display</button></form>");
+
   // Firmware upload (browser OTA). The CSRF field comes FIRST so it is parsed
   // before the file part and is available when the upload handler starts.
   h += F("<form class=card method=post action=/update enctype='multipart/form-data'>"
@@ -124,8 +151,31 @@ String page() {
          "<input type=file name=firmware accept='.bin'>"
          "<button type=submit>Upload &amp; flash</button></form>");
 
-  h += F("<script>setInterval(function(){fetch('/weight').then(r=>r.text())"
-         ".then(t=>{document.getElementById('w').textContent=t+' g'})},700)</script>");
+  h += F("<script>var CSRF='");
+  h += g_csrf;
+  h += F("';var $=function(i){return document.getElementById(i)};"
+         "setInterval(function(){fetch('/weight').then(r=>r.text())"
+         ".then(t=>{$('w').textContent=t+' g'})},700);"
+         "var poll=null;"
+         "function stopPoll(){if(poll){clearInterval(poll);poll=null;}}"
+         "function writeTag(){var st=$('t_status');"
+         "if(!$('t_name').value){st.textContent='Enter a material name first.';return;}"
+         "var b=new URLSearchParams();b.set('csrf',CSRF);"
+         "b.set('manufacturer',$('t_manu').value);b.set('name',$('t_name').value);"
+         "b.set('type',$('t_type').value);b.set('color',$('t_color').value);"
+         "b.set('nominal',$('t_nominal').value);b.set('empty',$('t_empty').value);"
+         "fetch('/write-tag',{method:'POST',body:b}).then(function(r){"
+         "if(!r.ok){st.textContent='Busy or invalid \\u2014 try again.';return;}"
+         "$('t_btn').disabled=true;st.textContent='Hold a blank tag to the reader\\u2026 ';"
+         "var c=document.createElement('a');c.href='#';c.textContent='cancel';"
+         "c.onclick=function(e){e.preventDefault();var x=new URLSearchParams();x.set('csrf',CSRF);"
+         "fetch('/write-cancel',{method:'POST',body:x});};st.appendChild(c);"
+         "stopPoll();poll=setInterval(function(){fetch('/write-status').then(r=>r.json()).then(function(s){"
+         "if(s.status=='waiting'||s.status=='writing')return;stopPoll();$('t_btn').disabled=false;"
+         "st.textContent=s.status=='done'?'Tag written \\u2014 place the spool to weigh it.':"
+         "(s.status=='failed'?('Write failed \\u2014 '+(s.reason||'use a blank NTAG21x tag.')):'Cancelled.');"
+         "});},800);});}"
+         "</script>");
   h += F("</body></html>");
   return h;
 }
@@ -222,11 +272,80 @@ void handleUpdateDone() {
   }
 }
 
+// Parse two hex chars at s[i..i+1] into a byte (0 on malformed input).
+uint8_t hexByte(const String &s, int i) {
+  auto nib = [](char c) -> int {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return 0;
+  };
+  if (i + 1 >= (int)s.length()) return 0;
+  return (uint8_t)((nib(s[i]) << 4) | nib(s[i + 1]));
+}
+
+// Queue writing a custom Spoolhouse tag from the form fields. The NFC task
+// (core 0) performs the actual write once a tag is presented.
+void handleWriteTag() {
+  if (!checkCsrf()) return;
+  const String name = server.arg("name");
+  if (!name.length()) {
+    server.send(400, "text/plain", "name required");
+    return;
+  }
+  const String manu = server.arg("manufacturer");
+  const String type = server.arg("type");
+  const String colorHex = server.arg("color");  // "#RRGGBB"
+  const uint16_t nominal = (uint16_t)server.arg("nominal").toInt();
+  const uint16_t empty = (uint16_t)server.arg("empty").toInt();
+
+  opentag::TagData data;
+  strncpy(data.manufacturer, manu.c_str(), sizeof(data.manufacturer) - 1);
+  strncpy(data.name, name.c_str(), sizeof(data.name) - 1);
+  strncpy(data.type, type.c_str(), sizeof(data.type) - 1);
+  data.nominalWeightGrams = nominal;
+  data.emptyWeightGrams = empty;
+  if (colorHex.length() >= 7 && colorHex[0] == '#') {
+    data.rgb[0] = hexByte(colorHex, 1);
+    data.rgb[1] = hexByte(colorHex, 3);
+    data.rgb[2] = hexByte(colorHex, 5);
+    data.hasColor = true;
+  }
+
+  if (!tag_write::request(data, name)) {
+    server.send(409, "text/plain", "a tag write is already in progress");
+    return;
+  }
+  Serial.printf("[tag] write requested: %s / %s\n", manu.c_str(), name.c_str());
+  server.send(200, "application/json", "{\"status\":\"waiting\"}");
+}
+
+void handleWriteStatus() {
+  server.send(200, "application/json",
+              String("{\"status\":\"") + tag_write::statusText() + "\",\"reason\":\"" +
+                  esc(tag_write::reason()) + "\"}");
+}
+
+void handleLog() { server.send(200, "text/plain", debuglog::dump()); }
+
+void handleWriteCancel() {
+  if (!checkCsrf()) return;
+  tag_write::cancel();
+  server.send(200, "application/json", "{\"status\":\"idle\"}");
+}
+
+void handleResetDisplay() {
+  if (!checkCsrf()) return;
+  if (g_resetDisplay) g_resetDisplay();
+  redirectHome();
+}
+
 }  // namespace
 
-void begin(Scale *scale, StatusFn onStatus) {
+void begin(Scale *scale, StatusFn onStatus, ResetDisplayFn onResetDisplay) {
   g_scale = scale;
   g_status = onStatus;
+  g_resetDisplay = onResetDisplay;
 
   char buf[17];
   snprintf(buf, sizeof(buf), "%08x%08x", esp_random(), esp_random());
@@ -237,6 +356,11 @@ void begin(Scale *scale, StatusFn onStatus) {
   server.on("/tare", HTTP_POST, handleTare);
   server.on("/calibrate", HTTP_POST, handleCalibrate);
   server.on("/save", HTTP_POST, handleSave);
+  server.on("/write-tag", HTTP_POST, handleWriteTag);
+  server.on("/write-status", HTTP_GET, handleWriteStatus);
+  server.on("/write-cancel", HTTP_POST, handleWriteCancel);
+  server.on("/log", HTTP_GET, handleLog);
+  server.on("/reset-display", HTTP_POST, handleResetDisplay);
   server.on("/update", HTTP_POST, handleUpdateDone, handleUpdateUpload);
   server.begin();
   MDNS.addService("http", "tcp", 80);

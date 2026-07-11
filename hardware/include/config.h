@@ -49,6 +49,11 @@ constexpr int DEFAULT_EMPTY_SPOOL_G = 250;
 // middle band (trimming outliers) before uploading.
 constexpr uint32_t UPLOAD_MEASURE_MS = 5000;
 
+// ---- Custom tag writing ----
+// How long the device waits for a blank tag after a write is requested from the
+// config page before giving up (so a forgotten request doesn't block reads).
+constexpr uint32_t TAG_WRITE_TIMEOUT_MS = 60000;
+
 // ---- WiFi setup portal ----
 // SoftAP name shown when the device can't reach WiFi and opens the setup portal.
 constexpr const char *PORTAL_AP_NAME = "Spoolhouse-Setup";

@@ -69,4 +69,12 @@ public:
     return false;
   }
   virtual bool supportsNtag() const { return false; }
+
+  // Re-select the tag and write `count` 4-byte pages starting at startPage from
+  // data (count*4 bytes). Used to write Spoolhouse's own tags onto blank NTAGs.
+  // Returns false on failure or if the reader/tag can't be written this way.
+  virtual bool writeNtagPages(const NfcUid & /*uid*/, uint8_t /*startPage*/, uint8_t /*count*/,
+                              const uint8_t * /*data*/) {
+    return false;
+  }
 };

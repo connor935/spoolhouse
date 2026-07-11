@@ -54,3 +54,21 @@ bool Pn532Reader::readNtagPages(const NfcUid &uid, uint8_t startPage, uint8_t co
   }
   return true;
 }
+
+bool Pn532Reader::writeNtagPages(const NfcUid &uid, uint8_t startPage, uint8_t count,
+                                 const uint8_t *data) {
+  uint8_t selUid[10] = {0};
+  uint8_t selLen = 0;
+  if (!_pn532.readPassiveTargetID(PN532_MIFARE_ISO14443A, selUid, &selLen, 50)) return false;
+  if (selLen != uid.length || memcmp(selUid, uid.bytes, selLen) != 0) return false;
+
+  // NTAG/Ultralight are written one 4-byte page at a time. The driver takes a
+  // non-const buffer, so copy each page. A blank NTAG21x has its user memory
+  // from page 4 up; MIFARE Classic tags reject these commands (write fails).
+  for (uint8_t i = 0; i < count; i++) {
+    uint8_t page[4];
+    memcpy(page, data + i * 4, 4);
+    if (!_pn532.mifareultralight_WritePage(startPage + i, page)) return false;
+  }
+  return true;
+}

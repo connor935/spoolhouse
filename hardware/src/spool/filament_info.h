@@ -10,12 +10,14 @@ struct FilamentInfo {
 
   char manufacturer[16] = {0};  // "Bambu Lab", "Creality", …
   char material[24] = {0};      // "PLA Basic", "PETG HF", …
+  char filamentType[12] = {0};  // base type "PLA"/"PETG"/… (empty = derive from material)
   char color[10] = {0};         // "#FF0000" (RGB hex) — logged, not shown
 
   uint8_t colorRgba[4] = {0};   // raw RGBA, valid when hasColor
   bool hasColor = false;
 
   uint16_t nominalWeightGrams = 0;  // labelled filament weight (e.g. 1000)
+  uint16_t emptyWeightGrams = 0;    // empty-spool weight (0 = unknown, use default)
   float diameterMm = 0.0f;          // 1.75 / 2.85
   uint16_t lengthMeters = 0;
   float spoolWidthMm = 0.0f;

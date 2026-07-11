@@ -12,7 +12,12 @@ namespace web_config {
 // progress/status on the display. line2 may be a byte/percent string.
 using StatusFn = void (*)(const char *line1, const char *line2);
 
-void begin(Scale *scale, StatusFn onStatus = nullptr);  // start HTTP server on port 80
-void handle();                                          // call every loop iteration
+// Optional: called when the user hits "Reset display" — re-initialises the TFT
+// (recovers a glitched/white panel without a power cycle). Runs on the loop.
+using ResetDisplayFn = void (*)();
+
+void begin(Scale *scale, StatusFn onStatus = nullptr,
+           ResetDisplayFn onResetDisplay = nullptr);  // start HTTP server on port 80
+void handle();                                        // call every loop iteration
 
 }  // namespace web_config

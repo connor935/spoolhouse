@@ -21,6 +21,8 @@ public:
 
   bool readNtagPages(const NfcUid &uid, uint8_t startPage, uint8_t count, uint8_t *out) override;
   bool supportsNtag() const override { return true; }
+  bool writeNtagPages(const NfcUid &uid, uint8_t startPage, uint8_t count,
+                      const uint8_t *data) override;
 
 private:
   Adafruit_PN532 _pn532;
