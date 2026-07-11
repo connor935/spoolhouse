@@ -2,7 +2,7 @@
 # spoolhouse.felixkratz.de to this service over the shared external "web" network.
 services:
   app:
-    image: ghcr.io/connor/spoolhouse:latest
+    image: ghcr.io/connor935/spoolhouse:latest
     restart: unless-stopped
     env_file: .env
     environment:
@@ -24,7 +24,7 @@ services:
   # Uses the builder stage (full deps + source + tsx) against the same DB volume.
   #   docker compose run --rm admin
   admin:
-    image: ghcr.io/connor/spoolhouse-tools:latest
+    image: ghcr.io/connor935/spoolhouse-tools:latest
     profiles: ['tools']
     env_file: .env
     environment:
