@@ -62,6 +62,9 @@ export const spools = sqliteTable("filaments", {
   fullFilamentWeightGrams: integer("full_filament_weight_grams").notNull(),
   // Last measured total weight of spool + filament (g) - what you put on the scale
   measuredTotalWeightGrams: integer("measured_total_weight_grams").notNull(),
+  // Optional NFC tag id (e.g. Bambu tray UID, hex) so an external client / scale
+  // can register-or-refresh this spool by its tag. Unique per user (enforced in SQL).
+  tagUid: text("tag_uid"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -70,6 +73,24 @@ export const spools = sqliteTable("filaments", {
     .default(sql`(unixepoch())`),
 })
 
+// Long-lived bearer tokens for the external REST API (/api/v1). Only the
+// SHA-256 hash is stored; the plaintext is shown once at creation on /account.
+export const apiTokens = sqliteTable("api_tokens", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  // First characters of the plaintext token, for display only (e.g. "sph_a1b2c3d4")
+  tokenPrefix: text("token_prefix").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
+})
+
+export type ApiToken = typeof apiTokens.$inferSelect
 export type Spool = typeof spools.$inferSelect
 export type NewSpool = typeof spools.$inferInsert
 export type Material = typeof materials.$inferSelect

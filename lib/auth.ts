@@ -15,8 +15,21 @@ export const passwordMinLength = process.env.MINIMUM_PASSWORD_LENGTH
   ? parseInt(process.env.MINIMUM_PASSWORD_LENGTH)
   : 12
 
+// Origins allowed to call the auth API (better-auth rejects others with
+// "Invalid origin"). BETTER_AUTH_URL is always trusted; add more (e.g. the LAN
+// IP and localhost when the app is reached via several hosts) as a
+// comma-separated TRUSTED_ORIGINS env.
+const trustedOrigins = [
+  ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+  ...(process.env.TRUSTED_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+].filter((o, i, a) => a.indexOf(o) === i)
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "sqlite" }),
+  trustedOrigins,
   emailAndPassword: {
     enabled: true,
     disableSignUp: !signupAllowed,

@@ -111,6 +111,10 @@ in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-page
 | `components/material-card.tsx` | Material card with per-spool rows (re-weigh, edit/delete, lent badge) + add-spool |
 | `components/spool-form-dialog.tsx` | Add/edit spool: material + spool-type pickers with inline request flows |
 | `components/group-stock.tsx` / `group-lend-requests.tsx` / `group-lend-history.tsx` / `group-sharing-settings.tsx` / `group-owner-tools.tsx` | `/groups/[id]` page sections |
+| `lib/api-auth.ts` | REST-API token auth: `generateApiToken`, `authenticateApiRequest(request)`, `apiError`/`unauthorized` helpers |
+| `lib/spool-type-usable.ts` | `isSpoolTypeUsable`/`assertSpoolTypeUsable` — shared by server actions and REST API |
+| `app/actions/api-tokens.ts` | API-token management actions (create/list/revoke) backing the `/account` section |
+| `app/api/v1/` | REST route handlers (see "REST API" below); `filaments/shared.ts` holds serialization + body validation |
 | `lib/utils.ts` | `cn()` (clsx + tailwind-merge) |
 
 ## Domain rules
@@ -143,6 +147,25 @@ in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-page
 - **Authorization**: every group/lend action starts with `requireUser()`; membership/ownership is
   always re-checked in the SQL `WHERE`, never inferred from client-provided ids — same discipline as
   the rest of the app.
+
+## REST API (`/api/v1`)
+
+External clients authenticate with long-lived bearer tokens created on `/account`
+(**API tokens** section). Endpoint reference: `docs/api.md`; interactive Swagger UI at
+`/api-docs` (login-protected), backed by the OpenAPI spec in `lib/openapi.ts` served at
+`GET /api/v1/openapi.json` (public, no auth — docs only).
+
+- Tokens: `sph_` + 32 random bytes base64url, stored **SHA-256-hashed** in `api_tokens`
+  (plaintext shown once at creation; revoke = row delete). `authenticateApiRequest(request)`
+  in `lib/api-auth.ts` resolves `Authorization: Bearer …` to the owning user and touches
+  `lastUsedAt` — call it first in every `/api/v1` route handler (the API-route counterpart
+  of `requireUser()`; ownership still enforced in SQL `WHERE`).
+- Endpoints: `GET /me`, `GET /spool-types` (usable ones), `GET|POST /filaments`,
+  `GET|PATCH|DELETE /filaments/:id`, `PUT /filaments/:id/weight` (re-weigh). Mutations call
+  `revalidatePath("/")`. Errors: `{"error":{"code","message"}}` with 400/401/404.
+- `proxy.ts` exempts all of `/api/` from the login redirect; API auth happens in the
+  handlers. Groups/lending are not exposed in v1.
+- **Keep `lib/openapi.ts` and `docs/api.md` in sync when endpoints change.**
 
 ## Known gaps / quirks (V0 export leftovers)
 
