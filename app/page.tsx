@@ -21,9 +21,14 @@ export default async function Page({
   const str = (v: string | string[] | undefined) =>
     typeof v === 'string' ? v : '';
   const minLeftParsed = Number.parseInt(str(params.minLeft), 10);
-  const initialTab = str(params.tab) || 'in-stock';
+  const initialTab = str(params.tab) || 'stock';
+  const statusParam = str(params.status);
+  const status = (['empty', 'all'].includes(statusParam)
+    ? statusParam
+    : 'in-stock') as 'in-stock' | 'empty' | 'all';
   const initialFilters = {
     q: str(params.q),
+    status,
     filamentType: str(params.type) || null,
     minLeftGrams: Number.isNaN(minLeftParsed) ? null : minLeftParsed,
     hideLent: str(params.hideLent) === '1',

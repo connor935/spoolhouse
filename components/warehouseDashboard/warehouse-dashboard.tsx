@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Package, UsersRound, ArrowLeftRight } from 'lucide-react';
-import { BorrowsPanel } from '@/components/borrows-panel';
+import { BorrowsDialog } from '@/components/warehouseDashboard/borrows-dialog';
 import { GroupStock } from '@/components/group-stock';
 import {
   InventoryFilter,
@@ -19,9 +20,10 @@ import type { Material, SpoolType } from '@/lib/db/schema';
 import type { SharedSpool } from '@/lib/sharing';
 import Link from 'next/link';
 import { AppHeader } from '../app-header';
-import { FilamentStats } from '../filament-stats';
 
-type Filter = 'in-stock' | 'empty' | 'all' | 'borrows' | `group-${number}`;
+// Top-level tabs: your own stock, or one per group. Status (in-stock/empty/all)
+// and borrows are no longer tabs — status is a filter, borrows is a modal.
+type Tab = 'stock' | `group-${number}`;
 
 type DashboardGroup = { id: number; name: string; stock: SharedSpool[] };
 
@@ -59,22 +61,21 @@ export function WarehouseDashboard({
   initialFilters: InventoryFilters;
 }) {
   const validTabs = new Set<string>([
-    'in-stock',
-    'empty',
-    'all',
-    'borrows',
+    'stock',
     ...groups.map((g) => `group-${g.id}`),
   ]);
-  const [filter, setFilter] = useState<Filter>(
-    validTabs.has(initialTab) ? (initialTab as Filter) : 'in-stock'
+  const [tab, setTab] = useState<Tab>(
+    validTabs.has(initialTab) ? (initialTab as Tab) : 'stock'
   );
   const [filters, setFilters] = useState<InventoryFilters>(initialFilters);
+  const [borrowsOpen, setBorrowsOpen] = useState(false);
 
   // Mirror tab + filters into the URL (replaceState: shareable links, no
   // navigation/server round-trip per keystroke, back button stays sane).
   useEffect(() => {
     const params = new URLSearchParams();
-    if (filter !== 'in-stock') params.set('tab', filter);
+    if (tab !== 'stock') params.set('tab', tab);
+    if (filters.status !== 'in-stock') params.set('status', filters.status);
     if (filters.q.trim() !== '') params.set('q', filters.q.trim());
     if (filters.filamentType) params.set('type', filters.filamentType);
     if (filters.minLeftGrams !== null)
@@ -82,7 +83,7 @@ export function WarehouseDashboard({
     if (filters.hideLent) params.set('hideLent', '1');
     const qs = params.toString();
     window.history.replaceState(null, '', qs ? `/?${qs}` : '/');
-  }, [filter, filters]);
+  }, [tab, filters]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingSpool, setEditingSpool] = useState<SpoolView | null>(null);
   const [presetMaterialId, setPresetMaterialId] = useState<number | null>(null);
@@ -99,20 +100,20 @@ export function WarehouseDashboard({
   );
   const empty = useMemo(() => allSpools.filter((s) => s.isEmpty), [allSpools]);
 
-  const activeGroup: DashboardGroup | null = filter.startsWith('group-')
-    ? (groups.find((g) => `group-${g.id}` === filter) ?? null)
+  const activeGroup: DashboardGroup | null = tab.startsWith('group-')
+    ? (groups.find((g) => `group-${g.id}` === tab) ?? null)
     : null;
 
   const openBorrows: number = myLends.filter(
     (l) => l.lend.status === 'requested' || l.lend.status === 'active'
   ).length;
 
-  // Which spools are visible under the current tab (per material),
-  // combined with the search/filter bar (Epic 5)
+  // Which spools are visible in "Your stock" (per material), combined with the
+  // status selector + search/filter bar (Epic 5)
   const visibleByMaterial = useMemo(() => {
     const spoolFilter = (s: SpoolView) => {
-      if (filter === 'in-stock' && s.isEmpty) return false;
-      if (filter === 'empty' && !s.isEmpty) return false;
+      if (filters.status === 'in-stock' && s.isEmpty) return false;
+      if (filters.status === 'empty' && !s.isEmpty) return false;
       if (
         filters.minLeftGrams !== null &&
         s.filamentLeftGrams < filters.minLeftGrams
@@ -127,7 +128,7 @@ export function WarehouseDashboard({
         visibleIds: new Set(m.spools.filter(spoolFilter).map((s) => s.id)),
       }))
       .filter((entry) => entry.visibleIds.size > 0);
-  }, [inventory, filter, filters]);
+  }, [inventory, filters]);
 
   // Group stock filtered by the same bar (+ hide-lent)
   const filteredGroupStock = useMemo(() => {
@@ -158,6 +159,39 @@ export function WarehouseDashboard({
     setFormOpen(true);
   }
 
+  // Borrows + Add spool. Rendered twice: pinned to the tabs row on desktop
+  // (`full={false}`, natural width) and as a full-width row under the filter on
+  // mobile (`full={true}`, buttons split the row). Borrows only exists in groups.
+  const renderActions = (full: boolean) => (
+    <>
+      {groups.length > 0 && (
+        <Button
+          variant="outline"
+          onClick={() => setBorrowsOpen(true)}
+          className={cn('relative', full && 'flex-1')}
+        >
+          <ArrowLeftRight className="mr-1 h-4 w-4" />
+          Borrows
+          {openBorrows > 0 && (
+            <span className="bg-accent text-accent-foreground absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[10px] font-semibold">
+              {openBorrows > 9 ? '9+' : openBorrows}
+            </span>
+          )}
+        </Button>
+      )}
+      <Button
+        onClick={() => openCreate()}
+        className={cn(
+          'bg-accent text-accent-foreground hover:bg-accent/90',
+          full && 'flex-1'
+        )}
+      >
+        <Plus className="mr-1 h-4 w-4" />
+        Add spool
+      </Button>
+    </>
+  );
+
   return (
     <div className="min-h-screen">
       <AppHeader user={user} unreadCount={unreadCount} />
@@ -167,50 +201,57 @@ export function WarehouseDashboard({
           inStock={inStock}
           empty={empty}
         /> */}
-        <div className="flex items-center justify-between gap-4">
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-            <TabsList>
-              <TabsTrigger value="in-stock">
-                In stock ({inStock.length})
-              </TabsTrigger>
-              <TabsTrigger value="empty">Empty ({empty.length})</TabsTrigger>
-              <TabsTrigger value="all">All ({allSpools.length})</TabsTrigger>
-              {groups.length > 0 && (
-                <TabsTrigger value="borrows">
-                  <ArrowLeftRight className="mr-1 h-3.5 w-3.5" />
-                  Borrows ({openBorrows})
-                </TabsTrigger>
-              )}
-              {groups.map((g) => (
-                <TabsTrigger key={g.id} value={`group-${g.id}`}>
-                  <UsersRound className="mr-1 h-3.5 w-3.5" />
-                  {g.name} ({g.stock.length})
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
-
-        {filter !== 'borrows' && (
-          <div className="flex w-full items-center gap-4">
-            <InventoryFilter
-              value={filters}
-              onChange={setFilters}
-              showHideLent={activeGroup !== null}
-            />
-            <Button
-              onClick={() => openCreate()}
-              className="bg-accent text-accent-foreground text-md hover:bg-accent/90 h-auto self-stretch"
-            >
-              <Plus className="mr-1 size-6" />
-              Add spool
-            </Button>
+        {groups.length > 0 && (
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 overflow-x-auto overflow-y-hidden">
+              <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+                <TabsList>
+                  <TabsTrigger value="stock">
+                    <Package className="mr-1 h-3.5 w-3.5" />
+                    Your stock
+                  </TabsTrigger>
+                  {groups.map((g) => (
+                    <TabsTrigger key={g.id} value={`group-${g.id}`}>
+                      <UsersRound className="mr-1 h-3.5 w-3.5" />
+                      {g.name} ({g.stock.length})
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+            {/* Desktop: actions sit in the tabs row. Hidden on mobile. */}
+            <div className="hidden shrink-0 items-center gap-2 md:flex">
+              {renderActions(false)}
+            </div>
           </div>
         )}
 
-        {filter === 'borrows' ? (
-          <BorrowsPanel lends={myLends} currentUserId={user.id} />
-        ) : activeGroup ? (
+        <div className="flex w-full flex-col items-center gap-4 md:flex-row">
+          <InventoryFilter
+            value={filters}
+            onChange={setFilters}
+            showStatus={activeGroup === null}
+            showHideLent={activeGroup !== null}
+            statusCounts={{
+              inStock: inStock.length,
+              empty: empty.length,
+              all: allSpools.length,
+            }}
+          />
+          {/* Mobile: actions in one row under the filter. On desktop with groups
+              they live in the tabs row (hidden here); without groups they sit
+              inline beside the filter. */}
+          <div
+            className={cn(
+              'flex gap-2',
+              groups.length > 0 ? 'w-full md:hidden' : 'w-full md:w-auto'
+            )}
+          >
+            {renderActions(true)}
+          </div>
+        </div>
+
+        {activeGroup ? (
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-4">
               <p className="text-muted-foreground text-sm">
@@ -248,12 +289,12 @@ export function WarehouseDashboard({
               <p className="text-muted-foreground text-sm">
                 {filtersActive(filters)
                   ? 'No materials match the current filters.'
-                  : filter === 'empty'
+                  : filters.status === 'empty'
                     ? "You haven't used up any spools yet."
                     : 'Add your first spool to start tracking inventory.'}
               </p>
             </div>
-            {filter !== 'empty' && !filtersActive(filters) && (
+            {filters.status !== 'empty' && !filtersActive(filters) && (
               <Button
                 variant="outline"
                 onClick={() => openCreate()}
@@ -288,6 +329,13 @@ export function WarehouseDashboard({
         materials={usableMaterials}
         spoolTypes={spoolTypes}
         isAdmin={user.isAdmin}
+      />
+
+      <BorrowsDialog
+        open={borrowsOpen}
+        onOpenChange={setBorrowsOpen}
+        lends={myLends}
+        currentUserId={user.id}
       />
     </div>
   );
