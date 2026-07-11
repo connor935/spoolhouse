@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { SwaggerDocs } from "@/components/swagger-docs"
 import { requireUser } from "@/lib/auth-session"
@@ -10,10 +9,6 @@ export const metadata = { title: "API docs — Spoolhouse" }
 
 export default async function ApiDocsPage() {
   await requireUser()
-  // Disabled at build time (ENABLE_API_DOCS=false) — swagger-ui-dist is stubbed
-  // out of the bundle, so there is nothing to render. The OpenAPI JSON at
-  // /api/v1/openapi.json is unaffected and still served.
-  if (process.env.ENABLE_API_DOCS === "false") notFound()
   return (
     // Swagger UI ships light-only styles, so this page keeps a white canvas
     // regardless of the app theme.
