@@ -60,7 +60,7 @@ export async function getOwnedSpoolByTag(tagUid: string, userId: string): Promis
 
 export function parseId(raw: string): number | null {
   const id = Number(raw)
-  return Number.isInteger(id) && id > 0 ? id : null
+  return Number.isSafeInteger(id) && id > 0 ? id : null
 }
 
 export type SpoolBody = {
@@ -85,7 +85,7 @@ export function parseSpoolBody(body: unknown, { partial }: { partial: boolean })
   for (const field of ["materialId", "spoolTypeId"] as const) {
     if (input[field] !== undefined) {
       const v = input[field]
-      if (typeof v !== "number" || !Number.isInteger(v) || v <= 0) {
+      if (typeof v !== "number" || !Number.isSafeInteger(v) || v <= 0) {
         return { ok: false, message: `${field} must be a positive integer` }
       }
       value[field] = v
@@ -113,7 +113,7 @@ function parseWeight(
   input: Record<string, unknown>,
   field: "fullFilamentWeightGrams" | "measuredTotalWeightGrams",
   min: number,
-  partial: boolean,
+  isPartial: boolean,
   out: Partial<SpoolBody>,
 ): ParseResult | null {
   if (input[field] !== undefined) {
@@ -124,7 +124,7 @@ function parseWeight(
     const grams = Math.round(v)
     if (grams < min) return { ok: false, message: `${field} must be at least ${min} g` }
     out[field] = grams
-  } else if (!partial) {
+  } else if (!isPartial) {
     return { ok: false, message: `${field} is required` }
   }
   return null

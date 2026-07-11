@@ -34,7 +34,7 @@ export const EMPTY_FILTERS: InventoryFilters = {
 };
 
 // `status` is a view selector, not a removable filter chip — deliberately excluded.
-export function filtersActive(f: InventoryFilters): boolean {
+export function areFiltersActive(f: InventoryFilters): boolean {
   return (
     f.q.trim() !== '' ||
     f.filamentType !== null ||
@@ -44,7 +44,7 @@ export function filtersActive(f: InventoryFilters): boolean {
 }
 
 // The advanced filters that live behind the mobile "Filters" toggle.
-function advancedActive(f: InventoryFilters): boolean {
+function isAdvancedActive(f: InventoryFilters): boolean {
   return f.filamentType !== null || f.minLeftGrams !== null || f.hideLent;
 }
 
@@ -107,7 +107,10 @@ export function InventoryFilter({
               v && onChange({ ...value, status: v as StockStatus })
             }
           >
-            <SelectTrigger className="h-9 w-32" aria-label="Filter by stock status">
+            <SelectTrigger
+              className="h-9 w-32"
+              aria-label="Filter by stock status"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -130,12 +133,12 @@ export function InventoryFilter({
         >
           <SlidersHorizontal className="mr-1 h-4 w-4" />
           Filters
-          {advancedActive(value) && (
+          {isAdvancedActive(value) && (
             <span className="bg-accent absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full" />
           )}
         </Button>
 
-        {filtersActive(value) && (
+        {areFiltersActive(value) && (
           <Button
             size="sm"
             variant="ghost"
@@ -160,7 +163,8 @@ export function InventoryFilter({
           items={TYPE_ITEMS}
           value={value.filamentType ?? ALL_TYPES}
           onValueChange={(v) =>
-            v && onChange({ ...value, filamentType: v === ALL_TYPES ? null : v })
+            v &&
+            onChange({ ...value, filamentType: v === ALL_TYPES ? null : v })
           }
         >
           <SelectTrigger className="h-9" aria-label="Filter by filament type">
@@ -187,9 +191,11 @@ export function InventoryFilter({
             type="number"
             step="1"
             min="0"
-            value={value.minLeftGrams === null ? '' : String(value.minLeftGrams)}
+            value={
+              value.minLeftGrams === null ? '' : String(value.minLeftGrams)
+            }
             onChange={(e) => {
-              const parsed = Number.parseInt(e.target.value, 10);
+              const parsed = Math.trunc(Number(e.target.value));
               onChange({
                 ...value,
                 minLeftGrams: Number.isNaN(parsed) ? null : parsed,
@@ -205,7 +211,9 @@ export function InventoryFilter({
             <input
               type="checkbox"
               checked={value.hideLent}
-              onChange={(e) => onChange({ ...value, hideLent: e.target.checked })}
+              onChange={(e) =>
+                onChange({ ...value, hideLent: e.target.checked })
+              }
               className="border-input h-4 w-4 rounded"
             />
             Hide lent spools

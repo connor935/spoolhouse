@@ -19,5 +19,6 @@ export function proxy(request: NextRequest) {
 export const config = {
   // /api is exempt: better-auth handles /api/auth itself, and the REST API
   // (/api/v1) does authoritative Bearer-token auth in its route handlers.
-  matcher: [String.raw`/((?!api/|_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|ico|webmanifest)$).*)`],
+  // eslint-disable-next-line unicorn/prefer-string-raw
+  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|ico|webmanifest)$).*)"],
 }

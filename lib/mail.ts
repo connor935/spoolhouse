@@ -9,7 +9,7 @@ type Mail = {
 // SMTP when configured; console fallback so dev works without a mail server.
 export async function sendMail({ to, subject, text }: Mail) {
   if (!process.env.SMTP_HOST) {
-    console.log(`[mail fallback] To: ${to}\nSubject: ${subject}\n${text}`)
+    console.warn(`[mail fallback] To: ${to}\nSubject: ${subject}\n${text}`)
     return
   }
   const transport = nodemailer.createTransport({

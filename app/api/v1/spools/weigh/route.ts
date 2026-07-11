@@ -44,7 +44,6 @@ export async function POST(request: Request) {
   // Register path: need enough to create/find a material
   const manufacturer = str(b.manufacturer)
   const name = str(b.name)
-  const filamentType = str(b.filamentType) || "Other"
   if (!manufacturer || !name) {
     return apiError(
       400,
@@ -52,6 +51,7 @@ export async function POST(request: Request) {
       "No spool for this tag. To register, include at least manufacturer and name.",
     )
   }
+  const filamentType = str(b.filamentType) || "Other"
   const color = str(b.color) || null
   const emptyWeightGrams = intOr(b.emptyWeightGrams, 0)
   const fullFilamentWeightGrams = intOr(b.fullFilamentWeightGrams, measured)

@@ -20,12 +20,12 @@ export default async function Page({
   const params = await searchParams;
   const str = (v: string | string[] | undefined) =>
     typeof v === 'string' ? v : '';
-  const minLeftParsed = Number.parseInt(str(params.minLeft), 10);
+  const minLeftParsed = Math.trunc(Number(str(params.minLeft)));
   const initialTab = str(params.tab) || 'stock';
   const statusParam = str(params.status);
-  const status = (['empty', 'all'].includes(statusParam)
-    ? statusParam
-    : 'in-stock') as 'in-stock' | 'empty' | 'all';
+  const status = (
+    ['empty', 'all'].includes(statusParam) ? statusParam : 'in-stock'
+  ) as 'in-stock' | 'empty' | 'all';
   const initialFilters = {
     q: str(params.q),
     status,
