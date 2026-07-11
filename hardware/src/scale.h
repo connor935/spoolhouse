@@ -16,6 +16,10 @@ public:
   // Re-zero: the current load becomes the new 0 g baseline.
   void tare();
 
+  // One fresh raw reading in grams (blocks until the HX711 is ready, ~100 ms);
+  // unsmoothed, for averaging during an upload measurement.
+  float readInstant();
+
   float grams() const { return _grams; }
   bool ready() const { return _ready; }
 

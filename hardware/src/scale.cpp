@@ -19,6 +19,11 @@ void Scale::tare() {
   _hasFirstSample = false;
 }
 
+float Scale::readInstant() {
+  if (!_ready) return _grams;
+  return _hx711.get_units(1);
+}
+
 void Scale::update() {
   if (!_ready || !_hx711.is_ready()) return;
   const float sample = _hx711.get_units(1);

@@ -4,6 +4,8 @@
 // behind NfcReader and the tag formats behind SpoolDecoder, so new readers
 // (CLRC663) and manufacturers (Creality, OpenTag) drop in without touching
 // this file's logic.
+#include <algorithm>
+
 #include <Arduino.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
@@ -47,15 +49,10 @@ bool tagPresent = false;
 uint8_t tagMisses = 0;
 FilamentInfo filament;  // decoded details for the current tag (valid flag inside)
 
-// Tare input edge detection (BOOT button + touchscreen)
+// Tap input edge detection (BOOT button + touchscreen)
 bool lastButtonDown = false;
 uint32_t lastButtonChangeMs = 0;
-uint32_t lastTouchTareMs = 0;
-
-// Auto-send state: send once per spool placement, after the weight settles
-String sentTagKey;   // spoolId we've already sent for the current placement
-float settleRef = 0;
-uint32_t settleStart = 0;
+uint32_t lastTouchMs = 0;
 
 uint32_t lastNfcPollMs = 0;
 uint32_t lastNfcInitMs = 0;
@@ -70,15 +67,19 @@ constexpr uint16_t INFO_Y = 26;    // top of the spool-info area
 constexpr int WEIGHT_TOP = 150;    // spool info ends / weight zone begins
 constexpr int WEIGHT_CY = 184;     // vertical centre of the weight readout
 
-// Thin footer hint (not a button — the whole screen is the touch target)
+// Thin footer hint (not a button — the whole screen is the touch target).
+// The action depends on context: upload when a spool is recognized, else tare.
 constexpr int FOOTER_H = 16;
 int footerY() { return tft.height() - FOOTER_H; }
+
+bool canUpload() { return tagPresent && filament.valid; }
 
 void drawFooterHint() {
   tft.fillRect(0, footerY(), tft.width(), FOOTER_H, TFT_BLACK);
   tft.setTextDatum(BC_DATUM);
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("tap screen to tare", tft.width() / 2, tft.height() - 1, 2);
+  tft.setTextColor(canUpload() ? TFT_SKYBLUE : TFT_DARKGREY, TFT_BLACK);
+  tft.drawString(canUpload() ? "tap screen to upload" : "tap screen to tare",
+                 tft.width() / 2, tft.height() - 1, 2);
 }
 
 void drawStaticUi() {
@@ -121,6 +122,7 @@ void drawInfo() {
   const String key = infoKey();
   if (key == drawnInfoKey) return;
   drawnInfoKey = key;
+  drawFooterHint();  // action (tare/upload) depends on spool presence
 
   // Clear the spool-info area (above the weight zone)
   tft.fillRect(0, INFO_Y, tft.width(), WEIGHT_TOP - INFO_Y - 2, TFT_BLACK);
@@ -192,14 +194,6 @@ void drawInfo() {
   }
 }
 
-void drawSendStatus(const String &s, uint16_t color) {
-  const int y = WEIGHT_TOP - 18;  // just above the weight zone
-  tft.fillRect(0, y, tft.width(), 16, TFT_BLACK);
-  tft.setTextDatum(TL_DATUM);
-  tft.setTextColor(color, TFT_BLACK);
-  tft.drawString(s, 14, y, 2);
-}
-
 void drawWifiStatus() {
   const bool up = spoolhouse::wifiConnected();
   tft.fillRect(tft.width() - 60, 4, 60, 14, TFT_BLACK);
@@ -210,10 +204,6 @@ void drawWifiStatus() {
 
 void handleNewTag() {
   filament = FilamentInfo{};
-  // New placement → allow one upload once the weight settles
-  sentTagKey = "";
-  settleRef = scale.grams();
-  settleStart = millis();
   // MIFARE auth over the bit-banged SPI occasionally fails on first contact,
   // so give the decoders a few attempts before concluding "unknown".
   for (uint8_t attempt = 0; attempt < 3; attempt++) {
@@ -244,35 +234,75 @@ void pollNfc() {
     tagPresent = false;
     tagMisses = 0;
     filament = FilamentInfo{};
-    sentTagKey = "";
     Serial.println("[nfc] tag removed");
   }
 }
 
-// Once a recognized spool's weight has settled, upload it to Spoolhouse once
-// per placement (register on first sight, refresh thereafter).
-void autoSend() {
-  if (!(tagPresent && filament.valid && filament.spoolId[0])) return;
-  if (sentTagKey == filament.spoolId) return;  // already sent this placement
+// Full-screen centred message (measuring / uploading / result overlay).
+void overlayMessage(const String &l1, const String &l2, uint16_t color) {
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(color, TFT_BLACK);
+  tft.drawString(l1, tft.width() / 2, tft.height() / 2 - 18, 4);
+  if (l2.length()) {
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.drawString(l2, tft.width() / 2, tft.height() / 2 + 16, 4);
+  }
+}
 
-  const int g = (int)lroundf(scale.grams());
-  if (fabsf((float)g - settleRef) > SEND_STABLE_G) {  // still moving → restart timer
-    settleRef = g;
-    settleStart = millis();
+// Repaint the normal UI after an overlay.
+void restoreUi() {
+  drawnWeight = "";
+  drawnInfoKey = "";
+  drawStaticUi();
+  drawWifiStatus();
+  drawWeight();
+  drawInfo();
+}
+
+// Measure the weight for 5 s, average the middle 5–95 % of the sorted samples
+// (rejecting outliers), and upload the result to Spoolhouse.
+void doUpload() {
+  overlayMessage("Measuring...", "hold still", TFT_SKYBLUE);
+
+  constexpr int CAP = 160;
+  static float samples[CAP];
+  int n = 0;
+  const uint32_t start = millis();
+  while (millis() - start < UPLOAD_MEASURE_MS && n < CAP) {
+    samples[n++] = scale.readInstant();
+  }
+  if (n < 3) {
+    overlayMessage("No reading", "", TFT_RED);
+    delay(1500);
+    restoreUi();
     return;
   }
-  if (millis() - settleStart < SEND_STABLE_MS) return;  // not settled long enough
 
-  drawSendStatus("uploading...", TFT_YELLOW);
-  String action;
-  const auto r = spoolhouse::postWeigh(filament, g, &action);
-  if (r == spoolhouse::Result::Ok) {
-    sentTagKey = filament.spoolId;
-    drawSendStatus("uploaded (" + action + ") " + String(g) + " g", TFT_GREENYELLOW);
-  } else {
-    drawSendStatus(r == spoolhouse::Result::NoWifi ? "no wifi" : "upload failed", TFT_ORANGE);
-    settleStart = millis();  // back off, retry after the next settle window
+  std::sort(samples, samples + n);
+  // Trim the lowest 5 % and highest 5 %, average the rest.
+  int lo = (int)floorf(0.05f * n);
+  int hi = (int)ceilf(0.95f * n);
+  if (hi <= lo) {
+    lo = 0;
+    hi = n;
   }
+  double sum = 0;
+  for (int i = lo; i < hi; i++) sum += samples[i];
+  const int avg = (int)lroundf(sum / (hi - lo));
+  Serial.printf("[upload] %d samples, trimmed avg %d g (used %d)\n", n, avg, hi - lo);
+
+  overlayMessage("Uploading...", String(avg) + " g", TFT_YELLOW);
+  String action;
+  const auto r = spoolhouse::postWeigh(filament, avg, &action);
+  if (r == spoolhouse::Result::Ok) {
+    overlayMessage("Uploaded!", String(avg) + " g", TFT_GREENYELLOW);
+    delay(2000);
+  } else {
+    overlayMessage("Upload failed", r == spoolhouse::Result::NoWifi ? "no wifi" : "server error", TFT_RED);
+    delay(2000);
+  }
+  restoreUi();
 }
 
 void doTare(const char *source) {
@@ -289,14 +319,23 @@ void doTare(const char *source) {
   drawFooterHint();
 }
 
-void pollTareInputs() {
+// Tap = upload when a recognized spool is present, otherwise tare.
+void onTap(const char *source) {
+  if (canUpload()) {
+    doUpload();
+  } else {
+    doTare(source);
+  }
+}
+
+void pollInputs() {
   const uint32_t now = millis();
 
-  // Touchscreen: any touch tares
+  // Touchscreen tap
   if (touch.tirqTouched() && touch.touched()) {
-    if (now - lastTouchTareMs >= TOUCH_DEBOUNCE_MS) {
-      lastTouchTareMs = now;
-      doTare("touch");
+    if (now - lastTouchMs >= TOUCH_DEBOUNCE_MS) {
+      lastTouchMs = now;
+      onTap("touch");
     }
   }
 
@@ -305,7 +344,7 @@ void pollTareInputs() {
   if (down != lastButtonDown && now - lastButtonChangeMs >= BUTTON_DEBOUNCE_MS) {
     lastButtonChangeMs = now;
     lastButtonDown = down;
-    if (down) doTare("button");
+    if (down) onTap("button");
   }
 }
 
@@ -360,7 +399,7 @@ void setup() {
 
 void loop() {
   if (scaleOk) scale.update();
-  pollTareInputs();
+  pollInputs();
 
   const uint32_t now = millis();
   if (!nfcOk && now - lastNfcInitMs >= NFC_REINIT_INTERVAL_MS) {
@@ -372,7 +411,6 @@ void loop() {
     lastNfcPollMs = now;
     pollNfc();
   }
-  autoSend();
   if (now - lastDrawMs >= DISPLAY_UPDATE_INTERVAL_MS) {
     lastDrawMs = now;
     drawWeight();
