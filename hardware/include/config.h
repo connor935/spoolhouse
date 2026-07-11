@@ -52,8 +52,10 @@ constexpr uint32_t UPLOAD_MEASURE_MS = 5000;
 // ---- Polling / display timing ----
 constexpr uint32_t NFC_POLL_INTERVAL_MS = 250;
 constexpr uint16_t NFC_POLL_TIMEOUT_MS = 50;
-// A tag counts as removed after this many consecutive failed polls
-constexpr uint8_t NFC_MISSES_UNTIL_GONE = 3;
+// A tag counts as removed after this many consecutive failed polls. Kept
+// generous so brief read glitches (e.g. WiFi activity during an upload
+// disturbing the bit-banged bus) don't spuriously drop a present tag.
+constexpr uint8_t NFC_MISSES_UNTIL_GONE = 6;
 // While the reader is offline, retry initializing it this often
 constexpr uint32_t NFC_REINIT_INTERVAL_MS = 5000;
 constexpr uint32_t DISPLAY_UPDATE_INTERVAL_MS = 200;

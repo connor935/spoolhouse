@@ -257,6 +257,10 @@ void nfcTask(void *) {
   bool present = false;
   uint8_t misses = 0;
   FilamentInfo fil;
+  // Cache of the last VALID decode, so a returning known tag shows instantly
+  // (no slow re-decode, no "unknown" flash) — e.g. after an upload.
+  NfcUid cacheUid;
+  FilamentInfo cacheFil;
   publishNfc(ok, false, uid, fil);
   uint32_t lastInit = millis();
 
@@ -278,8 +282,17 @@ void nfcTask(void *) {
       if (!present || u != uid) {
         uid = u;
         present = true;
-        Serial.printf("[nfc] tag present: %s\n", uid.toHexString().c_str());
-        decodeTag(uid, fil);
+        if (u == cacheUid && cacheFil.valid) {
+          fil = cacheFil;  // known tag → restore instantly
+          Serial.printf("[nfc] tag present (cached): %s\n", uid.toHexString().c_str());
+        } else {
+          Serial.printf("[nfc] tag present: %s\n", uid.toHexString().c_str());
+          decodeTag(uid, fil);
+          if (fil.valid) {
+            cacheUid = uid;
+            cacheFil = fil;
+          }
+        }
         publishNfc(ok, present, uid, fil);
       }
     } else if (present && ++misses >= NFC_MISSES_UNTIL_GONE) {
