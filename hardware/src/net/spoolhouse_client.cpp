@@ -67,7 +67,7 @@ void provision(void (*onPortalStart)(const char *apName)) {
   Serial.println("[wifi] no connection — starting setup portal");
   WiFiManager wm;
   WiFiManagerParameter pToken("token", "Spoolhouse API token (sph_...)", config_store::token().c_str(), 96);
-  WiFiManagerParameter pUrl("url", "Spoolhouse URL (http://ip:3000)", config_store::serverUrl().c_str(), 96);
+  WiFiManagerParameter pUrl("url", "Spoolhouse base URL", config_store::serverUrl().c_str(), 128);
   wm.addParameter(&pToken);
   wm.addParameter(&pUrl);
   wm.setConfigPortalTimeout(0);  // stay in setup until the user provisions

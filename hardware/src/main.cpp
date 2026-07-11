@@ -580,7 +580,10 @@ void loop() {
   pollInputs();
 
   const uint32_t now = millis();
-  if (now - lastDrawMs >= DISPLAY_UPDATE_INTERVAL_MS) {
+  // Don't repaint the normal UI while a factory-reset warning/countdown overlay
+  // is showing (resetCountdownSec >= 0) — otherwise the weight reading pops
+  // through over it.
+  if (resetCountdownSec < 0 && now - lastDrawMs >= DISPLAY_UPDATE_INTERVAL_MS) {
     lastDrawMs = now;
     drawWeight();
     drawInfo();
