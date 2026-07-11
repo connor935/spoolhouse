@@ -84,7 +84,7 @@ String page() {
          "input:focus{border-color:var(--ring);box-shadow:0 0 0 3px var(--ring)}"
          "input[type=file]{padding:.4rem;color:var(--mut)}"
          "button{margin-top:.9rem;width:100%;padding:.62rem 1rem;border:0;border-radius:calc(var(--r)*.8);"
-         "background:var(--primary);color:var(--primary-fg);font-size:.95rem;font-weight:600;cursor:pointer}"
+         "background:var(--accent);color:var(--accent-fg);font-size:.95rem;font-weight:600;cursor:pointer}"
          "button:hover{opacity:.9}.weight{font-size:2.6rem;font-weight:700;letter-spacing:-.02em}"
          ".muted{color:var(--mut);font-size:.82rem;margin:.2rem 0 .5rem}"
          "</style></head><body>"
