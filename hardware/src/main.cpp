@@ -525,6 +525,9 @@ void pollInputs() {
   }
 }
 
+// Status callback for the browser firmware-upload flow (drawn full-screen).
+void webStatus(const char *l1, const char *l2) { overlayMessage(l1, l2, TFT_SKYBLUE); }
+
 // Enable over-the-air firmware updates (so the case never has to be opened to
 // flash). Requires WiFi to be connected. Shows progress on the display.
 void setupOta() {
@@ -599,8 +602,8 @@ void setup() {
   // blocks until connected; the portal reboots the device once provisioned.
   spoolhouse::provision(drawSetupScreen);
 
-  setupOta();          // wireless firmware updates (WiFi is up now)
-  web_config::begin(&scale);  // http://spoolhouse-scale.local/ config page
+  setupOta();                            // wireless firmware updates (WiFi is up now)
+  web_config::begin(&scale, webStatus);  // http://spoolhouse-scale.local/ config + upload
 
   drawStaticUi();
   drawWifiStatus();

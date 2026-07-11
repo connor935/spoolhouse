@@ -8,7 +8,11 @@ class Scale;
 // operation once WiFi is connected.
 namespace web_config {
 
-void begin(Scale *scale);  // start the HTTP server on port 80
-void handle();             // call every loop iteration
+// Optional: called during a browser firmware upload so the caller can show
+// progress/status on the display. line2 may be a byte/percent string.
+using StatusFn = void (*)(const char *line1, const char *line2);
+
+void begin(Scale *scale, StatusFn onStatus = nullptr);  // start HTTP server on port 80
+void handle();                                          // call every loop iteration
 
 }  // namespace web_config

@@ -1,6 +1,7 @@
 #include "web_config.h"
 
 #include <ESPmDNS.h>
+#include <Update.h>
 #include <WebServer.h>
 #include <esp_random.h>
 
@@ -12,6 +13,7 @@ namespace {
 
 WebServer server(80);
 Scale *g_scale = nullptr;
+StatusFn g_status = nullptr;
 // Random per-boot CSRF token: embedded as a hidden field in every form and
 // re-checked on POST, so a page on another origin can't silently submit here
 // (it can't read this token due to the same-origin policy). No login is
@@ -83,6 +85,15 @@ String page() {
   h += csrfField();
   h += F("<button type=submit>Save</button></form>");
 
+  // Firmware upload (browser OTA). File inputs can't be populated cross-origin
+  // by script, so this isn't CSRF-able and needs no token.
+  h += F("<form method=post action=/update enctype='multipart/form-data'>"
+         "<h2>Firmware update</h2>"
+         "<label>Upload a .bin (pio: .pio/build/cyd/firmware.bin). The device "
+         "reboots when done.</label>"
+         "<input type=file name=firmware accept='.bin'>"
+         "<button type=submit>Upload &amp; flash</button></form>");
+
   h += F("<script>setInterval(function(){fetch('/weight').then(r=>r.text())"
          ".then(t=>{document.getElementById('w').textContent=t+' g'})},700)</script>");
   h += F("</body></html>");
@@ -129,10 +140,49 @@ void handleSave() {
   redirectHome();
 }
 
+// Streams an uploaded .bin straight into the inactive OTA partition.
+void handleUpdateUpload() {
+  HTTPUpload &up = server.upload();
+  if (up.status == UPLOAD_FILE_START) {
+    if (g_status) g_status("Firmware update", "receiving...");
+    Serial.printf("[update] start: %s\n", up.filename.c_str());
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) Update.printError(Serial);
+  } else if (up.status == UPLOAD_FILE_WRITE) {
+    if (Update.write(up.buf, up.currentSize) != up.currentSize) Update.printError(Serial);
+    if (g_status) {
+      char b[24];
+      snprintf(b, sizeof(b), "%u KB", (unsigned)(up.totalSize / 1024));
+      g_status("Firmware update", b);
+    }
+  } else if (up.status == UPLOAD_FILE_END) {
+    if (Update.end(true)) {
+      Serial.printf("[update] ok: %u bytes\n", (unsigned)up.totalSize);
+      if (g_status) g_status("Update complete", "rebooting");
+    } else {
+      Update.printError(Serial);
+      if (g_status) g_status("Update failed", "");
+    }
+  }
+}
+
+void handleUpdateDone() {
+  const bool ok = !Update.hasError();
+  server.send(200, "text/html",
+              ok ? F("<!doctype html><meta charset=utf-8><body style='font-family:sans-serif'>"
+                     "<p>Update OK - rebooting...</p>")
+                 : F("<!doctype html><meta charset=utf-8><body style='font-family:sans-serif'>"
+                     "<p>Update FAILED. <a href=/>back</a></p>"));
+  if (ok) {
+    delay(800);
+    ESP.restart();
+  }
+}
+
 }  // namespace
 
-void begin(Scale *scale) {
+void begin(Scale *scale, StatusFn onStatus) {
   g_scale = scale;
+  g_status = onStatus;
 
   char buf[17];
   snprintf(buf, sizeof(buf), "%08x%08x", esp_random(), esp_random());
@@ -143,6 +193,7 @@ void begin(Scale *scale) {
   server.on("/tare", HTTP_POST, handleTare);
   server.on("/calibrate", HTTP_POST, handleCalibrate);
   server.on("/save", HTTP_POST, handleSave);
+  server.on("/update", HTTP_POST, handleUpdateDone, handleUpdateUpload);
   server.begin();
   MDNS.addService("http", "tcp", 80);
 }
