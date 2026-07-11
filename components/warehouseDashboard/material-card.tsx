@@ -35,10 +35,22 @@ export function MaterialCard({
             style={{ backgroundColor: swatch }}
             aria-hidden
           />
-          <div className="min-w-0">
-            <h3 className="text-card-foreground leading-tight font-medium">
-              {material.name}
-            </h3>
+          <div className="w-full min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-card-foreground line-clamp-2 leading-tight font-medium">
+                {material.name}
+              </h3>
+              <div className="flex min-w-0 shrink-0 items-center gap-2">
+                {material.status === 'pending' && (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    Pending review
+                  </Badge>
+                )}
+                <Badge variant="secondary" className="font-mono text-xs">
+                  {material.filamentType}
+                </Badge>
+              </div>
+            </div>
             <div className="text-muted-foreground flex min-w-0 text-sm">
               <p className="truncate">{material.manufacturer}</p>
               <p className="mx-1">·</p>
@@ -49,16 +61,6 @@ export function MaterialCard({
               <p>{formatWeight(totalLeftGrams)} left</p>
             </div>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Badge variant="secondary" className="font-mono text-xs">
-            {material.filamentType}
-          </Badge>
-          {material.status === 'pending' && (
-            <Badge variant="outline" className="text-muted-foreground">
-              Pending review
-            </Badge>
-          )}
         </div>
       </div>
 
