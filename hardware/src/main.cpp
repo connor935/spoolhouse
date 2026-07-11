@@ -7,13 +7,16 @@
 #include <algorithm>
 
 #include <Arduino.h>
+#include <ArduinoOTA.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
+#include <WiFi.h>
 #include <XPT2046_Touchscreen.h>
 
 #include "config.h"
 #include "config_store.h"
 #include "net/spoolhouse_client.h"
+#include "secrets.h"  // OTA_PASSWORD
 #include "nfc/nfc_reader.h"
 #include "nfc/pn532_reader.h"
 #include "scale.h"
@@ -521,6 +524,30 @@ void pollInputs() {
   }
 }
 
+// Enable over-the-air firmware updates (so the case never has to be opened to
+// flash). Requires WiFi to be connected. Shows progress on the display.
+void setupOta() {
+  ArduinoOTA.setHostname(OTA_HOSTNAME);
+#ifdef OTA_PASSWORD
+  if (strlen(OTA_PASSWORD) > 0) ArduinoOTA.setPassword(OTA_PASSWORD);
+#endif
+  ArduinoOTA.onStart([]() { overlayMessage("Firmware update", "starting...", TFT_SKYBLUE); });
+  ArduinoOTA.onProgress([](unsigned int prog, unsigned int total) {
+    static int lastPct = -1;
+    const int pct = total ? (int)(prog * 100 / total) : 0;
+    if (pct == lastPct) return;
+    lastPct = pct;
+    tft.fillRect(0, tft.height() / 2, tft.width(), 40, TFT_BLACK);
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.drawString(String(pct) + "%", tft.width() / 2, tft.height() / 2 + 14, 4);
+  });
+  ArduinoOTA.onEnd([]() { overlayMessage("Update complete", "rebooting", TFT_GREENYELLOW); });
+  ArduinoOTA.onError([](ota_error_t) { overlayMessage("Update failed", "", TFT_RED); });
+  ArduinoOTA.begin();
+  Serial.printf("[ota] ready: %s (%s)\n", OTA_HOSTNAME, WiFi.localIP().toString().c_str());
+}
+
 }  // namespace
 
 void setup() {
@@ -571,6 +598,8 @@ void setup() {
   // blocks until connected; the portal reboots the device once provisioned.
   spoolhouse::provision(drawSetupScreen);
 
+  setupOta();  // wireless firmware updates (WiFi is up now)
+
   drawStaticUi();
   drawWifiStatus();
 
@@ -584,7 +613,8 @@ void setup() {
 }
 
 void loop() {
-  syncNfcState();  // pick up the latest NFC result from core 0
+  ArduinoOTA.handle();  // service wireless firmware updates
+  syncNfcState();       // pick up the latest NFC result from core 0
   if (scaleOk) scale.update();
   pollInputs();
 

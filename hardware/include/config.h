@@ -53,6 +53,11 @@ constexpr uint32_t UPLOAD_MEASURE_MS = 5000;
 // SoftAP name shown when the device can't reach WiFi and opens the setup portal.
 constexpr const char *PORTAL_AP_NAME = "Spoolhouse-Setup";
 
+// ---- OTA (over-the-air firmware update) ----
+// mDNS/OTA hostname; flash wirelessly with `pio run -e cyd_ota -t upload`.
+// The OTA password comes from OTA_PASSWORD in secrets.h (optional).
+constexpr const char *OTA_HOSTNAME = "spoolhouse-scale";
+
 // ---- Factory reset (hold the touchscreen) ----
 constexpr uint32_t RESET_WARN1_MS = 10000;    // first warning
 constexpr uint32_t RESET_WARN2_MS = 15000;    // second warning
