@@ -51,48 +51,76 @@ String page() {
   const int grams = g_scale ? (int)lroundf(g_scale->grams()) : 0;
 
   String h;
-  h.reserve(2800);
-  h += F("<!doctype html><html><head><meta charset=utf-8>"
+  h.reserve(5000);
+  // Design tokens mirror the Spoolhouse web app (app/globals.css): petrol/blue
+  // accent, cool neutrals, 0.5rem radius, light + dark via prefers-color-scheme.
+  h += F("<!doctype html><html lang=en><head><meta charset=utf-8>"
          "<meta name=viewport content='width=device-width,initial-scale=1'>"
          "<title>Spoolhouse scale</title><style>"
-         "body{font-family:system-ui,sans-serif;max-width:32rem;margin:1.5rem auto;padding:0 1rem;"
-         "background:#111;color:#eee}h1{font-size:1.3rem}h2{font-size:1rem;margin-top:1.6rem}"
-         "input{width:100%;box-sizing:border-box;padding:.5rem;margin:.25rem 0 .75rem;border-radius:.4rem;"
-         "border:1px solid #444;background:#1c1c1c;color:#eee}button{padding:.55rem 1rem;border:0;border-radius:.4rem;"
-         "background:#2b6cb0;color:#fff;font-size:1rem;cursor:pointer}.w{font-size:2.2rem;font-weight:700}"
-         "form{border:1px solid #333;border-radius:.6rem;padding:1rem;margin:.6rem 0}label{font-size:.85rem;color:#aaa}"
-         "</style></head><body><h1>Spoolhouse scale</h1>");
+         ":root{--bg:oklch(.985 .004 220);--fg:oklch(.22 .03 240);--card:oklch(1 0 0);"
+         "--primary:oklch(.28 .05 230);--primary-fg:oklch(.985 .004 220);--mut:oklch(.5 .02 240);"
+         "--accent:oklch(.52 .09 210);--accent-fg:oklch(.99 .005 210);--border:oklch(.9 .012 220);"
+         "--input:oklch(.9 .012 220);--ring:oklch(.52 .09 210);--r:.5rem}"
+         "@media(prefers-color-scheme:dark){:root{--bg:oklch(.17 .02 235);--fg:oklch(.96 .005 220);"
+         "--card:oklch(.21 .025 235);--primary:oklch(.96 .005 220);--primary-fg:oklch(.21 .025 235);"
+         "--mut:oklch(.68 .02 235);--accent:oklch(.6 .1 205);--accent-fg:oklch(.14 .02 220);"
+         "--border:oklch(1 0 0 / 12%);--input:oklch(1 0 0 / 15%);--ring:oklch(.6 .1 205)}}"
+         "*{box-sizing:border-box}"
+         "body{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;"
+         "background:var(--bg);color:var(--fg);max-width:34rem;margin:0 auto;padding:1.25rem 1rem 3rem;"
+         "line-height:1.5;-webkit-font-smoothing:antialiased}"
+         "header{display:flex;align-items:center;gap:.7rem;margin:.3rem 0 1.2rem}"
+         ".logo{width:2.1rem;height:2.1rem;border-radius:var(--r);background:var(--accent);"
+         "color:var(--accent-fg);display:grid;place-items:center;font-weight:700}"
+         "h1{font-size:1.3rem;font-weight:600;letter-spacing:-.01em;margin:0}"
+         ".sub{color:var(--mut);font-size:.82rem;margin:.1rem 0 0}"
+         ".card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);"
+         "padding:1.1rem;margin:.85rem 0}"
+         ".card h2{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;"
+         "color:var(--mut);margin:0 0 .7rem}"
+         "label{display:block;font-size:.82rem;color:var(--mut);margin:.55rem 0 .25rem}"
+         "input{width:100%;padding:.55rem .7rem;border:1px solid var(--input);border-radius:calc(var(--r)*.8);"
+         "background:var(--bg);color:var(--fg);font-size:.95rem;outline:none}"
+         "input:focus{border-color:var(--ring);box-shadow:0 0 0 3px var(--ring)}"
+         "input[type=file]{padding:.4rem;color:var(--mut)}"
+         "button{margin-top:.9rem;width:100%;padding:.62rem 1rem;border:0;border-radius:calc(var(--r)*.8);"
+         "background:var(--primary);color:var(--primary-fg);font-size:.95rem;font-weight:600;cursor:pointer}"
+         "button:hover{opacity:.9}.weight{font-size:2.6rem;font-weight:700;letter-spacing:-.02em}"
+         ".muted{color:var(--mut);font-size:.82rem;margin:.2rem 0 .5rem}"
+         "</style></head><body>"
+         "<header><div class=logo>S</div><div><h1>Spoolhouse scale</h1>"
+         "<p class=sub>Device configuration</p></div></header>");
 
-  h += F("<form action=/tare method=post><h2>Weight</h2><div class=w id=w>");
+  h += F("<form class=card action=/tare method=post><h2>Weight</h2><div class=weight id=w>");
   h += String(grams);
   h += F(" g</div>");
   h += csrfField();
   h += F("<button type=submit>Tare (zero)</button></form>");
 
-  h += F("<form action=/calibrate method=post><h2>Calibrate</h2>"
-         "<label>Tare empty, place a known weight, enter its grams, Calibrate.</label>"
-         "<input name=known type=number step=1 placeholder='known weight (g), e.g. 500'>"
-         "<label>counts/gram: ");
+  h += F("<form class=card action=/calibrate method=post><h2>Calibrate</h2>"
+         "<p class=muted>Tare empty, place a known weight, enter its grams, then Calibrate.</p>"
+         "<label>Known weight (g)</label>"
+         "<input name=known type=number step=1 placeholder='e.g. 500'>"
+         "<p class=muted>Current: ");
   h += String(cpg, 2);
-  h += F("</label>");
+  h += F(" counts/gram</p>");
   h += csrfField();
   h += F("<button type=submit>Calibrate</button></form>");
 
-  h += F("<form action=/save method=post><h2>Spoolhouse server</h2>"
+  h += F("<form class=card action=/save method=post><h2>Spoolhouse server</h2>"
          "<label>Base URL</label><input name=url value='");
   h += esc(url);
-  h += F("'><label>API token (leave blank to keep current)</label>"
-         "<input name=token type=password placeholder='sph_...'>");
+  h += F("'><label>API token</label>"
+         "<input name=token type=password placeholder='leave blank to keep current'>");
   h += csrfField();
   h += F("<button type=submit>Save</button></form>");
 
   // Firmware upload (browser OTA). The CSRF field comes FIRST so it is parsed
   // before the file part and is available when the upload handler starts.
-  h += F("<form method=post action=/update enctype='multipart/form-data'>"
+  h += F("<form class=card method=post action=/update enctype='multipart/form-data'>"
          "<h2>Firmware update</h2>");
   h += csrfField();
-  h += F("<label>Upload a .bin (pio: .pio/build/cyd/firmware.bin). The device "
-         "reboots when done.</label>"
+  h += F("<p class=muted>Upload a .bin (.pio/build/cyd/firmware.bin). The device reboots when done.</p>"
          "<input type=file name=firmware accept='.bin'>"
          "<button type=submit>Upload &amp; flash</button></form>");
 
