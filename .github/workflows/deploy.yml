@@ -70,7 +70,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Navigate to where your docker-compose.yml lives on Hetzner
-            cd /path/to/your/spoolhouse/deploy/dir
+            cd $STACK_DIR
 
             # Authenticate Docker with GHCR using the token if not already cached
             # (Ensure you ran `docker login ghcr.io` once on the server manually)
