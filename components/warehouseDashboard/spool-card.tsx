@@ -19,11 +19,34 @@ export function SpoolCard({
       : 'bg-accent';
 
   return (
-    <li className="flex items-center justify-between gap-4 px-5 py-3">
-      <div className="flex min-w-0 items-center gap-2">
-        <span className="text-muted-foreground font-mono text-xs">
-          #{index + 1}
+    <li className="flex flex-col gap-2 px-5 py-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-muted-foreground font-mono text-xs">
+            #{index + 1}
+          </span>
+        </div>
+
+        <span className="w-16 shrink-0 font-mono text-sm font-semibold tabular-nums">
+          {formatWeight(spool.filamentLeftGrams)}
         </span>
+        <div
+          className="bg-secondary h-2 w-full overflow-hidden rounded-full"
+          role="progressbar"
+          aria-valuenow={Math.round(spool.percentLeft)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className={`h-full rounded-full transition-all ${barColor}`}
+            style={{ width: `${spool.percentLeft}%` }}
+          />
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => onEdit(spool)}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="flex items-center gap-4">
         {spool.isEmpty ? (
           <Badge
             variant="outline"
@@ -42,25 +65,6 @@ export function SpoolCard({
           </Badge>
         )}
       </div>
-
-      <span className="w-16 shrink-0 font-mono text-sm font-semibold tabular-nums">
-        {formatWeight(spool.filamentLeftGrams)}
-      </span>
-      <div
-        className="bg-secondary h-2 w-full overflow-hidden rounded-full"
-        role="progressbar"
-        aria-valuenow={Math.round(spool.percentLeft)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
-        <div
-          className={`h-full rounded-full transition-all ${barColor}`}
-          style={{ width: `${spool.percentLeft}%` }}
-        />
-      </div>
-      <Button variant="ghost" size="icon" onClick={() => onEdit(spool)}>
-        <Pencil className="h-4 w-4" />
-      </Button>
     </li>
   );
 }
