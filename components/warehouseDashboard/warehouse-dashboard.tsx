@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -10,7 +9,7 @@ import { BorrowsDialog } from '@/components/warehouseDashboard/borrows-dialog';
 import { GroupStock } from '@/components/group-stock';
 import {
   InventoryFilter,
-  areFiltersActive,
+  filtersActive,
   type InventoryFilters,
 } from '@/components/inventory-filter';
 import { MaterialCard } from '@/components/warehouseDashboard/material-card';
@@ -28,7 +27,7 @@ type Tab = 'stock' | `group-${number}`;
 
 type DashboardGroup = { id: number; name: string; stock: SharedSpool[] };
 
-function isMaterialMatch(
+function materialMatches(
   m: { name: string; manufacturer: string; filamentType: string },
   f: InventoryFilters
 ): boolean {
@@ -123,7 +122,7 @@ export function WarehouseDashboard({
       return true;
     };
     return inventory
-      .filter((m) => isMaterialMatch(m.material, filters))
+      .filter((m) => materialMatches(m.material, filters))
       .map((m) => ({
         inventory: m,
         visibleIds: new Set(m.spools.filter(spoolFilter).map((s) => s.id)),
@@ -135,7 +134,7 @@ export function WarehouseDashboard({
   const filteredGroupStock = useMemo(() => {
     if (!activeGroup) return [];
     return activeGroup.stock.filter((s) => {
-      if (!isMaterialMatch(s.material, filters)) return false;
+      if (!materialMatches(s.material, filters)) return false;
       if (
         filters.minLeftGrams !== null &&
         s.filamentLeftGrams < filters.minLeftGrams
@@ -161,15 +160,15 @@ export function WarehouseDashboard({
   }
 
   // Borrows + Add spool. Rendered twice: pinned to the tabs row on desktop
-  // (`isFull={false}`, natural width) and as a full-width row under the filter on
-  // mobile (`isFull={true}`, buttons split the row). Borrows only exists in groups.
-  const renderActions = (isFull: boolean) => (
+  // (`full={false}`, natural width) and as a full-width row under the filter on
+  // mobile (`full={true}`, buttons split the row). Borrows only exists in groups.
+  const renderActions = (full: boolean) => (
     <>
       {groups.length > 0 && (
         <Button
           variant="outline"
           onClick={() => setBorrowsOpen(true)}
-          className={cn('relative', isFull && 'flex-1')}
+          className={cn('relative', full && 'flex-1')}
         >
           <ArrowLeftRight className="mr-1 h-4 w-4" />
           Borrows
@@ -184,7 +183,7 @@ export function WarehouseDashboard({
         onClick={() => openCreate()}
         className={cn(
           'bg-accent text-accent-foreground hover:bg-accent/90',
-          isFull && 'flex-1'
+          full && 'flex-1'
         )}
       >
         <Plus className="mr-1 h-4 w-4" />
@@ -257,7 +256,7 @@ export function WarehouseDashboard({
             <div className="flex items-center justify-between gap-4">
               <p className="text-muted-foreground text-sm">
                 Spools shared in {activeGroup.name}
-                {areFiltersActive(filters)
+                {filtersActive(filters)
                   ? ` — ${filteredGroupStock.length} of ${activeGroup.stock.length} match`
                   : '.'}
               </p>
@@ -268,7 +267,7 @@ export function WarehouseDashboard({
                 Manage group →
               </Link>
             </div>
-            {filteredGroupStock.length === 0 && areFiltersActive(filters) ? (
+            {filteredGroupStock.length === 0 && filtersActive(filters) ? (
               <div className="border-border bg-card/50 text-muted-foreground rounded-lg border border-dashed px-6 py-10 text-center text-sm">
                 No shared spools match the current filters.
               </div>
@@ -285,17 +284,17 @@ export function WarehouseDashboard({
             <Package className="text-muted-foreground h-8 w-8" />
             <div>
               <p className="font-medium">
-                {areFiltersActive(filters) ? 'No matches' : 'No spools here'}
+                {filtersActive(filters) ? 'No matches' : 'No spools here'}
               </p>
               <p className="text-muted-foreground text-sm">
-                {areFiltersActive(filters)
+                {filtersActive(filters)
                   ? 'No materials match the current filters.'
                   : filters.status === 'empty'
                     ? "You haven't used up any spools yet."
                     : 'Add your first spool to start tracking inventory.'}
               </p>
             </div>
-            {filters.status !== 'empty' && !areFiltersActive(filters) && (
+            {filters.status !== 'empty' && !filtersActive(filters) && (
               <Button
                 variant="outline"
                 onClick={() => openCreate()}

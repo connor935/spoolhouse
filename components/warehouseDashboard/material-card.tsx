@@ -7,11 +7,15 @@ import {
   type SpoolView,
 } from '@/lib/filament';
 import { SpoolCard } from './spool-card';
+import { Dialog } from '@base-ui/react';
+import { Plus } from 'lucide-react';
+import { Button } from '../ui/button';
 
 export function MaterialCard({
   inventory,
   visibleSpoolIds,
   onEditSpool,
+  onAddSpool,
 }: {
   inventory: MaterialInventory;
   // Tab filtering: only these spools are listed (indices stay material-wide)

@@ -31,8 +31,8 @@ type SpoolTypeInput = {
 function validateSpoolTypeInput(input: SpoolTypeInput) {
   const manufacturer = input.manufacturer.trim()
   const name = input.name.trim()
-  if (!manufacturer || !name) throw new Error("Manufacturer and name are required")
   const emptyWeightGrams = Math.round(input.emptyWeightGrams)
+  if (!manufacturer || !name) throw new Error("Manufacturer and name are required")
   if (!Number.isFinite(emptyWeightGrams) || emptyWeightGrams <= 0) {
     throw new Error("Empty spool weight must be greater than 0 g")
   }
