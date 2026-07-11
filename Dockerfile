@@ -3,7 +3,8 @@
 # ---- base -------------------------------------------------------------------
 # Debian (glibc) — NOT Alpine (musl): the runner must share a libc with the
 # stage that compiles the native better-sqlite3 binding.
-FROM node:22-bookworm-slim AS base
+# Node 24 to match the version pinned in .node-version (fnm) for local dev.
+FROM node:24-bookworm-slim AS base
 WORKDIR /app
 
 # ---- deps -------------------------------------------------------------------

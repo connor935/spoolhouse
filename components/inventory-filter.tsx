@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Search, X } from "lucide-react";
-import { FILAMENT_TYPES } from "@/lib/filament";
+} from '@/components/ui/select';
+import { Search, X } from 'lucide-react';
+import { FILAMENT_TYPES } from '@/lib/filament';
 
 export type InventoryFilters = {
   q: string;
@@ -21,19 +21,24 @@ export type InventoryFilters = {
 };
 
 export const EMPTY_FILTERS: InventoryFilters = {
-  q: "",
+  q: '',
   filamentType: null,
   minLeftGrams: null,
   hideLent: false,
 };
 
 export function filtersActive(f: InventoryFilters): boolean {
-  return f.q.trim() !== "" || f.filamentType !== null || f.minLeftGrams !== null || f.hideLent;
+  return (
+    f.q.trim() !== '' ||
+    f.filamentType !== null ||
+    f.minLeftGrams !== null ||
+    f.hideLent
+  );
 }
 
-const ALL_TYPES = "__all__";
+const ALL_TYPES = '__all__';
 const TYPE_ITEMS = [
-  { value: ALL_TYPES, label: "All types" },
+  { value: ALL_TYPES, label: 'All types' },
   ...FILAMENT_TYPES.map((t) => ({ value: t, label: t })),
 ];
 
@@ -47,9 +52,9 @@ export function InventoryFilter({
   showHideLent: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+    <div className="border-border bg-card flex flex-1 flex-wrap items-center gap-3 rounded-lg border px-4 py-3">
       <div className="relative min-w-48 flex-1">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
         <Input
           type="search"
           value={value.q}
@@ -80,7 +85,10 @@ export function InventoryFilter({
       </Select>
 
       <div className="flex items-center gap-2">
-        <Label htmlFor="min-left" className="text-xs whitespace-nowrap text-muted-foreground">
+        <Label
+          htmlFor="min-left"
+          className="text-muted-foreground text-xs whitespace-nowrap"
+        >
           Min. left (g)
         </Label>
         <Input
@@ -88,10 +96,13 @@ export function InventoryFilter({
           type="number"
           step="1"
           min="0"
-          value={value.minLeftGrams === null ? "" : String(value.minLeftGrams)}
+          value={value.minLeftGrams === null ? '' : String(value.minLeftGrams)}
           onChange={(e) => {
             const parsed = Number.parseInt(e.target.value, 10);
-            onChange({ ...value, minLeftGrams: Number.isNaN(parsed) ? null : parsed });
+            onChange({
+              ...value,
+              minLeftGrams: Number.isNaN(parsed) ? null : parsed,
+            });
           }}
           placeholder="e.g. 300"
           className="h-9 w-24 font-mono"
@@ -104,7 +115,7 @@ export function InventoryFilter({
             type="checkbox"
             checked={value.hideLent}
             onChange={(e) => onChange({ ...value, hideLent: e.target.checked })}
-            className="h-4 w-4 rounded border-input"
+            className="border-input h-4 w-4 rounded"
           />
           Hide lent spools
         </label>

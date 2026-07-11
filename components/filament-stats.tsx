@@ -30,7 +30,7 @@ export function FilamentStats({
   ];
 
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="hidden lg:grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((s) => (
         <div
           key={s.label}
