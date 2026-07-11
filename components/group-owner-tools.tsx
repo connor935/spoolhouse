@@ -21,7 +21,7 @@ export function GroupOwnerTools({ group, members }: { group: Group; members: Mem
   const [pending, setPending] = useState(false)
 
   const inviteLink =
-    typeof window !== "undefined" ? `${window.location.origin}/groups/join/${inviteCode}` : `/groups/join/${inviteCode}`
+    typeof window === "undefined" ? `/groups/join/${inviteCode}` : `${globalThis.location.origin}/groups/join/${inviteCode}`
 
   async function handleRename(e: React.FormEvent) {
     e.preventDefault()
@@ -73,7 +73,7 @@ export function GroupOwnerTools({ group, members }: { group: Group; members: Mem
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete "${group.name}"? This removes it for all members and can't be undone.`)) return
+    if (!globalThis.confirm(`Delete "${group.name}"? This removes it for all members and can't be undone.`)) return
     setPending(true)
     try {
       await deleteGroup(group.id)

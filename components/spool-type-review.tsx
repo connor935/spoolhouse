@@ -86,14 +86,14 @@ export function SpoolTypeReview({ spoolType, mode = "review" }: Props) {
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete "${manufacturer} — ${name}"? This can't be undone.`)) return
+    if (!globalThis.confirm(`Delete "${manufacturer} — ${name}"? This can't be undone.`)) return
     setPending(true)
     try {
       await deleteSpoolType(spoolType.id)
       toast.success("Spool type deleted")
       router.refresh()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not delete spool type")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not delete spool type")
       setPending(false)
     }
   }

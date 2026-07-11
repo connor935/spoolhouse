@@ -27,7 +27,7 @@ export default async function SpoolTypesPage() {
           : "Global spool types and their empty weights. Missing one? Request it below — you can use it immediately while an admin reviews it."
       }
     >
-      {[...byManufacturer.entries()].map(([manufacturer, list]) => (
+      {[...byManufacturer].map(([manufacturer, list]) => (
         <section key={manufacturer} className="mt-6 rounded-lg border border-border bg-card">
           <h2 className="border-b border-border px-6 py-3 font-semibold">{manufacturer}</h2>
           <ul className="divide-y divide-border">

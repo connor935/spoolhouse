@@ -45,7 +45,7 @@ export function SpoolFormDialog({
   spoolTypes,
   isAdmin = false,
 }: Props) {
-  const editing = Boolean(spool);
+  const isEditing = Boolean(spool);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -73,11 +73,11 @@ export function SpoolFormDialog({
 
   const emptyWeight = selectedType?.emptyWeightGrams ?? null;
   useEffect(() => {
-    if (editing || measuredDirty || emptyWeight === null) return;
+    if (isEditing || measuredDirty || emptyWeight === null) return;
     const full = Number.parseInt(fullGrams, 10);
     if (Number.isNaN(full)) return;
     setMeasuredGrams(String(full + emptyWeight));
-  }, [editing, measuredDirty, fullGrams, emptyWeight]);
+  }, [isEditing, measuredDirty, fullGrams, emptyWeight]);
 
   // Live computed preview of how much filament is actually left
   const measured = Number.parseInt(measuredGrams, 10);
@@ -120,7 +120,7 @@ export function SpoolFormDialog({
 
     try {
       setSaving(true);
-      if (editing && spool) {
+      if (isEditing && spool) {
         await updateSpool(spool.id, payload);
         toast.success('Spool updated');
       } else {
@@ -137,7 +137,7 @@ export function SpoolFormDialog({
 
   async function handleDelete() {
     if (!spool) return;
-    if (!window.confirm('Delete this spool? This can’t be undone.')) return;
+    if (!globalThis.confirm('Delete this spool? This can’t be undone.')) return;
     try {
       setDeleting(true);
       await deleteSpool(spool.id);
@@ -153,9 +153,9 @@ export function SpoolFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{editing ? 'Edit spool' : 'Add new spool'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit spool' : 'Add new spool'}</DialogTitle>
           <DialogDescription>
-            {editing
+            {isEditing
               ? 'Update this physical spool.'
               : 'Register a physical spool of a material. Remaining filament is calculated from the weighed total.'}
           </DialogDescription>
@@ -211,7 +211,7 @@ export function SpoolFormDialog({
                 }}
               />
               <p className="text-muted-foreground text-xs">
-                {editing || measuredDirty
+                {isEditing || measuredDirty
                   ? 'Put the whole spool on a scale and enter the value.'
                   : 'Prefilled for a fresh spool (filament + empty spool) — adjust to your scale value.'}
               </p>
@@ -223,12 +223,12 @@ export function SpoolFormDialog({
               Calculated filament left
             </span>
             <span className="text-card-foreground font-mono text-lg font-semibold tabular-nums">
-              {previewLeft !== null ? formatWeight(previewLeft) : '—'}
+              {previewLeft === null ? '—' : formatWeight(previewLeft)}
             </span>
           </div>
 
           <DialogFooter className="mt-2">
-            {editing && spool && (
+            {isEditing && spool && (
               <Button
                 type="button"
                 variant="destructive"
@@ -248,7 +248,7 @@ export function SpoolFormDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={saving || deleting}>
-              {saving ? 'Saving...' : editing ? 'Save changes' : 'Add spool'}
+              {saving ? 'Saving...' : isEditing ? 'Save changes' : 'Add spool'}
             </Button>
           </DialogFooter>
         </form>

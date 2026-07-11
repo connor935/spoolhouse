@@ -36,7 +36,7 @@ async function main() {
   console.log(`API token created for ${u.email}:\n\n  ${token}\n\nStore it now — it won't be shown again.`)
 }
 
-main().catch((err) => {
-  console.error(err)
+main().catch((error) => {
+  console.error(error)
   process.exit(1)
 })

@@ -10,10 +10,10 @@ export function SwaggerDocs({ url }: { url: string }) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    let cancelled = false
+    let isCancelled = false
     ;(async () => {
       const { SwaggerUIBundle } = await import("swagger-ui-dist")
-      if (cancelled || !ref.current) return
+      if (isCancelled || !ref.current) return
       ref.current.replaceChildren()
       SwaggerUIBundle({
         url,
@@ -24,7 +24,7 @@ export function SwaggerDocs({ url }: { url: string }) {
       })
     })()
     return () => {
-      cancelled = true
+      isCancelled = true
     }
   }, [url])
 

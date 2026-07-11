@@ -82,7 +82,7 @@ export function WarehouseDashboard({
       params.set('minLeft', String(filters.minLeftGrams));
     if (filters.hideLent) params.set('hideLent', '1');
     const qs = params.toString();
-    window.history.replaceState(null, '', qs ? `/?${qs}` : '/');
+    globalThis.history.replaceState(null, '', qs ? `/?${qs}` : '/');
   }, [tab, filters]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingSpool, setEditingSpool] = useState<SpoolView | null>(null);
