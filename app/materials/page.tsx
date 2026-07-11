@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic"
 
 export default async function MaterialsPage() {
   const user = await requireUser()
+  const isAdmin = user.role === "admin"
   const catalog = await getMaterialCatalog()
 
   const byManufacturer = new Map<string, typeof catalog>()
@@ -20,7 +21,11 @@ export default async function MaterialsPage() {
   return (
     <PageShell
       title="Materials"
-      description="Global material catalog. Missing one? Request it below — you can use it immediately while an admin reviews it."
+      description={
+        isAdmin
+          ? "Global material catalog. Missing one? Add it below — as an admin it's published straight away."
+          : "Global material catalog. Missing one? Request it below — you can use it immediately while an admin reviews it."
+      }
     >
       {[...byManufacturer.entries()].map(([manufacturer, list]) => (
         <section key={manufacturer} className="mt-6 rounded-lg border border-border bg-card">
@@ -34,8 +39,8 @@ export default async function MaterialsPage() {
       ))}
 
       <section className="mt-6 rounded-lg border border-border bg-card p-6">
-        <h2 className="font-semibold">Request a new material</h2>
-        <RequestMaterialForm />
+        <h2 className="font-semibold">{isAdmin ? "Add a new material" : "Request a new material"}</h2>
+        <RequestMaterialForm isAdmin={isAdmin} />
       </section>
     </PageShell>
   )

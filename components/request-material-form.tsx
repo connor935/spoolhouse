@@ -16,7 +16,7 @@ import { requestMaterial } from "@/app/actions/materials"
 import { FILAMENT_TYPES } from "@/lib/filament"
 import { toast } from "sonner"
 
-export function RequestMaterialForm() {
+export function RequestMaterialForm({ isAdmin = false }: { isAdmin?: boolean }) {
   const router = useRouter()
   const [manufacturer, setManufacturer] = useState("")
   const [name, setName] = useState("")
@@ -28,13 +28,17 @@ export function RequestMaterialForm() {
     e.preventDefault()
     setPending(true)
     try {
-      await requestMaterial({
+      const created = await requestMaterial({
         manufacturer: manufacturer.trim(),
         name: name.trim(),
         filamentType,
         color,
       })
-      toast.success("Material requested — you can use it right away")
+      toast.success(
+        created.status === "approved"
+          ? "Material added to the catalog"
+          : "Material requested — you can use it right away",
+      )
       setManufacturer("")
       setName("")
       router.refresh()
@@ -96,7 +100,13 @@ export function RequestMaterialForm() {
         </div>
       </div>
       <Button type="submit" disabled={pending} className="self-start">
-        {pending ? "Requesting…" : "Request material"}
+        {pending
+          ? isAdmin
+            ? "Adding…"
+            : "Requesting…"
+          : isAdmin
+            ? "Add material"
+            : "Request material"}
       </Button>
     </form>
   )

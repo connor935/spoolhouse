@@ -1,17 +1,28 @@
+# Dependencies & build output (rebuilt inside the image)
 node_modules
 .next
-.git
-.gitignore
+*.tsbuildinfo
+
+# Local SQLite DB + WAL sidecars (persisted via a Docker volume, never baked in)
 data
-hardware
-docs
+
+# Secrets & local env
 .env
 .env*.local
-.env.docker
+
+# VCS & tooling
+.git
+.gitignore
 .claude
 .vscode
-*.md
-npm-debug.log*
+
+# Deployment/docs not needed in the build context
 Dockerfile
 .dockerignore
 docker-compose.yml
+deploy
+DEPLOY.md
+README.md
+
+# OS cruft
+.DS_Store

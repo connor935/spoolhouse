@@ -40,13 +40,21 @@ function validateSpoolTypeInput(input: SpoolTypeInput) {
 }
 
 // Any user can request a new spool type; it lands as `pending` and is
-// immediately usable by the submitter. Returns the created row.
+// immediately usable by the submitter. Admins skip the review queue — their
+// submissions are auto-approved (self-reviewed) and instantly global.
+// Inspect the returned row's `status` for the outcome.
 export async function requestSpoolType(input: SpoolTypeInput): Promise<SpoolType> {
   const user = await requireUser()
   const values = validateSpoolTypeInput(input)
+  const isAdmin = user.role === "admin"
   const [created] = await db
     .insert(spoolTypes)
-    .values({ ...values, status: "pending", submittedById: user.id })
+    .values({
+      ...values,
+      status: isAdmin ? "approved" : "pending",
+      submittedById: user.id,
+      reviewedById: isAdmin ? user.id : undefined,
+    })
     .returning()
   revalidatePath("/spool-types")
   revalidatePath("/admin/spool-types")
