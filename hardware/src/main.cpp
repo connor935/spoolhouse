@@ -12,6 +12,7 @@
 #include <XPT2046_Touchscreen.h>
 
 #include "config.h"
+#include "config_store.h"
 #include "net/spoolhouse_client.h"
 #include "nfc/nfc_reader.h"
 #include "nfc/pn532_reader.h"
@@ -62,6 +63,11 @@ FilamentInfo filament;  // decoded details for the current tag (valid flag insid
 bool lastButtonDown = false;
 uint32_t lastButtonChangeMs = 0;
 uint32_t lastTouchMs = 0;
+
+// Touch-hold tracking (short tap vs long hold-to-factory-reset)
+bool touchHeld = false;
+uint32_t touchDownMs = 0;
+int resetCountdownSec = -1;  // last countdown value drawn during a hold (-1 = idle)
 
 uint32_t lastDrawMs = 0;
 
@@ -396,23 +402,122 @@ void onTap(const char *source) {
   }
 }
 
+// WiFi setup-portal screen (shown while the AP is open).
+void drawSetupScreen(const char *apName) {
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(TC_DATUM);
+  tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
+  tft.drawString("WiFi setup", tft.width() / 2, 16, 4);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawString("1. Join WiFi network:", tft.width() / 2, 64, 2);
+  tft.drawString(apName, tft.width() / 2, 84, 4);
+  tft.drawString("2. Open in a browser:", tft.width() / 2, 126, 2);
+  tft.drawString("192.168.4.1", tft.width() / 2, 146, 4);
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("pick network, password & API token", tft.width() / 2, 200, 2);
+}
+
+// Map a raw XPT2046 point to screen pixels (rough; for reset-button hit-tests).
+int touchToX(int rawX) {
+  long v = map(rawX, TOUCH_RAW_X_MIN, TOUCH_RAW_X_MAX, 0, tft.width());
+  return constrain((int)v, 0, tft.width() - 1);
+}
+int touchToY(int rawY) {
+  long v = map(rawY, TOUCH_RAW_Y_MIN, TOUCH_RAW_Y_MAX, 0, tft.height());
+  return constrain((int)v, 0, tft.height() - 1);
+}
+
+// Reset-screen button rectangles (x, y, w, h).
+struct Rect {
+  int x, y, w, h;
+  bool contains(int px, int py) const { return px >= x && px < x + w && py >= y && py < y + h; }
+};
+const Rect BTN_BACK = {14, 172, 140, 56};
+const Rect BTN_RESET = {166, 172, 140, 56};
+
+// Update the hold-to-reset warning/countdown overlay (redrawn once per second).
+void updateResetCountdown(uint32_t heldMs) {
+  const int remain = (int)((RESET_TRIGGER_MS - heldMs + 999) / 1000);
+  if (remain == resetCountdownSec) return;
+  resetCountdownSec = remain;
+  const uint16_t color = heldMs >= RESET_WARN2_MS ? TFT_RED : TFT_ORANGE;
+  overlayMessage("Factory reset in " + String(remain) + "s", "release to cancel", color);
+}
+
+// Shown after a 20 s hold: two buttons. The finger that held for 20 s must be
+// lifted first, then the reset button pressed deliberately — a tap anywhere
+// else (or 20 s of inaction) cancels, so a mis-tap is always safe.
+void factoryResetScreen() {
+  resetCountdownSec = -1;
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(TC_DATUM);
+  tft.setTextColor(TFT_RED, TFT_BLACK);
+  tft.drawString("Factory reset", tft.width() / 2, 22, 4);
+  tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  tft.drawString("Erase WiFi & API token?", tft.width() / 2, 66, 2);
+  tft.drawString("Release, then choose:", tft.width() / 2, 92, 2);
+
+  tft.fillRoundRect(BTN_BACK.x, BTN_BACK.y, BTN_BACK.w, BTN_BACK.h, 8, TFT_DARKGREEN);
+  tft.fillRoundRect(BTN_RESET.x, BTN_RESET.y, BTN_RESET.w, BTN_RESET.h, 8, TFT_RED);
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("Go back", BTN_BACK.x + BTN_BACK.w / 2, BTN_BACK.y + BTN_BACK.h / 2, 4);
+  tft.drawString("RESET", BTN_RESET.x + BTN_RESET.w / 2, BTN_RESET.y + BTN_RESET.h / 2, 4);
+
+  // Require the held finger to lift before any press counts.
+  while (touch.touched()) delay(20);
+  delay(150);
+
+  const uint32_t start = millis();
+  while (millis() - start < 20000) {  // decide within 20 s, else cancel
+    if (touch.touched()) {
+      const TS_Point p = touch.getPoint();
+      const int sx = touchToX(p.x), sy = touchToY(p.y);
+      if (BTN_RESET.contains(sx, sy)) {
+        overlayMessage("Resetting...", "", TFT_RED);
+        spoolhouse::factoryReset();
+        ESP.restart();
+      }
+      break;  // go-back button or anywhere else → cancel (safe)
+    }
+    delay(20);
+  }
+  restoreUi();
+}
+
 void pollInputs() {
   const uint32_t now = millis();
+  const bool down = touch.touched();  // continuous pressure detection
 
-  // Touchscreen tap
-  if (touch.tirqTouched() && touch.touched()) {
-    if (now - lastTouchMs >= TOUCH_DEBOUNCE_MS) {
-      lastTouchMs = now;
-      onTap("touch");
+  if (down && !touchHeld) {
+    touchHeld = true;
+    touchDownMs = now;
+    resetCountdownSec = -1;
+  } else if (down && touchHeld) {
+    const uint32_t dur = now - touchDownMs;
+    if (dur >= RESET_TRIGGER_MS) {
+      touchHeld = false;
+      factoryResetScreen();
+      return;
+    }
+    if (dur >= RESET_WARN1_MS) updateResetCountdown(dur);  // 10 s+: warn + count down
+  } else if (!down && touchHeld) {
+    const uint32_t dur = now - touchDownMs;
+    touchHeld = false;
+    if (resetCountdownSec >= 0) {
+      resetCountdownSec = -1;
+      restoreUi();  // warning was showing → cancelled
+    } else if (dur <= TAP_MAX_MS) {
+      onTap("touch");  // short tap → tare/upload
     }
   }
 
-  // BOOT button backup (active-low)
-  const bool down = digitalRead(PIN_TARE_BUTTON) == LOW;
-  if (down != lastButtonDown && now - lastButtonChangeMs >= BUTTON_DEBOUNCE_MS) {
+  // BOOT button backup (active-low): simple tap
+  const bool bdown = digitalRead(PIN_TARE_BUTTON) == LOW;
+  if (bdown != lastButtonDown && now - lastButtonChangeMs >= BUTTON_DEBOUNCE_MS) {
     lastButtonChangeMs = now;
-    lastButtonDown = down;
-    if (down) onTap("button");
+    lastButtonDown = bdown;
+    if (bdown) onTap("button");
   }
 }
 
@@ -446,8 +551,6 @@ void setup() {
   touch.begin(touchSpi);
   touch.setRotation(1);
 
-  drawStaticUi();
-
   scaleOk = scale.begin(PIN_HX711_DT, PIN_HX711_SCK, HX711_COUNTS_PER_GRAM);
   Serial.printf("[scale] HX711 %s\n", scaleOk ? "ready, tared" : "NOT FOUND");
 
@@ -455,7 +558,11 @@ void setup() {
   spoolRegistry.add(&crealityDecoder);
   spoolRegistry.add(&openTagDecoder);
 
-  spoolhouse::beginWifi();
+  // Connect to WiFi, or open the setup AP portal (shows drawSetupScreen). This
+  // blocks until connected; the portal reboots the device once provisioned.
+  spoolhouse::provision(drawSetupScreen);
+
+  drawStaticUi();
   drawWifiStatus();
 
   // Run the NFC reader/decoder on core 0 so it never stutters the UI (the

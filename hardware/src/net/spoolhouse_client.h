@@ -10,8 +10,18 @@ namespace spoolhouse {
 
 enum class Result { Ok, NoWifi, HttpError };
 
-// Connect to WiFi (non-fatal — the scale still works offline). Returns true if
-// connected within the timeout.
+// Bring up WiFi: try saved/compiled credentials, and if that fails open a setup
+// Access Point + captive portal to pick a network, enter its password, and the
+// API token / server URL. Blocks until connected (the portal reboots on save).
+// onPortalStart(apName) is invoked when the AP opens, so the caller can show a
+// setup screen. Call once in setup().
+void provision(void (*onPortalStart)(const char *apName));
+
+// Wipe WiFi credentials + stored config and force the setup portal on next
+// boot. The caller reboots afterwards.
+void factoryReset();
+
+// Reconnect using saved credentials (non-fatal). Returns true if connected.
 bool beginWifi(uint32_t timeoutMs = 15000);
 bool wifiConnected();
 

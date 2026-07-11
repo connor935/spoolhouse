@@ -49,6 +49,23 @@ constexpr int DEFAULT_EMPTY_SPOOL_G = 250;
 // middle band (trimming outliers) before uploading.
 constexpr uint32_t UPLOAD_MEASURE_MS = 5000;
 
+// ---- WiFi setup portal ----
+// SoftAP name shown when the device can't reach WiFi and opens the setup portal.
+constexpr const char *PORTAL_AP_NAME = "Spoolhouse-Setup";
+
+// ---- Factory reset (hold the touchscreen) ----
+constexpr uint32_t RESET_WARN1_MS = 10000;    // first warning
+constexpr uint32_t RESET_WARN2_MS = 15000;    // second warning
+constexpr uint32_t RESET_TRIGGER_MS = 20000;  // show the reset confirmation screen
+constexpr uint32_t TAP_MAX_MS = 1200;         // a touch shorter than this is a tap (tare/upload)
+
+// XPT2046 raw->pixel calibration (typical CYD values) for hit-testing the
+// reset-screen buttons. Tune if a button press lands in the wrong region.
+constexpr int TOUCH_RAW_X_MIN = 200;
+constexpr int TOUCH_RAW_X_MAX = 3700;
+constexpr int TOUCH_RAW_Y_MIN = 240;
+constexpr int TOUCH_RAW_Y_MAX = 3800;
+
 // ---- Polling / display timing ----
 constexpr uint32_t NFC_POLL_INTERVAL_MS = 250;
 constexpr uint16_t NFC_POLL_TIMEOUT_MS = 50;
