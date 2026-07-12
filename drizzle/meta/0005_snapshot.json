@@ -39,10 +39,7 @@
       "indexes": {
         "filament_share_overrides_group_member_id_filament_id_unique": {
           "name": "filament_share_overrides_group_member_id_filament_id_unique",
-          "columns": [
-            "group_member_id",
-            "filament_id"
-          ],
+          "columns": ["group_member_id", "filament_id"],
           "isUnique": true
         }
       },
@@ -51,12 +48,8 @@
           "name": "filament_share_overrides_group_member_id_group_members_id_fk",
           "tableFrom": "filament_share_overrides",
           "tableTo": "group_members",
-          "columnsFrom": [
-            "group_member_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_member_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -64,12 +57,8 @@
           "name": "filament_share_overrides_filament_id_filaments_id_fk",
           "tableFrom": "filament_share_overrides",
           "tableTo": "filaments",
-          "columnsFrom": [
-            "filament_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["filament_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -77,12 +66,8 @@
           "name": "filament_share_overrides_material_id_materials_id_fk",
           "tableFrom": "filament_share_overrides",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -143,10 +128,7 @@
       "indexes": {
         "group_members_group_id_user_id_unique": {
           "name": "group_members_group_id_user_id_unique",
-          "columns": [
-            "group_id",
-            "user_id"
-          ],
+          "columns": ["group_id", "user_id"],
           "isUnique": true
         }
       },
@@ -155,12 +137,8 @@
           "name": "group_members_group_id_groups_id_fk",
           "tableFrom": "group_members",
           "tableTo": "groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -168,12 +146,8 @@
           "name": "group_members_user_id_user_id_fk",
           "tableFrom": "group_members",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -233,9 +207,7 @@
       "indexes": {
         "groups_invite_code_unique": {
           "name": "groups_invite_code_unique",
-          "columns": [
-            "invite_code"
-          ],
+          "columns": ["invite_code"],
           "isUnique": true
         }
       },
@@ -244,12 +216,8 @@
           "name": "groups_owner_id_user_id_fk",
           "tableFrom": "groups",
           "tableTo": "user",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -342,12 +310,8 @@
           "name": "lends_filament_id_filaments_id_fk",
           "tableFrom": "lends",
           "tableTo": "filaments",
-          "columnsFrom": [
-            "filament_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["filament_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -355,12 +319,8 @@
           "name": "lends_borrower_id_user_id_fk",
           "tableFrom": "lends",
           "tableTo": "user",
-          "columnsFrom": [
-            "borrower_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["borrower_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -368,12 +328,8 @@
           "name": "lends_group_id_groups_id_fk",
           "tableFrom": "lends",
           "tableTo": "groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -465,12 +421,8 @@
           "name": "materials_submitted_by_id_user_id_fk",
           "tableFrom": "materials",
           "tableTo": "user",
-          "columnsFrom": [
-            "submitted_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["submitted_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -478,12 +430,8 @@
           "name": "materials_reviewed_by_id_user_id_fk",
           "tableFrom": "materials",
           "tableTo": "user",
-          "columnsFrom": [
-            "reviewed_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["reviewed_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -566,12 +514,8 @@
           "name": "notifications_user_id_user_id_fk",
           "tableFrom": "notifications",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -656,12 +600,8 @@
           "name": "spool_types_submitted_by_id_user_id_fk",
           "tableFrom": "spool_types",
           "tableTo": "user",
-          "columnsFrom": [
-            "submitted_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["submitted_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -669,12 +609,8 @@
           "name": "spool_types_reviewed_by_id_user_id_fk",
           "tableFrom": "spool_types",
           "tableTo": "user",
-          "columnsFrom": [
-            "reviewed_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["reviewed_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -779,12 +715,8 @@
           "name": "filaments_user_id_user_id_fk",
           "tableFrom": "filaments",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -792,12 +724,8 @@
           "name": "filaments_material_id_materials_id_fk",
           "tableFrom": "filaments",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -805,12 +733,8 @@
           "name": "filaments_spool_type_id_spool_types_id_fk",
           "tableFrom": "filaments",
           "tableTo": "spool_types",
-          "columnsFrom": [
-            "spool_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["spool_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -918,9 +842,7 @@
       "indexes": {
         "account_userId_idx": {
           "name": "account_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -929,12 +851,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1014,16 +932,12 @@
       "indexes": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "session_userId_idx": {
           "name": "session_userId_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -1032,12 +946,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1134,9 +1044,7 @@
       "indexes": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -1196,9 +1104,7 @@
       "indexes": {
         "verification_identifier_idx": {
           "name": "verification_identifier_idx",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": false
         }
       },

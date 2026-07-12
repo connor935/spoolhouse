@@ -1,30 +1,35 @@
-import "server-only"
+import 'server-only';
 
-import { eq, inArray } from "drizzle-orm"
-import { db } from "@/lib/db"
-import { groupMembers } from "@/lib/db/schema"
+import { eq, inArray } from 'drizzle-orm';
+import { db } from '@/lib/db';
+import { groupMembers } from '@/lib/db/schema';
 
-type Listener = () => void
+type Listener = () => void;
 
 // Per-user listener registry backing the /api/events SSE streams. Kept on
 // globalThis so it survives dev hot reloads (same pattern as lib/db). Module
 // scope holds only this Map — no I/O — so importing during `next build` is safe.
-const globalForEvents = globalThis as unknown as { eventListeners?: Map<string, Set<Listener>> }
-const listeners = (globalForEvents.eventListeners ??= new Map<string, Set<Listener>>())
+const globalForEvents = globalThis as unknown as {
+  eventListeners?: Map<string, Set<Listener>>;
+};
+const listeners = (globalForEvents.eventListeners ??= new Map<
+  string,
+  Set<Listener>
+>());
 
 // Register a listener for one user's change signals. Returns the unsubscribe
 // function; the last unsubscribe removes the user's Set entirely.
 export function subscribe(userId: string, listener: Listener): () => void {
-  let set = listeners.get(userId)
+  let set = listeners.get(userId);
   if (!set) {
-    set = new Set()
-    listeners.set(userId, set)
+    set = new Set();
+    listeners.set(userId, set);
   }
-  set.add(listener)
+  set.add(listener);
   return () => {
-    set.delete(listener)
-    if (set.size === 0) listeners.delete(userId)
-  }
+    set.delete(listener);
+    if (set.size === 0) listeners.delete(userId);
+  };
 }
 
 // Fire a payload-free "your data changed" signal to every open stream of the
@@ -34,7 +39,7 @@ export function emitToUsers(userIds: Iterable<string>) {
   for (const userId of new Set(userIds)) {
     for (const listener of listeners.get(userId) ?? []) {
       try {
-        listener()
+        listener();
       } catch {
         // the stream cleans itself up on its own enqueue failure
       }
@@ -51,13 +56,13 @@ export async function emitSpoolChange(ownerId: string) {
     const ownGroups = db
       .select({ groupId: groupMembers.groupId })
       .from(groupMembers)
-      .where(eq(groupMembers.userId, ownerId))
+      .where(eq(groupMembers.userId, ownerId));
     const members = await db
       .select({ userId: groupMembers.userId })
       .from(groupMembers)
-      .where(inArray(groupMembers.groupId, ownGroups))
-    emitToUsers([ownerId, ...members.map((m) => m.userId)])
+      .where(inArray(groupMembers.groupId, ownGroups));
+    emitToUsers([ownerId, ...members.map((m) => m.userId)]);
   } catch (error) {
-    console.error("emitSpoolChange failed:", error)
+    console.error('emitSpoolChange failed:', error);
   }
 }
