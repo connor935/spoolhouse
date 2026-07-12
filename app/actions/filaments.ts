@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { lends, materials, spools, spoolTypes, type NewSpool } from "@/lib/db/schema"
 import { requireUser } from "@/lib/auth-session"
+import { emitSpoolChange } from "@/lib/events"
 import { and, desc, eq, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -66,6 +67,7 @@ export async function createSpool(input: SpoolInput) {
   }
   await db.insert(spools).values(values)
   revalidatePath("/")
+  await emitSpoolChange(user.id)
 }
 
 export async function updateSpool(id: number, input: SpoolInput) {
@@ -83,6 +85,7 @@ export async function updateSpool(id: number, input: SpoolInput) {
     })
     .where(and(eq(spools.id, id), eq(spools.userId, user.id)))
   revalidatePath("/")
+  await emitSpoolChange(user.id)
 }
 
 // Quick re-weigh: store the new measured total weight from the scale (g).
@@ -111,10 +114,14 @@ export async function setMeasuredWeight(id: number, measuredTotalWeightGrams: nu
     .set({ measuredTotalWeightGrams: Math.round(measuredTotalWeightGrams), updatedAt: new Date() })
     .where(eq(spools.id, id))
   revalidatePath("/")
+  // Owner's id, not the actor's: the actor may be the borrower, and the
+  // owner-based fan-out already includes every co-member (borrower too).
+  await emitSpoolChange(spool.userId)
 }
 
 export async function deleteSpool(id: number) {
   const user = await requireUser()
   await db.delete(spools).where(and(eq(spools.id, id), eq(spools.userId, user.id)))
   revalidatePath("/")
+  await emitSpoolChange(user.id)
 }

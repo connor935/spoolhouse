@@ -3,6 +3,7 @@
 import { db } from "@/lib/db"
 import { groups, lends, materials, spools, spoolTypes, user } from "@/lib/db/schema"
 import { requireUser } from "@/lib/auth-session"
+import { emitSpoolChange } from "@/lib/events"
 import { createNotification } from "@/lib/notifications"
 import { getMembership, getSharedFilaments } from "@/lib/sharing"
 import { and, desc, eq, inArray, or } from "drizzle-orm"
@@ -48,6 +49,7 @@ export async function requestLend(spoolId: number, groupId: number) {
 
   revalidatePath(`/groups/${groupId}`)
   revalidatePath("/")
+  await emitSpoolChange(row.spool.userId)
 }
 
 // Returns the lend joined with the data needed for authz + notifications.
@@ -86,6 +88,7 @@ export async function approveLend(lendId: number) {
   })
   revalidatePath(`/groups/${lend.groupId}`)
   revalidatePath("/")
+  await emitSpoolChange(authUser.id)
 }
 
 export async function declineLend(lendId: number) {
@@ -105,6 +108,7 @@ export async function declineLend(lendId: number) {
     lendId,
   })
   revalidatePath(`/groups/${lend.groupId}`)
+  await emitSpoolChange(authUser.id)
 }
 
 export async function markReturned(lendId: number) {
@@ -125,6 +129,7 @@ export async function markReturned(lendId: number) {
   })
   revalidatePath(`/groups/${lend.groupId}`)
   revalidatePath("/")
+  await emitSpoolChange(authUser.id)
 }
 
 // Borrower withdraws their own pending request. The row is deleted —
@@ -156,6 +161,7 @@ export async function cancelLendRequest(lendId: number) {
   })
   revalidatePath(`/groups/${row.lend.groupId}`)
   revalidatePath("/")
+  await emitSpoolChange(row.ownerId)
 }
 
 const borrowerUser = alias(user, "borrower_user")

@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { spools } from "@/lib/db/schema"
 import { apiError, authenticateApiRequest, unauthorized } from "@/lib/api-auth"
+import { emitSpoolChange } from "@/lib/events"
 import { getOwnedSpool, parseId, serializeSpool } from "../../shared"
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -35,6 +36,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
   if (result.length === 0) return apiError(404, "not_found", "Spool not found")
 
   revalidatePath("/")
+  await emitSpoolChange(owner.id)
   const row = await getOwnedSpool(id, owner.id)
   return Response.json({ spool: serializeSpool(row!) })
 }

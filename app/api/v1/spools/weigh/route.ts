@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { materials, spools, spoolTypes } from "@/lib/db/schema"
 import { apiError, authenticateApiRequest, unauthorized, type ApiUser } from "@/lib/api-auth"
+import { emitSpoolChange } from "@/lib/events"
 import { getOwnedSpool, getOwnedSpoolByTag, serializeSpool } from "../shared"
 
 // Register-or-refresh a spool by its NFC tag id — the endpoint a scale/reader
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
       .set({ measuredTotalWeightGrams: measured, updatedAt: new Date() })
       .where(and(eq(spools.id, existing.spool.id), eq(spools.userId, owner.id)))
     revalidatePath("/")
+    await emitSpoolChange(owner.id)
     const row = await getOwnedSpool(existing.spool.id, owner.id)
     return Response.json({ action: "refreshed", spool: serializeSpool(row!) })
   }
@@ -75,6 +77,7 @@ export async function POST(request: Request) {
     })
     .returning()
   revalidatePath("/")
+  await emitSpoolChange(owner.id)
   const row = await getOwnedSpool(created.id, owner.id)
   return Response.json({ action: "registered", spool: serializeSpool(row!) }, { status: 201 })
 }

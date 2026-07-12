@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { spools } from "@/lib/db/schema"
 import { apiError, authenticateApiRequest, unauthorized } from "@/lib/api-auth"
+import { emitSpoolChange } from "@/lib/events"
 import { isSpoolTypeUsable } from "@/lib/spool-type-usable"
 import { isMaterialUsable } from "@/lib/material-usable"
 import { getOwnedSpool, listOwnedSpools, parseSpoolBody, serializeSpool, type SpoolBody } from "./shared"
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
     })
     .returning()
   revalidatePath("/")
+  await emitSpoolChange(owner.id)
   const row = await getOwnedSpool(created.id, owner.id)
   return Response.json({ spool: serializeSpool(row!) }, { status: 201 })
 }

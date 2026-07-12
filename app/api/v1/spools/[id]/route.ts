@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { spools } from "@/lib/db/schema"
 import { apiError, authenticateApiRequest, unauthorized } from "@/lib/api-auth"
+import { emitSpoolChange } from "@/lib/events"
 import { isSpoolTypeUsable } from "@/lib/spool-type-usable"
 import { isMaterialUsable } from "@/lib/material-usable"
 import { getOwnedSpool, parseId, parseSpoolBody, serializeSpool } from "../shared"
@@ -55,6 +56,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   if (result.length === 0) return notFound()
 
   revalidatePath("/")
+  await emitSpoolChange(owner.id)
   const row = await getOwnedSpool(id, owner.id)
   return Response.json({ spool: serializeSpool(row!) })
 }
@@ -71,5 +73,6 @@ export async function DELETE(request: Request, { params }: RouteContext) {
     .returning({ id: spools.id })
   if (deleted.length === 0) return notFound()
   revalidatePath("/")
+  await emitSpoolChange(owner.id)
   return new Response(null, { status: 204 })
 }

@@ -2,6 +2,7 @@ import "server-only"
 
 import { db } from "@/lib/db"
 import { notifications, type NewNotification } from "@/lib/db/schema"
+import { emitToUsers } from "@/lib/events"
 
 export type NotificationType =
   | "lend_requested"
@@ -28,4 +29,7 @@ export async function createNotification(input: {
     lendId: input.lendId ?? null,
   }
   await db.insert(notifications).values(values)
+  // Keep the recipient's bell count live regardless of caller; duplicates with
+  // the lend actions' own emits coalesce in the client-side refresh debounce.
+  emitToUsers([input.userId])
 }
