@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 // Shared layout for all sub-pages (everything except the dashboard and the
 // join-invite page): single source of truth for container width, back-link
@@ -7,8 +7,8 @@ import { ArrowLeft } from "lucide-react";
 export async function PageShell({
   title,
   description,
-  backHref = "/",
-  backLabel = "Back to dashboard",
+  backHref = '/',
+  backLabel = 'Back to dashboard',
   children,
 }: {
   title: string;
@@ -22,7 +22,7 @@ export async function PageShell({
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link
           href={backHref}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm"
         >
           <ArrowLeft className="h-4 w-4" />
           {backLabel}
@@ -30,7 +30,7 @@ export async function PageShell({
       </div>
       <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
       {description && (
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground mt-1 text-sm">{description}</p>
       )}
       {children}
     </main>

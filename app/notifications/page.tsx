@@ -1,23 +1,26 @@
-import { Bell } from "lucide-react"
-import { NotificationsList } from "@/components/notifications-list"
-import { PageShell } from "@/components/page-shell"
-import { getNotifications, markAllRead } from "@/app/actions/notifications"
-import { requireUser } from "@/lib/auth-session"
+import { Bell } from 'lucide-react';
+import { NotificationsList } from '@/components/notifications-list';
+import { PageShell } from '@/components/page-shell';
+import { getNotifications, markAllRead } from '@/app/actions/notifications';
+import { requireUser } from '@/lib/auth-session';
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic';
 
 export default async function NotificationsPage() {
-  await requireUser()
+  await requireUser();
   // Fetch first so unread rows can be highlighted once, then clear the counter.
-  const items = await getNotifications()
-  await markAllRead()
+  const items = await getNotifications();
+  await markAllRead();
 
   return (
-    <PageShell title="Notifications" description="Lending activity in your groups. Click a borrow request to respond.">
+    <PageShell
+      title="Notifications"
+      description="Lending activity in your groups. Click a borrow request to respond."
+    >
       {items.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center gap-3 rounded-lg border border-dashed border-border bg-card/50 px-6 py-16 text-center">
-          <Bell className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
+        <div className="border-border bg-card/50 mt-6 flex flex-col items-center gap-3 rounded-lg border border-dashed px-6 py-16 text-center">
+          <Bell className="text-muted-foreground h-8 w-8" />
+          <p className="text-muted-foreground text-sm">
             Nothing yet — borrow requests and lending updates will show up here.
           </p>
         </div>
@@ -25,5 +28,5 @@ export default async function NotificationsPage() {
         <NotificationsList items={items} />
       )}
     </PageShell>
-  )
+  );
 }

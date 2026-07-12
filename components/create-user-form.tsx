@@ -1,41 +1,41 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { authClient } from "@/lib/auth-client"
-import { toast } from "sonner"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth-client';
+import { toast } from 'sonner';
 
 export function CreateUserForm({ minLength }: { minLength: number }) {
-  const router = useRouter()
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [admin, setAdmin] = useState(false)
-  const [pending, setPending] = useState(false)
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [admin, setAdmin] = useState(false);
+  const [pending, setPending] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setPending(true)
+    e.preventDefault();
+    setPending(true);
     const { error } = await authClient.admin.createUser({
       name: name.trim(),
       email: email.trim(),
       password,
-      role: admin ? "admin" : "user",
-    })
-    setPending(false)
+      role: admin ? 'admin' : 'user',
+    });
+    setPending(false);
     if (error) {
-      toast.error(error.message ?? "Could not create user")
-      return
+      toast.error(error.message ?? 'Could not create user');
+      return;
     }
-    toast.success(`Account for ${name.trim()} created`)
-    setName("")
-    setEmail("")
-    setPassword("")
-    setAdmin(false)
-    router.refresh()
+    toast.success(`Account for ${name.trim()} created`);
+    setName('');
+    setEmail('');
+    setPassword('');
+    setAdmin(false);
+    router.refresh();
   }
 
   return (
@@ -81,8 +81,8 @@ export function CreateUserForm({ minLength }: { minLength: number }) {
         Grant admin role
       </label>
       <Button type="submit" disabled={pending} className="self-start">
-        {pending ? "Creating…" : "Create user"}
+        {pending ? 'Creating…' : 'Create user'}
       </Button>
     </form>
-  )
+  );
 }

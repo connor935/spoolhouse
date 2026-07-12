@@ -1,14 +1,14 @@
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import { SwaggerDocs } from "@/components/swagger-docs"
-import { requireUser } from "@/lib/auth-session"
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import { SwaggerDocs } from '@/components/swagger-docs';
+import { requireUser } from '@/lib/auth-session';
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic';
 
-export const metadata = { title: "API docs — Spoolhouse" }
+export const metadata = { title: 'API docs — Spoolhouse' };
 
 export default async function ApiDocsPage() {
-  await requireUser()
+  await requireUser();
   return (
     // Swagger UI ships light-only styles, so this page keeps a white canvas
     // regardless of the app theme.
@@ -24,5 +24,5 @@ export default async function ApiDocsPage() {
         <SwaggerDocs url="/api/v1/openapi.json" />
       </div>
     </main>
-  )
+  );
 }

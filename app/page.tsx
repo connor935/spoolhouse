@@ -23,9 +23,9 @@ export default async function Page({
   const minLeftParsed = Number.parseInt(str(params.minLeft), 10);
   const initialTab = str(params.tab) || 'stock';
   const statusParam = str(params.status);
-  const status = (['empty', 'all'].includes(statusParam)
-    ? statusParam
-    : 'in-stock') as 'in-stock' | 'empty' | 'all';
+  const status = (
+    ['empty', 'all'].includes(statusParam) ? statusParam : 'in-stock'
+  ) as 'in-stock' | 'empty' | 'all';
   const initialFilters = {
     q: str(params.q),
     status,

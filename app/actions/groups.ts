@@ -39,14 +39,12 @@ export async function createGroup(name: string) {
       inviteCode: generateInviteCode(),
     })
     .returning();
-  await db
-    .insert(groupMembers)
-    .values({
-      groupId: group.id,
-      userId: authUser.id,
-      role: 'owner',
-      shareMode: 'all',
-    });
+  await db.insert(groupMembers).values({
+    groupId: group.id,
+    userId: authUser.id,
+    role: 'owner',
+    shareMode: 'all',
+  });
   revalidatePath('/groups');
   return group;
 }
@@ -60,14 +58,12 @@ export async function joinGroup(code: string) {
   if (!group) throw new Error('Invalid invite code');
   const existing = await getMembership(group.id, authUser.id);
   if (!existing) {
-    await db
-      .insert(groupMembers)
-      .values({
-        groupId: group.id,
-        userId: authUser.id,
-        role: 'member',
-        shareMode: 'all',
-      });
+    await db.insert(groupMembers).values({
+      groupId: group.id,
+      userId: authUser.id,
+      role: 'member',
+      shareMode: 'all',
+    });
   }
   revalidatePath('/groups');
   revalidatePath(`/groups/${group.id}`);
@@ -168,14 +164,12 @@ export async function updateShareSettings(
     .delete(filamentShareOverrides)
     .where(eq(filamentShareOverrides.groupMemberId, membership.id));
   if (validIds.length > 0) {
-    await db
-      .insert(filamentShareOverrides)
-      .values(
-        validIds.map((materialId) => ({
-          groupMemberId: membership.id,
-          materialId,
-        }))
-      );
+    await db.insert(filamentShareOverrides).values(
+      validIds.map((materialId) => ({
+        groupMemberId: membership.id,
+        materialId,
+      }))
+    );
   }
   revalidatePath(`/groups/${groupId}`);
   revalidatePath('/');

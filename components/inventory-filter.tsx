@@ -107,7 +107,10 @@ export function InventoryFilter({
               v && onChange({ ...value, status: v as StockStatus })
             }
           >
-            <SelectTrigger className="h-9 w-32" aria-label="Filter by stock status">
+            <SelectTrigger
+              className="h-9 w-32"
+              aria-label="Filter by stock status"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -160,7 +163,8 @@ export function InventoryFilter({
           items={TYPE_ITEMS}
           value={value.filamentType ?? ALL_TYPES}
           onValueChange={(v) =>
-            v && onChange({ ...value, filamentType: v === ALL_TYPES ? null : v })
+            v &&
+            onChange({ ...value, filamentType: v === ALL_TYPES ? null : v })
           }
         >
           <SelectTrigger className="h-9" aria-label="Filter by filament type">
@@ -187,7 +191,9 @@ export function InventoryFilter({
             type="number"
             step="1"
             min="0"
-            value={value.minLeftGrams === null ? '' : String(value.minLeftGrams)}
+            value={
+              value.minLeftGrams === null ? '' : String(value.minLeftGrams)
+            }
             onChange={(e) => {
               const parsed = Number.parseInt(e.target.value, 10);
               onChange({
@@ -205,7 +211,9 @@ export function InventoryFilter({
             <input
               type="checkbox"
               checked={value.hideLent}
-              onChange={(e) => onChange({ ...value, hideLent: e.target.checked })}
+              onChange={(e) =>
+                onChange({ ...value, hideLent: e.target.checked })
+              }
               className="border-input h-4 w-4 rounded"
             />
             Hide lent spools

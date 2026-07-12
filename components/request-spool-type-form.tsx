@@ -1,43 +1,51 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { requestSpoolType } from "@/app/actions/spool-types"
-import { toast } from "sonner"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { requestSpoolType } from '@/app/actions/spool-types';
+import { toast } from 'sonner';
 
-export function RequestSpoolTypeForm({ isAdmin = false }: { isAdmin?: boolean }) {
-  const router = useRouter()
-  const [manufacturer, setManufacturer] = useState("")
-  const [name, setName] = useState("")
-  const [grams, setGrams] = useState("")
-  const [pending, setPending] = useState(false)
+export function RequestSpoolTypeForm({
+  isAdmin = false,
+}: {
+  isAdmin?: boolean;
+}) {
+  const router = useRouter();
+  const [manufacturer, setManufacturer] = useState('');
+  const [name, setName] = useState('');
+  const [grams, setGrams] = useState('');
+  const [pending, setPending] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const emptyWeightGrams = Number.parseInt(grams, 10)
+    e.preventDefault();
+    const emptyWeightGrams = Number.parseInt(grams, 10);
     if (Number.isNaN(emptyWeightGrams) || emptyWeightGrams <= 0) {
-      toast.error("Empty spool weight must be greater than 0 g")
-      return
+      toast.error('Empty spool weight must be greater than 0 g');
+      return;
     }
-    setPending(true)
+    setPending(true);
     try {
-      const created = await requestSpoolType({ manufacturer: manufacturer.trim(), name: name.trim(), emptyWeightGrams })
+      const created = await requestSpoolType({
+        manufacturer: manufacturer.trim(),
+        name: name.trim(),
+        emptyWeightGrams,
+      });
       toast.success(
-        created.status === "approved"
-          ? "Spool type added to the catalog"
-          : "Spool type requested — you can use it right away",
-      )
-      setManufacturer("")
-      setName("")
-      setGrams("")
-      router.refresh()
+        created.status === 'approved'
+          ? 'Spool type added to the catalog'
+          : 'Spool type requested — you can use it right away'
+      );
+      setManufacturer('');
+      setName('');
+      setGrams('');
+      router.refresh();
     } catch {
-      toast.error("Could not request spool type")
+      toast.error('Could not request spool type');
     } finally {
-      setPending(false)
+      setPending(false);
     }
   }
 
@@ -78,12 +86,12 @@ export function RequestSpoolTypeForm({ isAdmin = false }: { isAdmin?: boolean })
       <Button type="submit" disabled={pending} className="self-start">
         {pending
           ? isAdmin
-            ? "Adding…"
-            : "Requesting…"
+            ? 'Adding…'
+            : 'Requesting…'
           : isAdmin
-            ? "Add spool type"
-            : "Request spool type"}
+            ? 'Add spool type'
+            : 'Request spool type'}
       </Button>
     </form>
-  )
+  );
 }

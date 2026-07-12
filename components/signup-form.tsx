@@ -1,47 +1,50 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { AuthCard } from "@/components/auth-card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { authClient } from "@/lib/auth-client"
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { AuthCard } from '@/components/auth-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth-client';
 
 export function SignupForm({ minLength }: { minLength: number }) {
-  const router = useRouter()
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirm, setConfirm] = useState("")
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
     if (password !== confirm) {
-      setError("Passwords don't match")
-      return
+      setError("Passwords don't match");
+      return;
     }
-    setPending(true)
-    setError(null)
+    setPending(true);
+    setError(null);
     const { error } = await authClient.signUp.email({
       name: name.trim(),
       email: email.trim(),
       password,
-    })
+    });
     if (error) {
-      setError(error.message ?? "Sign-up failed")
-      setPending(false)
-      return
+      setError(error.message ?? 'Sign-up failed');
+      setPending(false);
+      return;
     }
-    router.push("/")
-    router.refresh()
+    router.push('/');
+    router.refresh();
   }
 
   return (
-    <AuthCard title="Create account" description="Track your filament inventory">
+    <AuthCard
+      title="Create account"
+      description="Track your filament inventory"
+    >
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="name">Name</Label>
@@ -89,14 +92,21 @@ export function SignupForm({ minLength }: { minLength: number }) {
             onChange={(e) => setConfirm(e.target.value)}
           />
         </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        <Button type="submit" disabled={pending} className="bg-accent text-accent-foreground hover:bg-accent/90">
-          {pending ? "Creating account…" : "Sign up"}
+        {error && <p className="text-destructive text-sm">{error}</p>}
+        <Button
+          type="submit"
+          disabled={pending}
+          className="bg-accent text-accent-foreground hover:bg-accent/90"
+        >
+          {pending ? 'Creating account…' : 'Sign up'}
         </Button>
-        <Link href="/login" className="text-center text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          href="/login"
+          className="text-muted-foreground hover:text-foreground text-center text-sm"
+        >
           Already have an account? Sign in
         </Link>
       </form>
     </AuthCard>
-  )
+  );
 }
