@@ -167,6 +167,38 @@ External clients authenticate with long-lived bearer tokens created on `/account
   handlers. Groups/lending are not exposed in v1.
 - **Keep `lib/openapi.ts` and `docs/api.md` in sync when endpoints change.**
 
+## Seeding catalogs from SpoolmanDB
+
+`npm run db:import -- --manufacturer <slug> [--manufacturer …] [--type PETG,PLA] [--dry-run]`
+seeds the global **materials** & **spool-type** catalogs from the community
+[SpoolmanDB-Community](https://github.com/Icezaza2543/SpoolmanDB-Community) source
+files (`scripts/import-spoolmandb.ts`). It consumes the clean *source* files (one
+per manufacturer), NOT the compiled 50k-row output, and dedupes hard:
+
+- **Product-line near-dupes** ("PET-G Premium" / "PETG Premium" / "PET G Matt
+  Matte PETG") collapse by normalizing the name (fold `pet-g→petg`, drop
+  material-code tokens, `matte→matt`, dedupe tokens); equal token lists merge
+  (shortest name wins). Not subset — "Premium" ≠ "Premium High Speed".
+- **Colors** dedupe by normalized name within a line (not exact hex — the same
+  named color drifts a few hex points between lines; first swatch kept).
+- One material per (line, color); the empty-spool weights become spool types.
+- **Extra data** (density, diameters, extruder/bed temps) is stored on
+  `materials` **data-only for now — no UI yet** (surface it later, step by step).
+
+**Insert-only / idempotent** via a unique `externalKey` on both tables
+(`spoolmandb:<mfr>:<line>:<color>` and `…:spool:<type>:<weight>`): a re-run skips
+known keys, **claims** a matching manual row (sets only `externalKey` +
+NULL-backfills the extra columns; never renames/recolors), or inserts a new
+`approved` row. So admin edits and re-crawls never clobber each other. Upstream
+*renames* change the key → old row lingers; delete it via `/admin/materials`.
+Run under Node 24 (`fnm exec --using=v24.18.0 npm run db:import -- …`) for the
+better-sqlite3 native module.
+
+Because the catalog then holds hundreds/thousands of materials, the add-spool
+dialog uses a **searchable combobox** (`components/warehouseDashboard/spoolForm/
+material-picker.tsx`), not a Select — client-side filter on name + manufacturer,
+capped at 50 visible.
+
 ## Known gaps / quirks (V0 export leftovers)
 
 - No README, no seed data (fresh DB shows the empty state; spool-type catalog starts empty too)

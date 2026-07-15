@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/select';
 import { Plus, X } from 'lucide-react';
 import { requestMaterial } from '@/app/actions/materials';
-import { FILAMENT_TYPES, materialLabel } from '@/lib/filament';
+import { MaterialPicker } from '@/components/warehouseDashboard/spoolForm/material-picker';
+import { FILAMENT_TYPES } from '@/lib/filament';
 import type { Material } from '@/lib/db/schema';
 import { toast } from 'sonner';
 
@@ -46,16 +47,6 @@ export function MaterialField({
     const seen = new Set(materials.map((m) => m.id));
     return [...materials, ...extras.filter((m) => !seen.has(m.id))];
   }, [materials, extras]);
-
-  // Base UI Select renders raw values unless the root gets an items map
-  const items = useMemo(
-    () =>
-      all.map((m) => ({
-        value: String(m.id),
-        label: `${materialLabel(m)}${m.status === 'pending' ? ' — pending' : ''}`,
-      })),
-    [all]
-  );
 
   async function handleRequest() {
     if (!manufacturer.trim() || !name.trim()) {
@@ -102,24 +93,12 @@ export function MaterialField({
           </button>
         )}
       </div>
-      <Select
-        items={items}
-        value={value ? String(value.id) : null}
-        onValueChange={(v) =>
-          v && onChange(all.find((m) => String(m.id) === v) ?? null)
-        }
-      >
-        <SelectTrigger id="material" className="w-full">
-          <SelectValue placeholder="Pick a material" />
-        </SelectTrigger>
-        <SelectContent>
-          {items.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <MaterialPicker
+        id="material"
+        materials={all}
+        value={value}
+        onChange={onChange}
+      />
 
       {requesting && (
         <div className="border-border bg-secondary/50 flex flex-col gap-3 rounded-md border p-3">

@@ -1,5 +1,11 @@
 import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import {
+  integer,
+  real,
+  sqliteTable,
+  text,
+  unique,
+} from 'drizzle-orm/sqlite-core';
 import { user } from './auth-schema';
 
 export * from './auth-schema';
@@ -14,6 +20,9 @@ export const spoolTypes = sqliteTable('spool_types', {
   // Weight of the bare, empty spool (g)
   emptyWeightGrams: integer('empty_weight_grams').notNull(),
   status: text('status').notNull().default('pending'), // approved | pending | rejected
+  // Stable identity for entries seeded from SpoolmanDB (import idempotence).
+  // NULL for user/admin-created entries. See scripts/import-spoolmandb.ts.
+  externalKey: text('external_key').unique(),
   submittedById: text('submitted_by_id').references(() => user.id, {
     onDelete: 'set null',
   }),
@@ -44,6 +53,17 @@ export const materials = sqliteTable('materials', {
   reviewedById: text('reviewed_by_id').references(() => user.id, {
     onDelete: 'set null',
   }),
+  // Stable identity for entries seeded from SpoolmanDB (import idempotence).
+  // NULL for user/admin-created entries. See scripts/import-spoolmandb.ts.
+  externalKey: text('external_key').unique(),
+  // Extra reference data seeded from SpoolmanDB (data-only for now, no UI yet).
+  // All nullable; on re-import backfilled only where NULL (never overwritten).
+  densityGCm3: real('density_g_cm3'),
+  diametersMm: text('diameters_mm'), // comma-joined, e.g. "1.75" or "1.75,2.85"
+  extruderTempMinC: integer('extruder_temp_min_c'),
+  extruderTempMaxC: integer('extruder_temp_max_c'),
+  bedTempMinC: integer('bed_temp_min_c'),
+  bedTempMaxC: integer('bed_temp_max_c'),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

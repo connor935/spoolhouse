@@ -13,6 +13,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "admin:create": "tsx scripts/create-admin.ts",
+    "db:import": "tsx scripts/import-spoolmandb.ts",
     "token:create": "tsx scripts/create-api-token.ts",
     "format": "prettier '*/**/*.{js,ts,mjs,cjs,json,tsx}' --write"
   },
