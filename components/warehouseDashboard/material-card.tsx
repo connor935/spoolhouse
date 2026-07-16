@@ -7,28 +7,38 @@ import {
   type SpoolView,
 } from '@/lib/filament';
 import { SpoolCard } from './spool-card';
-import { Dialog } from '@base-ui/react';
-import { Plus } from 'lucide-react';
-import { Button } from '../ui/button';
 
 export function MaterialCard({
   inventory,
   visibleSpoolIds,
   onEditSpool,
-  onAddSpool,
+  onOpenMaterialDialog,
 }: {
   inventory: MaterialInventory;
   // Tab filtering: only these spools are listed (indices stay material-wide)
   visibleSpoolIds: Set<number>;
   onEditSpool: (s: SpoolView) => void;
-  onAddSpool: (materialId: number) => void;
+  onOpenMaterialDialog: (material: MaterialInventory) => void;
 }) {
   const { material, spools, totalLeftGrams } = inventory;
   const swatch = material?.color || '#000000';
 
   return (
     <div className="border-border bg-card hover:border-accent/40 flex flex-col rounded-lg border transition-colors">
-      <div className="flex items-start justify-between gap-3 p-5 pb-3">
+      {/* Only the header opens the material dialog — spool rows below stay
+          independently interactive (their edit buttons must not bubble here). */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onOpenMaterialDialog(inventory)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpenMaterialDialog(inventory);
+          }
+        }}
+        className="hover:bg-secondary/40 focus-visible:ring-ring flex cursor-pointer items-start justify-between gap-3 rounded-t-lg p-5 pb-3 outline-none focus-visible:ring-2"
+      >
         <div className="flex flex-1 items-start gap-3">
           <span
             className="border-border mt-0.5 h-9 w-9 shrink-0 rounded-full border shadow-inner"

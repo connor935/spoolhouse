@@ -20,6 +20,7 @@ import type { Material, SpoolType } from '@/lib/db/schema';
 import type { SharedSpool } from '@/lib/sharing';
 import Link from 'next/link';
 import { AppHeader } from '../app-header';
+import { MaterialDialog } from './material-dialog';
 
 // Top-level tabs: your own stock, or one per group. Status (in-stock/empty/all)
 // and borrows are no longer tabs — status is a filter, borrows is a modal.
@@ -69,6 +70,9 @@ export function WarehouseDashboard({
   );
   const [filters, setFilters] = useState<InventoryFilters>(initialFilters);
   const [borrowsOpen, setBorrowsOpen] = useState(false);
+  const [openMaterialDialog, setOpenMaterialDialog] = useState(false);
+  const [dialogMaterial, setDialogMaterial] =
+    useState<MaterialInventory | null>(null);
 
   // Mirror tab + filters into the URL (replaceState: shareable links, no
   // navigation/server round-trip per keystroke, back button stays sane).
@@ -157,6 +161,11 @@ export function WarehouseDashboard({
     setPresetMaterialId(null);
     setFormInstance((i) => i + 1);
     setFormOpen(true);
+  }
+
+  function openMaterialDetails(m: MaterialInventory) {
+    setDialogMaterial(m);
+    setOpenMaterialDialog(true);
   }
 
   // Borrows + Add spool. Rendered twice: pinned to the tabs row on desktop
@@ -313,7 +322,7 @@ export function WarehouseDashboard({
                 inventory={m}
                 visibleSpoolIds={visibleIds}
                 onEditSpool={openEdit}
-                onAddSpool={openCreate}
+                onOpenMaterialDialog={openMaterialDetails}
               />
             ))}
           </section>
@@ -329,6 +338,14 @@ export function WarehouseDashboard({
         materials={usableMaterials}
         spoolTypes={spoolTypes}
         isAdmin={user.isAdmin}
+      />
+
+      <MaterialDialog
+        open={openMaterialDialog}
+        onOpenChange={setOpenMaterialDialog}
+        inventoryMaterial={dialogMaterial}
+        onAddSpool={openCreate}
+        onEditSpool={openEdit}
       />
 
       <BorrowsDialog
