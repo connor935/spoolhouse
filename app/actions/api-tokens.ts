@@ -37,7 +37,7 @@ export async function createApiToken(name: string): Promise<{ token: string }> {
   return { token };
 }
 
-export async function revokeApiToken(id: number) {
+export async function revokeApiToken(id: string) {
   const user = await requireUser();
   await db
     .delete(apiTokens)

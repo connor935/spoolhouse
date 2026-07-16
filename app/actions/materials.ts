@@ -73,7 +73,7 @@ export async function getPendingMaterials() {
     .orderBy(asc(materials.createdAt));
 }
 
-export async function approveMaterial(id: number, edits?: MaterialInput) {
+export async function approveMaterial(id: string, edits?: MaterialInput) {
   const admin = await requireAdmin();
   const fields = edits ? validateMaterialInput(edits) : {};
   await db
@@ -89,7 +89,7 @@ export async function approveMaterial(id: number, edits?: MaterialInput) {
   revalidatePath('/admin/materials');
 }
 
-export async function rejectMaterial(id: number) {
+export async function rejectMaterial(id: string) {
   const admin = await requireAdmin();
   await db
     .update(materials)
@@ -120,7 +120,7 @@ export async function getAllMaterialsForAdmin(): Promise<MaterialWithUsage[]> {
 // The submitter can edit their own material while it's pending or rejected
 // (never once approved — it's global and others may reference it); editing
 // a rejected entry resubmits it as pending for re-review.
-export async function updateMaterial(id: number, input: MaterialInput) {
+export async function updateMaterial(id: string, input: MaterialInput) {
   const user = await requireUser();
   const [existing] = await db
     .select()
@@ -150,7 +150,7 @@ export async function updateMaterial(id: number, input: MaterialInput) {
 // Admin-only, and only when no spool references it (no data migration on
 // delete — see the DB-setup notes: FK enforcement is off, so this check is
 // the only thing preventing dangling spool.materialId references).
-export async function deleteMaterial(id: number) {
+export async function deleteMaterial(id: string) {
   await requireAdmin();
   const [usage] = await db
     .select({ count: count() })

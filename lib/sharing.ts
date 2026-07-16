@@ -19,17 +19,17 @@ export type SharedSpool = SpoolView & {
   material: Material;
   ownerId: string;
   ownerName: string;
-  lentTo: { lendId: number; borrowerId: string; borrowerName: string } | null;
+  lentTo: { lendId: string; borrowerId: string; borrowerName: string } | null;
   // Outstanding (not yet approved/declined) borrow request, if any
   pendingRequest: {
-    lendId: number;
+    lendId: string;
     borrowerId: string;
     borrowerName: string;
   } | null;
 };
 
 export async function getMembership(
-  groupId: number,
+  groupId: string,
   userId: string
 ): Promise<GroupMember | undefined> {
   const [membership] = await db
@@ -45,7 +45,7 @@ export async function getMembership(
 // group's pooled stock. Single source of truth — reused by lend actions
 // and (later) search.
 export async function getSharedFilaments(
-  groupId: number
+  groupId: string
 ): Promise<SharedSpool[]> {
   const members = await db
     .select({
@@ -85,9 +85,9 @@ export async function getSharedFilaments(
     );
 
   // Per member: set of overridden MATERIAL ids
-  const overridesByMember = new Map<number, Set<number>>();
+  const overridesByMember = new Map<string, Set<string>>();
   for (const o of overrides) {
-    const set = overridesByMember.get(o.groupMemberId) ?? new Set<number>();
+    const set = overridesByMember.get(o.groupMemberId) ?? new Set<string>();
     set.add(o.materialId);
     overridesByMember.set(o.groupMemberId, set);
   }
@@ -119,7 +119,7 @@ export async function getSharedFilaments(
     if (!member) continue;
 
     const overrideSet =
-      overridesByMember.get(member.groupMemberId) ?? new Set<number>();
+      overridesByMember.get(member.groupMemberId) ?? new Set<string>();
     const shared =
       member.shareMode === 'whitelist'
         ? overrideSet.has(row.material.id)

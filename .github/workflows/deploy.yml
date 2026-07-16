@@ -68,6 +68,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Stop the deploy on the first failing command — in particular, if the
+          # migration step below fails we must NOT roll out the app.
+          script_stop: true
           script: |
             # Navigate to where your docker-compose.yml lives on Hetzner
             cd $STACK_DIR
@@ -75,8 +78,20 @@ jobs:
             # Authenticate Docker with GHCR using the token if not already cached
             # (Ensure you ran `docker login ghcr.io` once on the server manually)
 
-            # Pull down the newly pushed images
+            # Pull the newly pushed app image, and the tools image separately
+            # (the `admin` service is under the `tools` profile, so a bare
+            # `docker compose pull` skips it — name it explicitly).
             docker compose pull
+            docker compose pull admin
+
+            # Apply DB migrations BEFORE starting the new app, via the one-off
+            # tools image (same DB volume + DATABASE_PATH as the app). Running it
+            # as a gated step means a bad migration fails the deploy here instead
+            # of crash-looping the app container. The app also auto-migrates on
+            # startup, so this is idempotent — a re-run just records nothing new.
+            # Overrides the `admin` service's create-admin entrypoint with the
+            # migration runner (plain node ESM, no tsx needed).
+            docker compose run --rm --entrypoint node admin scripts/migrate.mjs
 
             # Relaunch the application with zero downtime
             docker compose up -d --remove-orphans

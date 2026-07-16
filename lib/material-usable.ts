@@ -7,7 +7,7 @@ import { materials } from '@/lib/db/schema';
 // A material is usable if it's approved, or if the user submitted it —
 // mirrors lib/spool-type-usable.ts, shared by server actions and the REST API.
 export async function isMaterialUsable(
-  materialId: number,
+  materialId: string,
   userId: string
 ): Promise<boolean> {
   const [m] = await db

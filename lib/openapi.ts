@@ -28,8 +28,8 @@ const idParameter = {
   name: 'id',
   in: 'path',
   required: true,
-  schema: { type: 'integer', minimum: 1 },
-  description: 'Spool id',
+  schema: { type: 'string', format: 'uuid' },
+  description: 'Spool id (UUID)',
 };
 
 export const openApiSpec = {
@@ -341,7 +341,7 @@ export const openApiSpec = {
       Material: {
         type: 'object',
         properties: {
-          id: { type: 'integer' },
+          id: { type: 'string', format: 'uuid' },
           manufacturer: { type: 'string', example: 'Bambu Lab' },
           name: { type: 'string', example: 'PLA Matte' },
           filamentType: { type: 'string', enum: FILAMENT_TYPES },
@@ -353,7 +353,7 @@ export const openApiSpec = {
       SpoolType: {
         type: 'object',
         properties: {
-          id: { type: 'integer' },
+          id: { type: 'string', format: 'uuid' },
           manufacturer: { type: 'string', example: 'Bambu Lab' },
           name: { type: 'string', example: 'Bambu Lab spool' },
           emptyWeightGrams: { type: 'integer', example: 250 },
@@ -364,13 +364,13 @@ export const openApiSpec = {
       Spool: {
         type: 'object',
         properties: {
-          id: { type: 'integer' },
+          id: { type: 'string', format: 'uuid' },
           tagUid: {
             type: 'string',
             nullable: true,
             example: 'D8836C2EB0E94080AFD875E41EF80492',
           },
-          materialId: { type: 'integer' },
+          materialId: { type: 'string', format: 'uuid' },
           material: {
             type: 'object',
             properties: {
@@ -380,7 +380,7 @@ export const openApiSpec = {
               color: { type: 'string', nullable: true },
             },
           },
-          spoolTypeId: { type: 'integer' },
+          spoolTypeId: { type: 'string', format: 'uuid' },
           spoolTypeLabel: { type: 'string' },
           emptyWeightGrams: { type: 'integer' },
           fullFilamentWeightGrams: { type: 'integer' },
@@ -403,8 +403,8 @@ export const openApiSpec = {
       SpoolCreate: {
         type: 'object',
         properties: {
-          materialId: { type: 'integer', minimum: 1 },
-          spoolTypeId: { type: 'integer', minimum: 1 },
+          materialId: { type: 'string', format: 'uuid' },
+          spoolTypeId: { type: 'string', format: 'uuid' },
           fullFilamentWeightGrams: {
             type: 'integer',
             minimum: 1,
@@ -428,8 +428,8 @@ export const openApiSpec = {
         type: 'object',
         description: 'Any subset of the create fields; at least one required.',
         properties: {
-          materialId: { type: 'integer', minimum: 1 },
-          spoolTypeId: { type: 'integer', minimum: 1 },
+          materialId: { type: 'string', format: 'uuid' },
+          spoolTypeId: { type: 'string', format: 'uuid' },
           fullFilamentWeightGrams: { type: 'integer', minimum: 1 },
           measuredTotalWeightGrams: { type: 'integer', minimum: 0 },
           tagUid: { type: 'string', nullable: true },

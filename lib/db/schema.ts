@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import {
   integer,
@@ -8,13 +9,20 @@ import {
 } from 'drizzle-orm/sqlite-core';
 import { user } from './auth-schema';
 
+// All app-table primary keys are random UUIDs (not sequential integers): they
+// surface in the REST API (/api/v1/spools/:id etc.) and URLs, so unguessable
+// ids avoid enumeration/leaking counts. `user`/auth tables keep better-auth's
+// own (already random) ids. Generated in JS via $defaultFn on insert.
+
 export * from './auth-schema';
 
 // Global spool-type catalog: admin-curated, users can submit requests.
 // A pending type is immediately usable by its submitter, visible to others
 // only once approved.
 export const spoolTypes = sqliteTable('spool_types', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   manufacturer: text('manufacturer').notNull(),
   name: text('name').notNull(),
   // Weight of the bare, empty spool (g)
@@ -41,7 +49,9 @@ export const spoolTypes = sqliteTable('spool_types', {
 // admin approves; a pending material is immediately usable by its submitter.
 // Many users' spools can reference the same material.
 export const materials = sqliteTable('materials', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   manufacturer: text('manufacturer').notNull(),
   name: text('name').notNull(),
   filamentType: text('filament_type').notNull(),
@@ -75,15 +85,17 @@ export const materials = sqliteTable('materials', {
 // A physical spool of a material. DB table name stays "filaments" (SQLite
 // table renames fight drizzle-kit's interactive prompts); TS calls it spools.
 export const spools = sqliteTable('filaments', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  materialId: integer('material_id')
+  materialId: text('material_id')
     .notNull()
     .references(() => materials.id),
   // Empty-spool weight comes from the referenced spool type
-  spoolTypeId: integer('spool_type_id')
+  spoolTypeId: text('spool_type_id')
     .notNull()
     .references(() => spoolTypes.id),
   // Nominal amount of filament on a full spool (g) - used for % remaining
@@ -104,7 +116,9 @@ export const spools = sqliteTable('filaments', {
 // Long-lived bearer tokens for the external REST API (/api/v1). Only the
 // SHA-256 hash is stored; the plaintext is shown once at creation on /account.
 export const apiTokens = sqliteTable('api_tokens', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -129,7 +143,9 @@ export type NewSpoolType = typeof spoolTypes.$inferInsert;
 // Invite-only groups of nearby users that pool their (selectively) shared
 // spools into a browsable group stock — see .claude/epic-4.md.
 export const groups = sqliteTable('groups', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   name: text('name').notNull(),
   ownerId: text('owner_id')
     .notNull()
@@ -147,8 +163,10 @@ export const groups = sqliteTable('groups', {
 export const groupMembers = sqliteTable(
   'group_members',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    groupId: integer('group_id')
+    id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+    groupId: text('group_id')
       .notNull()
       .references(() => groups.id, { onDelete: 'cascade' }),
     userId: text('user_id')
@@ -170,11 +188,13 @@ export const groupMembers = sqliteTable(
 export const filamentShareOverrides = sqliteTable(
   'filament_share_overrides',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    groupMemberId: integer('group_member_id')
+    id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+    groupMemberId: text('group_member_id')
       .notNull()
       .references(() => groupMembers.id, { onDelete: 'cascade' }),
-    materialId: integer('material_id')
+    materialId: text('material_id')
       .notNull()
       .references(() => materials.id, { onDelete: 'cascade' }),
   },
@@ -182,15 +202,17 @@ export const filamentShareOverrides = sqliteTable(
 );
 
 export const lends = sqliteTable('lends', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   // References a physical spool (row in the "filaments" table)
-  filamentId: integer('filament_id')
+  filamentId: text('filament_id')
     .notNull()
     .references(() => spools.id, { onDelete: 'cascade' }),
   borrowerId: text('borrower_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  groupId: integer('group_id')
+  groupId: text('group_id')
     .notNull()
     .references(() => groups.id, { onDelete: 'cascade' }),
   status: text('status').notNull().default('requested'), // requested | active | declined | returned
@@ -210,7 +232,9 @@ export const lends = sqliteTable('lends', {
 // In-app notifications (bell + /notifications). Actor/filament/group names are
 // denormalized snapshots so notifications survive deletions of their sources.
 export const notifications = sqliteTable('notifications', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   // Recipient
   userId: text('user_id')
     .notNull()
@@ -220,7 +244,7 @@ export const notifications = sqliteTable('notifications', {
   actorName: text('actor_name').notNull(),
   filamentName: text('filament_name').notNull(),
   groupName: text('group_name').notNull(),
-  lendId: integer('lend_id'),
+  lendId: text('lend_id'),
   readAt: integer('read_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()

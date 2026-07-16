@@ -56,7 +56,7 @@ const spoolJoin = () =>
     .innerJoin(spoolTypes, eq(spools.spoolTypeId, spoolTypes.id));
 
 export async function getOwnedSpool(
-  id: number,
+  id: string,
   userId: string
 ): Promise<SpoolRow | null> {
   const [row] = await spoolJoin().where(
@@ -79,14 +79,16 @@ export async function getOwnedSpoolByTag(
   return row ?? null;
 }
 
-export function parseId(raw: string): number | null {
-  const id = Number(raw);
-  return Number.isInteger(id) && id > 0 ? id : null;
+// Ids are UUIDs (opaque strings). Accept any non-empty, reasonably-sized token
+// (avoids unbounded input); existence is checked by the ownership-scoped query.
+export function parseId(raw: string): string | null {
+  const id = raw.trim();
+  return id.length > 0 && id.length <= 64 ? id : null;
 }
 
 export type SpoolBody = {
-  materialId: number;
-  spoolTypeId: number;
+  materialId: string;
+  spoolTypeId: string;
   fullFilamentWeightGrams: number;
   measuredTotalWeightGrams: number;
   tagUid: string | null;
@@ -110,8 +112,8 @@ export function parseSpoolBody(
   for (const field of ['materialId', 'spoolTypeId'] as const) {
     if (input[field] !== undefined) {
       const v = input[field];
-      if (typeof v !== 'number' || !Number.isInteger(v) || v <= 0) {
-        return { ok: false, message: `${field} must be a positive integer` };
+      if (typeof v !== 'string' || v.trim() === '') {
+        return { ok: false, message: `${field} must be a non-empty id string` };
       }
       value[field] = v;
     } else if (!partial) {

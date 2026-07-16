@@ -2,9 +2,9 @@ import type { Material, Spool, SpoolType } from '@/lib/db/schema';
 
 // One physical spool with computed amounts (material fields live on MaterialInventory)
 export type SpoolView = {
-  id: number;
-  materialId: number;
-  spoolTypeId: number;
+  id: string;
+  materialId: string;
+  spoolTypeId: string;
   // e.g. "Prusament — Standard (216 g)"
   spoolTypeLabel: string;
   // Weight of the bare, empty spool (g), from the spool type
@@ -87,9 +87,9 @@ export function toSpoolView(s: Spool, spoolType: SpoolType): SpoolView {
 // spools oldest-first (stable #1, #2 … numbering).
 export function groupInventory(
   rows: { spool: Spool; material: Material; spoolType: SpoolType }[],
-  lentToBySpoolId?: Map<number, string>
+  lentToBySpoolId?: Map<string, string>
 ): MaterialInventory[] {
-  const byMaterial = new Map<number, MaterialInventory>();
+  const byMaterial = new Map<string, MaterialInventory>();
   for (const row of rows) {
     const view = toSpoolView(row.spool, row.spoolType);
     view.lentToName = lentToBySpoolId?.get(row.spool.id) ?? null;

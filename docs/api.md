@@ -11,6 +11,7 @@ Interactive **Swagger UI**: `/api-docs` (sign in first). Machine-readable OpenAP
 A physical **spool** references a global **material** (manufacturer, name, filament type,
 colour) and a **spool type** (the empty-spool weight). Remaining filament =
 `measuredTotalWeightGrams − spoolType.emptyWeightGrams`. All weights are gram integers.
+All resource ids (`materialId`, `spoolTypeId`, spool `:id`, …) are **UUID strings**, not numbers.
 
 ## Authentication
 

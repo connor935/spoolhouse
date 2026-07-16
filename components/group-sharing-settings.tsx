@@ -31,19 +31,19 @@ export function GroupSharingSettings({
   initialOverrideIds,
   ownMaterials,
 }: {
-  groupId: number;
+  groupId: string;
   initialShareMode: ShareMode;
-  initialOverrideIds: number[];
+  initialOverrideIds: string[];
   ownMaterials: Material[];
 }) {
   const router = useRouter();
   const [shareMode, setShareMode] = useState<ShareMode>(initialShareMode);
-  const [overrideIds, setOverrideIds] = useState<Set<number>>(
+  const [overrideIds, setOverrideIds] = useState<Set<string>>(
     new Set(initialOverrideIds)
   );
   const [saving, setSaving] = useState(false);
 
-  function toggle(id: number) {
+  function toggle(id: string) {
     setOverrideIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);

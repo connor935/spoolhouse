@@ -30,7 +30,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   spool?: SpoolView | null;
-  presetMaterialId?: number | null;
+  presetMaterialId?: string | null;
   materials: Material[];
   spoolTypes: SpoolType[];
   isAdmin?: boolean;

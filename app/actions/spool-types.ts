@@ -80,7 +80,7 @@ export async function getPendingSpoolTypes() {
     .orderBy(asc(spoolTypes.createdAt));
 }
 
-export async function approveSpoolType(id: number, edits?: SpoolTypeInput) {
+export async function approveSpoolType(id: string, edits?: SpoolTypeInput) {
   const admin = await requireAdmin();
   const fields = edits ? validateSpoolTypeInput(edits) : {};
   await db
@@ -96,7 +96,7 @@ export async function approveSpoolType(id: number, edits?: SpoolTypeInput) {
   revalidatePath('/admin/spool-types');
 }
 
-export async function rejectSpoolType(id: number) {
+export async function rejectSpoolType(id: string) {
   const admin = await requireAdmin();
   await db
     .update(spoolTypes)
@@ -129,7 +129,7 @@ export async function getAllSpoolTypesForAdmin(): Promise<
 // The submitter can edit their own spool type while it's pending or rejected
 // (never once approved — it's global and others may reference it); editing
 // a rejected entry resubmits it as pending for re-review.
-export async function updateSpoolType(id: number, input: SpoolTypeInput) {
+export async function updateSpoolType(id: string, input: SpoolTypeInput) {
   const user = await requireUser();
   const [existing] = await db
     .select()
@@ -159,7 +159,7 @@ export async function updateSpoolType(id: number, input: SpoolTypeInput) {
 // Admin-only, and only when no spool references it (no data migration on
 // delete — see the DB-setup notes: FK enforcement is off, so this check is
 // the only thing preventing dangling spool.spoolTypeId references).
-export async function deleteSpoolType(id: number) {
+export async function deleteSpoolType(id: string) {
   await requireAdmin();
   const [usage] = await db
     .select({ count: count() })

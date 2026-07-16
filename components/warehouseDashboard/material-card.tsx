@@ -16,7 +16,7 @@ export function MaterialCard({
 }: {
   inventory: MaterialInventory;
   // Tab filtering: only these spools are listed (indices stay material-wide)
-  visibleSpoolIds: Set<number>;
+  visibleSpoolIds: Set<string>;
   onEditSpool: (s: SpoolView) => void;
   onOpenMaterialDialog: (material: MaterialInventory) => void;
 }) {

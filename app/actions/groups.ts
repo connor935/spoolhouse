@@ -18,7 +18,7 @@ function generateInviteCode() {
   return randomBytes(6).toString('base64url');
 }
 
-async function requireOwner(groupId: number, userId: string) {
+async function requireOwner(groupId: string, userId: string) {
   const [group] = await db
     .select()
     .from(groups)
@@ -70,7 +70,7 @@ export async function joinGroup(code: string) {
   return group;
 }
 
-export async function leaveGroup(groupId: number) {
+export async function leaveGroup(groupId: string) {
   const authUser = await requireUser();
   await db
     .delete(groupMembers)
@@ -84,7 +84,7 @@ export async function leaveGroup(groupId: number) {
   revalidatePath('/groups');
 }
 
-export async function removeMember(groupId: number, memberUserId: string) {
+export async function removeMember(groupId: string, memberUserId: string) {
   const authUser = await requireUser();
   await requireOwner(groupId, authUser.id);
   await db
@@ -99,7 +99,7 @@ export async function removeMember(groupId: number, memberUserId: string) {
   revalidatePath(`/groups/${groupId}`);
 }
 
-export async function rotateInviteCode(groupId: number) {
+export async function rotateInviteCode(groupId: string) {
   const authUser = await requireUser();
   await requireOwner(groupId, authUser.id);
   const inviteCode = generateInviteCode();
@@ -111,7 +111,7 @@ export async function rotateInviteCode(groupId: number) {
   return inviteCode;
 }
 
-export async function renameGroup(groupId: number, name: string) {
+export async function renameGroup(groupId: string, name: string) {
   const authUser = await requireUser();
   await requireOwner(groupId, authUser.id);
   const trimmed = name.trim();
@@ -124,7 +124,7 @@ export async function renameGroup(groupId: number, name: string) {
   revalidatePath('/groups');
 }
 
-export async function deleteGroup(groupId: number) {
+export async function deleteGroup(groupId: string) {
   const authUser = await requireUser();
   await requireOwner(groupId, authUser.id);
   await db.delete(groups).where(eq(groups.id, groupId));
@@ -132,9 +132,9 @@ export async function deleteGroup(groupId: number) {
 }
 
 export async function updateShareSettings(
-  groupId: number,
+  groupId: string,
   mode: 'all' | 'whitelist' | 'blacklist',
-  overrideMaterialIds: number[]
+  overrideMaterialIds: string[]
 ) {
   const authUser = await requireUser();
   const membership = await getMembership(groupId, authUser.id);
@@ -186,7 +186,7 @@ export async function getMyGroups() {
     .where(eq(groupMembers.userId, authUser.id));
 }
 
-export async function getGroupDetail(groupId: number) {
+export async function getGroupDetail(groupId: string) {
   const authUser = await requireUser();
   const membership = await getMembership(groupId, authUser.id);
   if (!membership) return null;

@@ -22,7 +22,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   inventoryMaterial: MaterialInventory | null;
-  onAddSpool?: (materialId: number) => void;
+  onAddSpool?: (materialId: string) => void;
   onEditSpool: (s: SpoolView) => void;
 };
 
@@ -154,7 +154,9 @@ export function MaterialDialog({
                   key={spool.id}
                   className="flex items-center justify-between gap-4 px-5 py-2"
                 >
-                  <span className="flex w-fit flex-1">ID: {spool.id}</span>
+                  <span className="text-muted-foreground w-10 shrink-0 font-mono text-xs">
+                    #{i + 1}
+                  </span>
                   <div
                     className="bg-secondary flex h-2 w-full flex-1 overflow-hidden rounded-full"
                     role="progressbar"

@@ -119,7 +119,7 @@ async function findOrCreateMaterial(
     filamentType: string;
     color: string | null;
   }
-): Promise<number> {
+): Promise<string> {
   // A material's identity includes its colour (e.g. "Galaxy Black"), so a
   // different colour of the same product is a different material — match on
   // colour too (NULL-safe) rather than lumping all colours together.
@@ -150,7 +150,7 @@ async function findOrCreateMaterial(
 async function findOrCreateSpoolType(
   owner: ApiUser,
   st: { manufacturer: string; name: string; emptyWeightGrams: number }
-): Promise<number> {
+): Promise<string> {
   const [found] = await db
     .select({ id: spoolTypes.id })
     .from(spoolTypes)

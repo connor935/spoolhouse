@@ -119,6 +119,7 @@ in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-page
 
 ## Domain rules
 
+- **All app-table primary keys are random UUIDs** (`text`, `$defaultFn(() => randomUUID())` in `lib/db/schema.ts`), not sequential integers — they're exposed in the REST API (`/api/v1/spools/:id`) and URLs, so unguessable ids avoid enumeration/leaking counts. Only the `user`/auth tables keep better-auth's own ids. All id params in actions/API are `string`. **Migrations run with `PRAGMA foreign_keys=OFF`** on the connection (`lib/db/index.ts`, `scripts/migrate.mjs`) — a `PRAGMA foreign_keys=OFF` *inside* a migration is a no-op because Drizzle wraps each in a transaction; table-recreation migrations (id/type changes) need FK enforcement off to drop/rebuild referenced tables.
 - **All weights are gram integers** (`emptyWeightGrams`, `fullFilamentWeightGrams`, `measuredTotalWeightGrams`); display via `formatWeight()` (g below 1 kg, kg above); timestamps are `integer` unix-epoch columns surfaced as `Date` objects (Drizzle `mode: "timestamp"`)
 - Remaining filament: `filamentLeftGrams = measuredTotalWeightGrams − spoolType.emptyWeightGrams` (clamped ≥ 0)
 - Re-weigh (`setMeasuredWeight`) is allowed for the **owner and the current borrower** (active lend) — the borrower re-weighs from the Borrows tab ("Borrowed by you" section)

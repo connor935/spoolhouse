@@ -19,8 +19,8 @@ export default async function GroupPage({
 }) {
   await requireUser();
   const { id } = await params;
-  const groupId = Number(id);
-  if (!Number.isInteger(groupId)) notFound();
+  const groupId = id;
+  if (!groupId) notFound();
 
   const detail = await getGroupDetail(groupId);
   if (!detail) redirect('/groups');
@@ -28,7 +28,7 @@ export default async function GroupPage({
   // Distinct materials the user has spools of — sharing is material-level
   const inventoryRows = await getInventory();
   const ownMaterials = [
-    ...new Map<number, Material>(
+    ...new Map<string, Material>(
       inventoryRows.map((r) => [r.material.id, r.material])
     ).values(),
   ];

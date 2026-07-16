@@ -143,7 +143,7 @@ export function BorrowsPanel({
   currentUserId: string;
 }) {
   const router = useRouter();
-  const [pendingId, setPendingId] = useState<number | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const incoming = lends.filter(
     (l) => l.lend.status === 'requested' && l.ownerId === currentUserId
@@ -162,8 +162,8 @@ export function BorrowsPanel({
   );
 
   async function run(
-    lendId: number,
-    fn: (id: number) => Promise<void>,
+    lendId: string,
+    fn: (id: string) => Promise<void>,
     success: string
   ) {
     setPendingId(lendId);

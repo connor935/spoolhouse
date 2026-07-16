@@ -25,6 +25,10 @@ function createDb(): BetterSQLite3Database<typeof schema> {
   const sqlite = new Database(DB_PATH);
   sqlite.pragma('journal_mode = WAL');
   sqlite.pragma('busy_timeout = 5000');
+  // Table-recreation migrations need FK enforcement off (a `PRAGMA
+  // foreign_keys=OFF` inside a migration is a no-op — Drizzle wraps each in a
+  // transaction). Left off at runtime too, matching prior behavior.
+  sqlite.pragma('foreign_keys = OFF');
   const db = drizzle(sqlite, { schema });
   // Skip migrations for CLI scripts that only touch data on an already-migrated
   // DB (SPOOLHOUSE_SKIP_MIGRATE=1). Otherwise apply them on startup.

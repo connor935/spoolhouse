@@ -81,7 +81,7 @@ async function main() {
     },
   ] as const;
 
-  const spoolTypeIds: number[] = [];
+  const spoolTypeIds: string[] = [];
   for (const def of spoolTypeDefs) {
     const existing = await db
       .select()
@@ -134,7 +134,7 @@ async function main() {
     },
   ] as const;
 
-  const materialIds: number[] = [];
+  const materialIds: string[] = [];
   for (const def of materialDefs) {
     const existing = await db
       .select()
@@ -161,7 +161,7 @@ async function main() {
     .select()
     .from(spools)
     .where(eq(spools.userId, adminId));
-  let spoolIds: number[] = existingSpools.map((f) => f.id);
+  let spoolIds: string[] = existingSpools.map((f) => f.id);
   if (existingSpools.length === 0) {
     const spoolDefs = [
       {
@@ -200,7 +200,7 @@ async function main() {
   }
 
   // Group with both users, sharing everything
-  let groupId: number;
+  let groupId: string;
   const existingGroup = await db
     .select()
     .from(groups)
@@ -226,7 +226,7 @@ async function main() {
     { userId: adminId, role: 'owner' as const },
     { userId: bobId, role: 'member' as const },
   ];
-  const memberIds: Record<string, number> = {};
+  const memberIds: Record<string, string> = {};
   for (const m of memberDefs) {
     const existing = await db
       .select()

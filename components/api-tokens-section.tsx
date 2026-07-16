@@ -10,7 +10,7 @@ import { createApiToken, revokeApiToken } from '@/app/actions/api-tokens';
 import { toast } from 'sonner';
 
 type TokenRow = {
-  id: number;
+  id: string;
   name: string;
   tokenPrefix: string;
   createdAt: Date;
@@ -41,7 +41,7 @@ export function ApiTokensSection({ tokens }: { tokens: TokenRow[] }) {
     }
   }
 
-  async function revoke(id: number) {
+  async function revoke(id: string) {
     try {
       await revokeApiToken(id);
       toast.success('Token revoked');

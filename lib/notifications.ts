@@ -18,7 +18,7 @@ export async function createNotification(input: {
   actorName: string;
   filamentName: string;
   groupName: string;
-  lendId?: number;
+  lendId?: string;
 }) {
   const values: NewNotification = {
     userId: input.userId,

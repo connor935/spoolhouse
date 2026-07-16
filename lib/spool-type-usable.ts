@@ -7,7 +7,7 @@ import { spoolTypes } from '@/lib/db/schema';
 // A spool type is usable if it's approved, or if the user submitted it —
 // shared by the server actions and the REST API.
 export async function isSpoolTypeUsable(
-  spoolTypeId: number,
+  spoolTypeId: string,
   userId: string
 ): Promise<boolean> {
   const [st] = await db
@@ -26,7 +26,7 @@ export async function isSpoolTypeUsable(
 }
 
 export async function assertSpoolTypeUsable(
-  spoolTypeId: number,
+  spoolTypeId: string,
   userId: string
 ) {
   if (!(await isSpoolTypeUsable(spoolTypeId, userId))) {

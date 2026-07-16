@@ -20,16 +20,16 @@ export function GroupStock({
   spools,
   currentUserId,
 }: {
-  groupId: number;
+  groupId: string;
   spools: SharedSpool[];
   currentUserId: string;
 }) {
   const router = useRouter();
-  const [pendingId, setPendingId] = useState<number | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const byMaterial = useMemo(() => {
     const map = new Map<
-      number,
+      string,
       { material: SharedSpool['material']; spools: SharedSpool[] }
     >();
     for (const s of spools) {
@@ -48,7 +48,7 @@ export function GroupStock({
   }, [spools]);
 
   async function run(
-    spoolId: number,
+    spoolId: string,
     fn: () => Promise<void>,
     success: string
   ) {

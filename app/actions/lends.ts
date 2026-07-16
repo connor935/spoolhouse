@@ -17,7 +17,7 @@ import { and, desc, eq, inArray, or } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { revalidatePath } from 'next/cache';
 
-export async function requestLend(spoolId: number, groupId: number) {
+export async function requestLend(spoolId: string, groupId: string) {
   const authUser = await requireUser();
   const membership = await getMembership(groupId, authUser.id);
   if (!membership) throw new Error('Not a member of this group');
@@ -76,7 +76,7 @@ export async function requestLend(spoolId: number, groupId: number) {
 }
 
 // Returns the lend joined with the data needed for authz + notifications.
-async function requireSpoolOwner(lendId: number, userId: string) {
+async function requireSpoolOwner(lendId: string, userId: string) {
   const [row] = await db
     .select({
       lend: lends,
@@ -93,7 +93,7 @@ async function requireSpoolOwner(lendId: number, userId: string) {
   return row;
 }
 
-export async function approveLend(lendId: number) {
+export async function approveLend(lendId: string) {
   const authUser = await requireUser();
   const { lend, materialName, groupName } = await requireSpoolOwner(
     lendId,
@@ -118,7 +118,7 @@ export async function approveLend(lendId: number) {
   await emitSpoolChange(authUser.id);
 }
 
-export async function declineLend(lendId: number) {
+export async function declineLend(lendId: string) {
   const authUser = await requireUser();
   const { lend, materialName, groupName } = await requireSpoolOwner(
     lendId,
@@ -142,7 +142,7 @@ export async function declineLend(lendId: number) {
   await emitSpoolChange(authUser.id);
 }
 
-export async function markReturned(lendId: number) {
+export async function markReturned(lendId: string) {
   const authUser = await requireUser();
   const { lend, materialName, groupName } = await requireSpoolOwner(
     lendId,
@@ -168,7 +168,7 @@ export async function markReturned(lendId: number) {
 
 // Borrower withdraws their own pending request. The row is deleted —
 // cancelled requests carry no history value (unlike declined ones).
-export async function cancelLendRequest(lendId: number) {
+export async function cancelLendRequest(lendId: string) {
   const authUser = await requireUser();
   const [row] = await db
     .select({

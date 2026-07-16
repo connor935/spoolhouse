@@ -26,7 +26,7 @@ import { MaterialDialog } from './material-dialog';
 // and borrows are no longer tabs — status is a filter, borrows is a modal.
 type Tab = 'stock' | `group-${number}`;
 
-type DashboardGroup = { id: number; name: string; stock: SharedSpool[] };
+type DashboardGroup = { id: string; name: string; stock: SharedSpool[] };
 
 function materialMatches(
   m: { name: string; manufacturer: string; filamentType: string },
@@ -90,7 +90,7 @@ export function WarehouseDashboard({
   }, [tab, filters]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingSpool, setEditingSpool] = useState<SpoolView | null>(null);
-  const [presetMaterialId, setPresetMaterialId] = useState<number | null>(null);
+  const [presetMaterialId, setPresetMaterialId] = useState<string | null>(null);
   // Bumped on every open so the dialog remounts with fresh field state
   const [formInstance, setFormInstance] = useState(0);
 
@@ -149,7 +149,7 @@ export function WarehouseDashboard({
     });
   }, [activeGroup, filters]);
 
-  function openCreate(materialId: number | null = null) {
+  function openCreate(materialId: string | null = null) {
     setEditingSpool(null);
     setPresetMaterialId(materialId);
     setFormInstance((i) => i + 1);

@@ -12,6 +12,11 @@ mkdirSync(path.dirname(path.resolve(DB_PATH)), { recursive: true });
 const sqlite = new Database(DB_PATH);
 sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('busy_timeout = 5000');
+// Table-recreation migrations (id-type changes, column drops) must run with FK
+// enforcement off: a `PRAGMA foreign_keys=OFF` *inside* a migration is a no-op
+// because Drizzle wraps each migration in a transaction, so set it here on the
+// connection. Matches runtime (the app doesn't enable FK enforcement).
+sqlite.pragma('foreign_keys = OFF');
 migrate(drizzle(sqlite), {
   migrationsFolder: path.join(process.cwd(), 'drizzle'),
 });

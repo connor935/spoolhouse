@@ -308,7 +308,7 @@ async function upsertMaterials(cands: MaterialCandidate[], dryRun: boolean) {
     if (m.externalKey) byKey.set(m.externalKey, m);
     else claimable.push(m);
   }
-  const usedClaim = new Set<number>();
+  const usedClaim = new Set<string>();
   let inserted = 0,
     claimed = 0,
     skipped = 0,
@@ -379,7 +379,7 @@ async function upsertSpoolTypes(cands: SpoolTypeCandidate[], dryRun: boolean) {
     if (t.externalKey) byKey.set(t.externalKey, t);
     else claimable.push(t);
   }
-  const usedClaim = new Set<number>();
+  const usedClaim = new Set<string>();
   let inserted = 0,
     claimed = 0,
     skipped = 0;
