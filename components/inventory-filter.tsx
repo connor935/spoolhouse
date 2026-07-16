@@ -84,7 +84,7 @@ export function InventoryFilter({
   ];
 
   return (
-    <div className="border-border bg-card flex flex-1 flex-col gap-3 rounded-lg border px-3 py-3 sm:px-4">
+    <div className="border-border bg-card flex w-full flex-1 flex-col gap-3 rounded-lg border px-3 py-3 sm:px-4">
       {/* Always visible: search + status + (mobile) Filters toggle + Clear */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <div className="relative min-w-40 flex-1">
@@ -99,35 +99,11 @@ export function InventoryFilter({
           />
         </div>
 
-        {showStatus && (
-          <Select
-            items={statusItems}
-            value={value.status}
-            onValueChange={(v) =>
-              v && onChange({ ...value, status: v as StockStatus })
-            }
-          >
-            <SelectTrigger
-              className="h-9 w-32"
-              aria-label="Filter by stock status"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusItems.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
         <Button
           type="button"
           size="sm"
-          variant="outline"
-          className="relative h-9 md:hidden"
+          variant={expanded ? 'default' : 'outline'}
+          className="relative h-9"
           onClick={() => setExpanded((e) => !e)}
           aria-expanded={expanded}
         >
@@ -154,11 +130,33 @@ export function InventoryFilter({
       {/* Advanced: type + min-left (+ hide-lent). Collapsed on mobile, inline on desktop. */}
       <div
         className={cn(
-          'flex-wrap items-center gap-3',
-          expanded ? 'flex' : 'hidden',
-          'md:flex'
+          'border-border flex-wrap items-center gap-4 border-t pt-3',
+          expanded ? 'flex' : 'hidden'
         )}
       >
+        {showStatus && (
+          <Select
+            items={statusItems}
+            value={value.status}
+            onValueChange={(v) =>
+              v && onChange({ ...value, status: v as StockStatus })
+            }
+          >
+            <SelectTrigger
+              className="h-9 w-32"
+              aria-label="Filter by stock status"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select
           items={TYPE_ITEMS}
           value={value.filamentType ?? ALL_TYPES}
