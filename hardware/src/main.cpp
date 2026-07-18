@@ -466,24 +466,18 @@ bool serviceTagWrite() {
   return true;
 }
 
-// Measure the weight for 5 s, average the middle 5–95 % of the sorted samples
-// (rejecting outliers), and upload the result to Spoolhouse.
-void doUpload() {
-  overlayMessage("Measuring...", "hold still", TFT_SKYBLUE);
-
+// Sample the weight for durationMs and average the middle 5–95 % of the
+// sorted samples (rejecting outliers). False if the scale yields too few
+// samples (~10 Hz, so expect durationMs/100 of them).
+bool measureTrimmed(uint32_t durationMs, float &avg) {
   constexpr int CAP = 160;
   static float samples[CAP];
   int n = 0;
   const uint32_t start = millis();
-  while (millis() - start < UPLOAD_MEASURE_MS && n < CAP) {
+  while (millis() - start < durationMs && n < CAP) {
     samples[n++] = scale.readInstant();
   }
-  if (n < 3) {
-    overlayMessage("No reading", "", TFT_RED);
-    delay(1500);
-    restoreUi();
-    return;
-  }
+  if (n < 3) return false;
 
   std::sort(samples, samples + n);
   // Trim the lowest 5 % and highest 5 %, average the rest.
@@ -495,8 +489,25 @@ void doUpload() {
   }
   double sum = 0;
   for (int i = lo; i < hi; i++) sum += samples[i];
-  const int avg = (int)lroundf(sum / (hi - lo));
-  Serial.printf("[upload] %d samples, trimmed avg %d g (used %d)\n", n, avg, hi - lo);
+  avg = (float)(sum / (hi - lo));
+  Serial.printf("[scale] %d samples, trimmed avg %.1f g (used %d)\n", n, avg, hi - lo);
+  return true;
+}
+
+// Measure the weight for 4 s (trimmed average, after the tap settles) and
+// upload the result to Spoolhouse.
+void doUpload() {
+  overlayMessage("Measuring...", "hold still", TFT_SKYBLUE);
+  delay(MEASURE_SETTLE_MS);
+
+  float measured;
+  if (!measureTrimmed(UPLOAD_MEASURE_MS, measured)) {
+    overlayMessage("No reading", "", TFT_RED);
+    delay(1500);
+    restoreUi();
+    return;
+  }
+  const int avg = (int)lroundf(measured);
 
   overlayMessage("Uploading...", String(avg) + " g", TFT_YELLOW);
   String action;
@@ -511,18 +522,26 @@ void doUpload() {
   restoreUi();
 }
 
+// Tare with the tap disturbance filtered out: the tap itself wobbles the load
+// cell, so wait for it to settle, then use a trimmed average as the new zero.
 void doTare(const char *source) {
   if (!scaleOk) return;
-  scale.tare();
-  drawnWeight = "";  // force weight repaint (snaps to ~0 g)
-  Serial.printf("[scale] tared (%s)\n", source);
-  // Brief confirmation toast in the footer, then restore the hint
-  tft.fillRect(0, footerY(), tft.width(), FOOTER_H, TFT_BLACK);
-  tft.setTextDatum(BC_DATUM);
-  tft.setTextColor(TFT_GREENYELLOW, TFT_BLACK);
-  tft.drawString("tared", tft.width() / 2, tft.height() - 1, 2);
-  delay(150);
-  drawFooterHint();
+  overlayMessage("Taring...", "hold still", TFT_SKYBLUE);
+  delay(MEASURE_SETTLE_MS);
+
+  float avg;
+  if (!measureTrimmed(TARE_MEASURE_MS, avg)) {
+    overlayMessage("No reading", "", TFT_RED);
+    delay(1500);
+    restoreUi();
+    return;
+  }
+  scale.tareBy(avg);
+  Serial.printf("[scale] tared (%s, zeroed out %.1f g)\n", source, avg);
+
+  overlayMessage("Tared", "", TFT_GREENYELLOW);
+  delay(800);
+  restoreUi();  // repaints the weight, which snaps to ~0 g
 }
 
 // Tap = upload when a recognized spool is present, otherwise tare.

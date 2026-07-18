@@ -37,6 +37,15 @@ void Scale::tare() {
   _hasFirstSample = false;
 }
 
+void Scale::tareBy(float grams) {
+  if (!_ready) return;
+  // get_units = (raw − offset) / cpg, so shifting the offset by grams·cpg
+  // moves the zero point onto the measured value.
+  _hx711.set_offset(_hx711.get_offset() + (long)lroundf(grams * _cpg));
+  _grams = 0.0f;
+  _hasFirstSample = false;
+}
+
 float Scale::readInstant() {
   if (!_ready) return _grams;
   return _hx711.get_units(1);

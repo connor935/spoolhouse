@@ -45,9 +45,12 @@ constexpr uint32_t TOUCH_DEBOUNCE_MS = 400;
 // Assumed empty-spool weight (g) sent when registering a new spool (the tag
 // doesn't carry it); edit the spool type later in the webapp for accuracy.
 constexpr int DEFAULT_EMPTY_SPOOL_G = 250;
-// Tap-to-upload measurement: sample the weight for this long, then average the
-// middle band (trimming outliers) before uploading.
-constexpr uint32_t UPLOAD_MEASURE_MS = 5000;
+// Weight measurements (tap-to-upload and tap-to-tare): wait for the tap's
+// wobble on the load cell to settle, then sample for a while and average the
+// middle band (trimming the 5 % extremes).
+constexpr uint32_t MEASURE_SETTLE_MS = 1000;
+constexpr uint32_t UPLOAD_MEASURE_MS = 4000;
+constexpr uint32_t TARE_MEASURE_MS = 2000;
 
 // ---- Custom tag writing ----
 // How long the device waits for a blank tag after a write is requested from the

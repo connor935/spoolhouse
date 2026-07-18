@@ -42,20 +42,22 @@ If the scale can't reach a known WiFi network, it starts a **setup portal**:
 After setup you can change the token / base URL any time from the
 [config page](#5-the-config-page) — the portal only appears when WiFi is down.
 
----
 
 ## 3. Everyday use
 
 ### Weighing & uploading
 - **Empty scale reads 0 g** (it tares on boot).
 - **Tare (zero):** when no recognized spool is present, **tap the screen** (or press
-  the on-board BOOT button). The footer shows "tap screen to tare".
+  the on-board BOOT button). The footer shows "tap screen to tare". The device waits
+  **1 second** for the tap's wobble to settle, then measures for **2 seconds**
+  (averaging like an upload, see below) — keep hands off until it shows **"Tared"**.
 - **Weigh + upload:** place a tagged spool → its details appear and the footer shows
   "tap screen to upload" → **tap the screen**. The device:
-  1. measures the weight for **5 seconds**,
-  2. averages the middle of the readings (discarding the noisy 5 % extremes),
-  3. uploads that weight to Spoolhouse, and
-  4. shows **"Uploaded!"** with the value.
+  1. waits **1 second** for the tap's wobble to settle,
+  2. measures the weight for **4 seconds**,
+  3. averages the middle of the readings (discarding the noisy 5 % extremes),
+  4. uploads that weight to Spoolhouse, and
+  5. shows **"Uploaded!"** with the value.
 
 The upload calls `POST /api/v1/spools/weigh`, which **registers** the spool on first
 sight (creating the material/spool-type from the tag) or **refreshes** its weight

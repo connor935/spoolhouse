@@ -16,6 +16,11 @@ public:
   // Re-zero: the current load becomes the new 0 g baseline.
   void tare();
 
+  // Re-zero by shifting the baseline so a reading of `grams` becomes 0 g —
+  // for a zero point averaged externally (e.g. the trimmed tap-to-tare
+  // measurement), unlike tare() which samples raw counts itself.
+  void tareBy(float grams);
+
   // One fresh raw reading in grams (blocks until the HX711 is ready, ~100 ms);
   // unsmoothed, for averaging during an upload measurement.
   float readInstant();
