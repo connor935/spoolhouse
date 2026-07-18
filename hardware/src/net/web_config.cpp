@@ -90,15 +90,45 @@ String page() {
          "background:var(--accent);color:var(--accent-fg);font-size:.95rem;font-weight:600;cursor:pointer}"
          "button:hover{opacity:.9}.weight{font-size:2.6rem;font-weight:700;letter-spacing:-.02em}"
          ".muted{color:var(--mut);font-size:.82rem;margin:.2rem 0 .5rem}"
+         // Tab bar: underline style on the shared border, accent for the active tab
+         ".tabs{display:flex;gap:.3rem;border-bottom:1px solid var(--border);margin:0 0 .3rem}"
+         ".tabs button{width:auto;margin:0;padding:.45rem .95rem;background:none;border:0;"
+         "border-bottom:2px solid transparent;border-radius:0;color:var(--mut);font-size:.9rem;"
+         "font-weight:600;cursor:pointer}"
+         ".tabs button:hover{opacity:1;color:var(--fg)}"
+         ".tabs button.act{color:var(--fg);border-bottom-color:var(--accent)}"
          "</style></head><body>"
          "<header><div class=logo>S</div><div><h1>Spoolhouse scale</h1>"
-         "<p class=sub>Device configuration</p></div></header>");
+         "<p class=sub>Device configuration</p></div></header>"
+         "<nav class=tabs><button type=button id=tb-main onclick=\"showTab('main')\">Scale</button>"
+         "<button type=button id=tb-settings onclick=\"showTab('settings')\">Settings</button></nav>"
+         "<div id=tab-main>");
 
   h += F("<form class=card action=/tare method=post><h2>Weight</h2><div class=weight id=w>");
   h += String(grams);
   h += F(" g</div>");
   h += csrfField();
   h += F("<button type=submit>Tare (zero)</button></form>");
+
+  // Write a custom tag for a "dumb" (tag-less) spool. Fills a blank NTAG so the
+  // scale recognises it like a smart spool. JS-driven: POST /write-tag, then
+  // poll /write-status while the device waits for a tag to be presented.
+  h += F("<div class=card><h2>Write custom tag</h2>"
+         "<p class=muted>Encode a blank NFC tag (NTAG21x) for a spool that has none. "
+         "Fill in the details, press Write, then hold the tag to the reader.</p>"
+         "<label>Manufacturer</label><input id=t_manu placeholder='e.g. Generic'>"
+         "<label>Material name</label><input id=t_name placeholder='e.g. PLA Matte'>"
+         "<label>Filament type</label><input id=t_type placeholder='e.g. PLA'>"
+         "<label>Colour</label><input id=t_color type=color value='#3366aa'>"
+         "<label>Nominal filament weight (g)</label>"
+         "<input id=t_nominal type=number step=1 value=1000>"
+         "<label>Empty-spool weight (g)</label>"
+         "<input id=t_empty type=number step=1 value=250>"
+         "<button type=button id=t_btn onclick='writeTag()'>Write tag</button>"
+         "<p id=t_status class=muted style='margin-top:.7rem'></p></div>");
+
+  // ---- Settings tab: calibration, server, display, firmware ----
+  h += F("</div><div id=tab-settings style='display:none'>");
 
   h += F("<form class=card action=/calibrate method=post><h2>Calibrate</h2>"
          "<p class=muted>Tare empty, place a known weight, enter its grams, then Calibrate.</p>"
@@ -118,23 +148,6 @@ String page() {
   h += csrfField();
   h += F("<button type=submit>Save</button></form>");
 
-  // Write a custom tag for a "dumb" (tag-less) spool. Fills a blank NTAG so the
-  // scale recognises it like a smart spool. JS-driven: POST /write-tag, then
-  // poll /write-status while the device waits for a tag to be presented.
-  h += F("<div class=card><h2>Write custom tag</h2>"
-         "<p class=muted>Encode a blank NFC tag (NTAG21x) for a spool that has none. "
-         "Fill in the details, press Write, then hold the tag to the reader.</p>"
-         "<label>Manufacturer</label><input id=t_manu placeholder='e.g. Generic'>"
-         "<label>Material name</label><input id=t_name placeholder='e.g. PLA Matte'>"
-         "<label>Filament type</label><input id=t_type placeholder='e.g. PLA'>"
-         "<label>Colour</label><input id=t_color type=color value='#3366aa'>"
-         "<label>Nominal filament weight (g)</label>"
-         "<input id=t_nominal type=number step=1 value=1000>"
-         "<label>Empty-spool weight (g)</label>"
-         "<input id=t_empty type=number step=1 value=250>"
-         "<button type=button id=t_btn onclick='writeTag()'>Write tag</button>"
-         "<p id=t_status class=muted style='margin-top:.7rem'></p></div>");
-
   // Recover a glitched/white display without a power cycle (the ESP32 keeps
   // running on WiFi even when the panel drops out).
   h += F("<form class=card action=/reset-display method=post><h2>Display</h2>"
@@ -151,9 +164,18 @@ String page() {
          "<input type=file name=firmware accept='.bin'>"
          "<button type=submit>Upload &amp; flash</button></form>");
 
+  h += F("</div>");  // close the settings tab
+
   h += F("<script>var CSRF='");
   h += g_csrf;
   h += F("';var $=function(i){return document.getElementById(i)};"
+         // Tab switching; #settings in the URL survives the settings forms'
+         // post-redirect cycle, so saving stays on the Settings tab.
+         "function showTab(t){var s=t=='settings';"
+         "$('tab-main').style.display=s?'none':'';$('tab-settings').style.display=s?'':'none';"
+         "$('tb-main').className=s?'':'act';$('tb-settings').className=s?'act':'';"
+         "if(history.replaceState)history.replaceState(null,'',s?'#settings':location.pathname);}"
+         "showTab(location.hash=='#settings'?'settings':'main');"
          "setInterval(function(){fetch('/weight').then(r=>r.text())"
          ".then(t=>{$('w').textContent=t+' g'})},700);"
          "var poll=null;"
@@ -185,6 +207,12 @@ void redirectHome() {
   server.send(303, "text/plain", "");
 }
 
+// After a settings-tab form posts, land back on the Settings tab.
+void redirectSettings() {
+  server.sendHeader("Location", "/#settings");
+  server.send(303, "text/plain", "");
+}
+
 void handleRoot() { server.send(200, "text/html", page()); }
 
 void handleWeight() {
@@ -204,7 +232,7 @@ void handleCalibrate() {
     const float factor = g_scale->calibrate(known);
     config_store::setCountsPerGram(factor);
   }
-  redirectHome();
+  redirectSettings();
 }
 
 void handleSave() {
@@ -217,7 +245,7 @@ void handleSave() {
     const String t = server.arg("token");
     if (t.length()) config_store::setToken(t);  // blank = keep current
   }
-  redirectHome();
+  redirectSettings();
 }
 
 // Streams an uploaded .bin straight into the inactive OTA partition.
@@ -337,7 +365,7 @@ void handleWriteCancel() {
 void handleResetDisplay() {
   if (!checkCsrf()) return;
   if (g_resetDisplay) g_resetDisplay();
-  redirectHome();
+  redirectSettings();
 }
 
 }  // namespace
