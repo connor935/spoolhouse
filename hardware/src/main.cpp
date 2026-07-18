@@ -2,8 +2,8 @@
 // Shows the current weight (zeroable with the tare button) and, when a spool's
 // RFID tag is recognized, the decoded filament details. The NFC chip sits
 // behind NfcReader and the tag formats behind SpoolDecoder, so new readers
-// (CLRC663) and manufacturers (Creality, OpenTag) drop in without touching
-// this file's logic.
+// and manufacturers (Creality, OpenTag) drop in without touching this file's
+// logic.
 #include <algorithm>
 
 #include <Arduino.h>
@@ -19,8 +19,8 @@
 #include "net/spoolhouse_client.h"
 #include "net/web_config.h"
 #include "secrets.h"  // OTA_PASSWORD
+#include "nfc/clrc663_reader.h"
 #include "nfc/nfc_reader.h"
-#include "nfc/pn532_reader.h"
 #include "scale.h"
 #include "spool/bambu_decoder.h"
 #include "spool/creality_decoder.h"
@@ -33,9 +33,9 @@ namespace {
 
 TFT_eSPI tft;
 Scale scale;
-Pn532Reader pn532Reader(PIN_NFC_SCK, PIN_NFC_MISO, PIN_NFC_MOSI, PIN_NFC_CS);
+Clrc663Reader clrc663Reader(PIN_NFC_SCK, PIN_NFC_MISO, PIN_NFC_MOSI, PIN_NFC_CS);
 // The one place that decides which NFC chip is in use
-NfcReader &nfc = pn532Reader;
+NfcReader &nfc = clrc663Reader;
 
 // Resistive touch on its own pins, driven by the (otherwise free) VSPI bus
 SPIClass touchSpi(VSPI);

@@ -11,14 +11,14 @@ constexpr uint8_t PIN_HX711_SCK = 27;
 // this cell reads inverted with the positive factor.
 constexpr float HX711_COUNTS_PER_GRAM = -420.0f;
 
-// ---- NFC reader, SPI ----
-// Driven as software SPI: the Adafruit PN532 driver is unreliable over ESP32
-// hardware SPI with many clone modules, and bit-banging works on the same pins.
+// ---- NFC reader (CLRC663), SPI ----
+// Driven as software SPI: both hardware SPI peripherals are taken (TFT on
+// HSPI, touch remapped onto VSPI), and bit-banging works on these pins.
 constexpr uint8_t PIN_NFC_SCK = 18;
 constexpr uint8_t PIN_NFC_MISO = 19;
 constexpr uint8_t PIN_NFC_MOSI = 23;
-// PN532 SS is wired to IO5, the former SD-card CS (the SD holder is removed,
-// so the pin is exclusively the NFC chip select).
+// NFC chip select is wired to IO5, the former SD-card CS (the SD holder is
+// removed, so the pin is exclusively the NFC chip select).
 constexpr uint8_t PIN_NFC_CS = 5;
 
 // RGB LED channels (common anode, HIGH = off)

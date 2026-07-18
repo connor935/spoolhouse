@@ -30,7 +30,7 @@ struct NfcUid {
 enum MifareKeyType : uint8_t { MIFARE_KEY_A = 0, MIFARE_KEY_B = 1 };
 
 // Abstraction over NFC reader chips so the firmware doesn't care which one is
-// wired up (PN532 today, CLRC663 when it arrives). Implementations own their
+// wired up (CLRC663 today, previously PN532). Implementations own their
 // bus/driver specifics; main.cpp and the spool decoders only talk to this
 // interface.
 class NfcReader {
