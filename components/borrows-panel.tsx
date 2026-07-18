@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +14,8 @@ import {
   type MyLend,
 } from '@/app/actions/lends';
 import { computeFilamentLeft, formatWeight } from '@/lib/filament';
+import { useAsyncAction, useKeyedAsyncAction } from '@/hooks/use-async-action';
+import { LEND_TOAST } from '@/lib/lend-toast';
 import { toast } from 'sonner';
 
 // Cross-group borrow overview: incoming requests on my spools, my outgoing
@@ -22,10 +23,9 @@ import { toast } from 'sonner';
 // A spool you currently borrow: shows remaining amount and lets you re-weigh
 // it (the borrower is the one printing with it).
 function BorrowedRow({ lend: l }: { lend: MyLend }) {
-  const router = useRouter();
   const [adjusting, setAdjusting] = useState(false);
   const [value, setValue] = useState(String(l.measuredTotalWeightGrams));
-  const [pending, setPending] = useState(false);
+  const { pending, run } = useAsyncAction();
 
   const measured = Number.parseInt(value, 10);
   const previewLeft = !Number.isNaN(measured)
@@ -40,23 +40,17 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
       );
       return;
     }
-    setPending(true);
-    try {
-      await setMeasuredWeight(l.lend.filamentId, grams);
-      toast.success('Weight updated');
-      setAdjusting(false);
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not update weight');
-    } finally {
-      setPending(false);
-    }
+    await run(() => setMeasuredWeight(l.lend.filamentId, grams), {
+      success: 'Weight updated',
+      errorFallback: 'Could not update weight',
+      onSuccess: () => setAdjusting(false),
+    });
   }
 
   return (
     <li className="flex flex-col gap-3 px-5 py-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+        <div className="flex w-full items-center justify-between gap-3 md:min-w-0">
           <div className="min-w-0">
             <p className="truncate leading-tight font-medium">
               {l.materialName}
@@ -87,6 +81,7 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
               setValue(String(l.measuredTotalWeightGrams));
               setAdjusting(true);
             }}
+            className="w-full md:w-fit"
           >
             <Scale className="mr-1 h-4 w-4" />
             Re-weigh
@@ -94,7 +89,7 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
         )}
       </div>
       {adjusting && (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex w-full flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <Input
               type="number"
@@ -102,7 +97,7 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
               min="0"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              className="h-9 max-w-40 font-mono"
+              className="h-9 flex-1 font-mono md:max-w-40"
               aria-label="Measured total weight in grams"
             />
             <Button
@@ -142,8 +137,7 @@ export function BorrowsPanel({
   lends: MyLend[];
   currentUserId: string;
 }) {
-  const router = useRouter();
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const { pendingKey: pendingId, run } = useKeyedAsyncAction<string>();
 
   const incoming = lends.filter(
     (l) => l.lend.status === 'requested' && l.ownerId === currentUserId
@@ -160,23 +154,6 @@ export function BorrowsPanel({
   const history = lends.filter(
     (l) => l.lend.status === 'returned' || l.lend.status === 'declined'
   );
-
-  async function run(
-    lendId: string,
-    fn: (id: string) => Promise<void>,
-    success: string
-  ) {
-    setPendingId(lendId);
-    try {
-      await fn(lendId);
-      toast.success(success);
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Action failed');
-    } finally {
-      setPendingId(null);
-    }
-  }
 
   function spoolLine(l: MyLend) {
     return (
@@ -211,9 +188,9 @@ export function BorrowsPanel({
             {incoming.map((l) => (
               <li
                 key={l.lend.id}
-                className="flex items-center justify-between gap-4 px-5 py-4"
+                className="flex flex-col items-center justify-between gap-4 px-5 py-4"
               >
-                <div className="flex min-w-0 items-center gap-3">
+                <div className="flex w-full items-center justify-between gap-3 md:min-w-0">
                   {spoolLine(l)}
                   <Badge variant="secondary">{l.borrowerName}</Badge>
                 </div>
@@ -221,9 +198,12 @@ export function BorrowsPanel({
                   <Button
                     size="sm"
                     onClick={() =>
-                      run(l.lend.id, approveLend, 'Request approved')
+                      run(l.lend.id, () => approveLend(l.lend.id), {
+                        success: LEND_TOAST.approved,
+                      })
                     }
                     disabled={pendingId === l.lend.id}
+                    className="w-full md:w-fit"
                   >
                     Approve
                   </Button>
@@ -231,9 +211,12 @@ export function BorrowsPanel({
                     size="sm"
                     variant="outline"
                     onClick={() =>
-                      run(l.lend.id, declineLend, 'Request declined')
+                      run(l.lend.id, () => declineLend(l.lend.id), {
+                        success: LEND_TOAST.declined,
+                      })
                     }
                     disabled={pendingId === l.lend.id}
+                    className="w-full md:w-fit"
                   >
                     Decline
                   </Button>
@@ -251,9 +234,9 @@ export function BorrowsPanel({
             {outgoing.map((l) => (
               <li
                 key={l.lend.id}
-                className="flex items-center justify-between gap-4 px-5 py-4"
+                className="flex flex-col items-center justify-between gap-4 px-5 py-4 md:flex-row"
               >
-                <div className="flex min-w-0 items-center gap-3">
+                <div className="flex w-full items-center justify-between gap-3 md:min-w-0">
                   {spoolLine(l)}
                   <Badge variant="outline" className="text-muted-foreground">
                     Awaiting {l.ownerName}
@@ -263,9 +246,12 @@ export function BorrowsPanel({
                   size="sm"
                   variant="ghost"
                   onClick={() =>
-                    run(l.lend.id, cancelLendRequest, 'Request cancelled')
+                    run(l.lend.id, () => cancelLendRequest(l.lend.id), {
+                      success: LEND_TOAST.cancelled,
+                    })
                   }
                   disabled={pendingId === l.lend.id}
+                  className="w-full md:w-fit"
                 >
                   Cancel
                 </Button>
@@ -282,9 +268,9 @@ export function BorrowsPanel({
             {lentOut.map((l) => (
               <li
                 key={l.lend.id}
-                className="flex items-center justify-between gap-4 px-5 py-4"
+                className="flex flex-col items-center justify-between gap-4 px-5 py-4 md:flex-row"
               >
-                <div className="flex min-w-0 items-center gap-3">
+                <div className="flex w-full items-center justify-between gap-3 md:min-w-0">
                   {spoolLine(l)}
                   <Badge
                     variant="outline"
@@ -297,9 +283,12 @@ export function BorrowsPanel({
                   size="sm"
                   variant="outline"
                   onClick={() =>
-                    run(l.lend.id, markReturned, 'Marked as returned')
+                    run(l.lend.id, () => markReturned(l.lend.id), {
+                      success: LEND_TOAST.returned,
+                    })
                   }
                   disabled={pendingId === l.lend.id}
+                  className="w-full md:w-fit"
                 >
                   Mark returned
                 </Button>
@@ -327,7 +316,7 @@ export function BorrowsPanel({
             {history.slice(0, 15).map((l) => (
               <li
                 key={l.lend.id}
-                className="text-muted-foreground flex items-center justify-between gap-4 px-5 py-3 text-sm"
+                className="text-muted-foreground flex flex-col items-center justify-between gap-4 px-5 py-3 text-sm md:flex-row"
               >
                 <span className="truncate">
                   {l.materialName} — {l.ownerName} → {l.borrowerName} (
@@ -335,7 +324,7 @@ export function BorrowsPanel({
                 </span>
                 <Badge
                   variant="outline"
-                  className="text-muted-foreground shrink-0"
+                  className="text-muted-foreground w-full shrink-0 md:w-fit"
                 >
                   {l.lend.status === 'returned' ? 'Returned' : 'Declined'}
                 </Badge>

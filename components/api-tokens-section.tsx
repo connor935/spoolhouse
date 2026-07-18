@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createApiToken, revokeApiToken } from '@/app/actions/api-tokens';
+import { useAsyncAction } from '@/hooks/use-async-action';
 import { toast } from 'sonner';
 
 type TokenRow = {
@@ -20,25 +21,21 @@ type TokenRow = {
 export function ApiTokensSection({ tokens }: { tokens: TokenRow[] }) {
   const router = useRouter();
   const [name, setName] = useState('');
-  const [pending, setPending] = useState(false);
+  const { pending, run } = useAsyncAction();
   // Plaintext of the token created in this session — shown exactly once
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    setPending(true);
-    try {
-      const { token } = await createApiToken(name);
-      setCreatedToken(token);
-      setCopied(false);
-      setName('');
-      router.refresh();
-    } catch {
-      toast.error('Could not create token');
-    } finally {
-      setPending(false);
-    }
+    await run(() => createApiToken(name), {
+      error: 'Could not create token',
+      onSuccess: ({ token }) => {
+        setCreatedToken(token);
+        setCopied(false);
+        setName('');
+      },
+    });
   }
 
   async function revoke(id: string) {

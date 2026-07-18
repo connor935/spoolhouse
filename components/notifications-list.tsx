@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,7 +13,8 @@ import {
 import { approveLend, declineLend } from '@/app/actions/lends';
 import type { NotificationWithStatus } from '@/app/actions/notifications';
 import type { Notification } from '@/lib/db/schema';
-import { toast } from 'sonner';
+import { useAsyncAction } from '@/hooks/use-async-action';
+import { LEND_TOAST } from '@/lib/lend-toast';
 
 function notificationText(n: Notification) {
   switch (n.type) {
@@ -80,9 +80,8 @@ export function NotificationsList({
 }: {
   items: NotificationWithStatus[];
 }) {
-  const router = useRouter();
   const [active, setActive] = useState<NotificationWithStatus | null>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, run } = useAsyncAction();
 
   function isActionable(item: NotificationWithStatus) {
     return (
@@ -93,23 +92,16 @@ export function NotificationsList({
   }
 
   async function handle(action: 'approve' | 'decline') {
-    if (!active?.notification.lendId) return;
-    setPending(true);
-    try {
-      if (action === 'approve') {
-        await approveLend(active.notification.lendId);
-        toast.success('Request approved');
-      } else {
-        await declineLend(active.notification.lendId);
-        toast.success('Request declined');
+    const lendId = active?.notification.lendId;
+    if (!lendId) return;
+    await run(
+      () => (action === 'approve' ? approveLend(lendId) : declineLend(lendId)),
+      {
+        success:
+          action === 'approve' ? LEND_TOAST.approved : LEND_TOAST.declined,
+        onSuccess: () => setActive(null),
       }
-      setActive(null);
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Action failed');
-    } finally {
-      setPending(false);
-    }
+    );
   }
 
   return (

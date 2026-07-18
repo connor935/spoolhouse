@@ -1,7 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,9 +8,10 @@ import {
   markReturned,
   requestLend,
 } from '@/app/actions/lends';
-import { formatWeight } from '@/lib/filament';
+import { DEFAULT_MATERIAL_COLOR, formatWeight } from '@/lib/filament';
 import type { SharedSpool } from '@/lib/sharing';
-import { toast } from 'sonner';
+import { useKeyedAsyncAction } from '@/hooks/use-async-action';
+import { LEND_TOAST } from '@/lib/lend-toast';
 
 // Pooled group stock, grouped by (global) material so it's visible when
 // several members have the same material. Lending stays per physical spool.
@@ -24,8 +24,7 @@ export function GroupStock({
   spools: SharedSpool[];
   currentUserId: string;
 }) {
-  const router = useRouter();
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const { pendingKey: pendingId, run } = useKeyedAsyncAction<string>();
 
   const byMaterial = useMemo(() => {
     const map = new Map<
@@ -47,23 +46,6 @@ export function GroupStock({
     );
   }, [spools]);
 
-  async function run(
-    spoolId: string,
-    fn: () => Promise<void>,
-    success: string
-  ) {
-    setPendingId(spoolId);
-    try {
-      await fn();
-      toast.success(success);
-      router.refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Action failed');
-    } finally {
-      setPendingId(null);
-    }
-  }
-
   if (spools.length === 0) {
     return (
       <div className="border-border bg-card/50 text-muted-foreground rounded-lg border border-dashed px-6 py-10 text-center text-sm">
@@ -83,7 +65,7 @@ export function GroupStock({
             <div className="flex items-start gap-3">
               <span
                 className="border-border mt-0.5 h-7 w-7 shrink-0 rounded-full border shadow-inner"
-                style={{ backgroundColor: material.color ?? '#94a3b8' }}
+                style={{ backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR }}
                 aria-hidden
               />
               <div className="min-w-0">
@@ -125,11 +107,9 @@ export function GroupStock({
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          run(
-                            s.id,
-                            () => markReturned(s.lentTo!.lendId),
-                            'Marked as returned'
-                          )
+                          run(s.id, () => markReturned(s.lentTo!.lendId), {
+                            success: LEND_TOAST.returned,
+                          })
                         }
                         disabled={pendingId === s.id}
                       >
@@ -170,7 +150,7 @@ export function GroupStock({
                           run(
                             s.id,
                             () => cancelLendRequest(s.pendingRequest!.lendId),
-                            'Request cancelled'
+                            { success: LEND_TOAST.cancelled }
                           )
                         }
                         disabled={pendingId === s.id}
@@ -191,11 +171,9 @@ export function GroupStock({
                     size="sm"
                     className="self-start"
                     onClick={() =>
-                      run(
-                        s.id,
-                        () => requestLend(s.id, groupId),
-                        'Requested to borrow — waiting for the owner'
-                      )
+                      run(s.id, () => requestLend(s.id, groupId), {
+                        success: LEND_TOAST.requested,
+                      })
                     }
                     disabled={pendingId === s.id}
                   >

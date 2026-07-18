@@ -13,7 +13,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
 import { updateSpoolType } from '@/app/actions/spool-types';
+import { describeReviewStatus } from '@/lib/describe-review-status';
 import type { SpoolType } from '@/lib/db/schema';
 import { toast } from 'sonner';
 
@@ -72,30 +74,18 @@ export function EditSpoolTypeDialog({
         <DialogHeader>
           <DialogTitle>Edit spool type</DialogTitle>
           <DialogDescription>
-            {isAdmin
-              ? 'Edits publish immediately and keep the current status.'
-              : spoolType.status === 'rejected'
-                ? 'Saving resubmits this spool type as pending for re-review.'
-                : "Only you can see this until it's approved."}
+            {describeReviewStatus(isAdmin, spoolType.status, 'spool type')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-st-manufacturer">Manufacturer</Label>
-            <Input
-              id="edit-st-manufacturer"
-              value={manufacturer}
-              onChange={(e) => setManufacturer(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-st-name">Spool name</Label>
-            <Input
-              id="edit-st-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+          <ManufacturerNameFields
+            idPrefix="edit-st"
+            manufacturer={manufacturer}
+            onManufacturerChange={setManufacturer}
+            name={name}
+            onNameChange={setName}
+            nameLabel="Spool name"
+          />
           <div className="flex flex-col gap-2">
             <Label htmlFor="edit-st-grams">Empty spool weight (g)</Label>
             <Input

@@ -1,19 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SelectField } from '@/components/select-field';
 import { updateShareSettings } from '@/app/actions/groups';
 import type { Material } from '@/lib/db/schema';
-import { toast } from 'sonner';
+import { useAsyncAction } from '@/hooks/use-async-action';
 
 type ShareMode = 'all' | 'whitelist' | 'blacklist';
 
@@ -36,12 +29,11 @@ export function GroupSharingSettings({
   initialOverrideIds: string[];
   ownMaterials: Material[];
 }) {
-  const router = useRouter();
   const [shareMode, setShareMode] = useState<ShareMode>(initialShareMode);
   const [overrideIds, setOverrideIds] = useState<Set<string>>(
     new Set(initialOverrideIds)
   );
-  const [saving, setSaving] = useState(false);
+  const { pending: saving, run } = useAsyncAction();
 
   function toggle(id: string) {
     setOverrideIds((prev) => {
@@ -53,38 +45,23 @@ export function GroupSharingSettings({
   }
 
   async function handleSave() {
-    setSaving(true);
-    try {
-      await updateShareSettings(groupId, shareMode, [...overrideIds]);
-      toast.success('Sharing settings saved');
-      router.refresh();
-    } catch {
-      toast.error('Could not save sharing settings');
-    } finally {
-      setSaving(false);
-    }
+    await run(() => updateShareSettings(groupId, shareMode, [...overrideIds]), {
+      success: 'Sharing settings saved',
+      error: 'Could not save sharing settings',
+    });
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2 sm:max-w-xs">
         <Label htmlFor="share-mode">Share mode</Label>
-        <Select
+        <SelectField
+          id="share-mode"
           items={SHARE_MODE_ITEMS}
           value={shareMode}
-          onValueChange={(value) => value && setShareMode(value as ShareMode)}
-        >
-          <SelectTrigger id="share-mode" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SHARE_MODE_ITEMS.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onValueChange={setShareMode}
+          triggerClassName="w-full"
+        />
       </div>
 
       {shareMode !== 'all' && (

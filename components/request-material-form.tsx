@@ -2,18 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SelectField } from '@/components/select-field';
+import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
+import { RequestSubmitButton } from '@/components/request-submit-button';
 import { requestMaterial } from '@/app/actions/materials';
-import { FILAMENT_TYPES } from '@/lib/filament';
+import { requestEntityToast } from '@/lib/request-entity-toast';
+import { FILAMENT_TYPE_ITEMS } from '@/lib/catalog-filter-items';
 import { toast } from 'sonner';
 
 export function RequestMaterialForm({
@@ -38,11 +33,7 @@ export function RequestMaterialForm({
         filamentType,
         color,
       });
-      toast.success(
-        created.status === 'approved'
-          ? 'Material added to the catalog'
-          : 'Material requested — you can use it right away'
-      );
+      requestEntityToast('Material', created);
       setManufacturer('');
       setName('');
       router.refresh();
@@ -55,44 +46,26 @@ export function RequestMaterialForm({
 
   return (
     <form onSubmit={onSubmit} className="mt-4 flex flex-col gap-4 sm:max-w-sm">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="m-manufacturer">Manufacturer</Label>
-        <Input
-          id="m-manufacturer"
-          required
-          value={manufacturer}
-          onChange={(e) => setManufacturer(e.target.value)}
-          placeholder="e.g. Prusament"
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="m-name">Material name</Label>
-        <Input
-          id="m-name"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Galaxy Black"
-        />
-      </div>
+      <ManufacturerNameFields
+        idPrefix="m"
+        manufacturer={manufacturer}
+        onManufacturerChange={setManufacturer}
+        name={name}
+        onNameChange={setName}
+        nameLabel="Material name"
+        manufacturerPlaceholder="e.g. Prusament"
+        namePlaceholder="e.g. Galaxy Black"
+        required
+      />
       <div className="flex items-end gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="m-type">Type</Label>
-          <Select
+          <SelectField
+            id="m-type"
+            items={FILAMENT_TYPE_ITEMS}
             value={filamentType}
-            onValueChange={(v) => v && setFilamentType(v)}
-          >
-            <SelectTrigger id="m-type">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FILAMENT_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onValueChange={setFilamentType}
+          />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="m-color">Color</Label>
@@ -106,15 +79,12 @@ export function RequestMaterialForm({
           />
         </div>
       </div>
-      <Button type="submit" disabled={pending} className="self-start">
-        {pending
-          ? isAdmin
-            ? 'Adding…'
-            : 'Requesting…'
-          : isAdmin
-            ? 'Add material'
-            : 'Request material'}
-      </Button>
+      <RequestSubmitButton
+        isAdmin={isAdmin}
+        pending={pending}
+        noun="material"
+        className="self-start"
+      />
     </form>
   );
 }

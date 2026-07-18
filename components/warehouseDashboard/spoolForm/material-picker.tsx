@@ -1,12 +1,10 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { materialLabel } from '@/lib/filament';
+import { useCombobox } from '@/hooks/use-combobox';
+import { DEFAULT_MATERIAL_COLOR, materialLabel } from '@/lib/filament';
 import type { Material } from '@/lib/db/schema';
 import { cn } from '@/lib/utils';
-
-const MAX_RESULTS = 50;
 
 // Searchable combobox for the material catalog. The SpoolmanDB import grows the
 // catalog to hundreds/thousands of rows, where a plain Select is unusable — this
@@ -22,78 +20,44 @@ export function MaterialPicker({
   onChange: (material: Material) => void;
   id?: string;
 }) {
-  const [query, setQuery] = useState('');
-  const [open, setOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q === '') return materials;
-    return materials.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) ||
-        m.manufacturer.toLowerCase().includes(q)
-    );
-  }, [materials, query]);
-  const results = filtered.slice(0, MAX_RESULTS);
-
-  function select(m: Material) {
-    onChange(m);
-    setQuery('');
-    setOpen(false);
-  }
-
-  function onKeyDown(e: React.KeyboardEvent) {
-    if (!open) {
-      if (e.key === 'ArrowDown' || e.key === 'Enter') setOpen(true);
-      return;
-    }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, results.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      const m = results[activeIndex];
-      if (m) select(m);
-    } else if (e.key === 'Escape') {
-      setOpen(false);
-    }
-  }
-
-  const displayValue = open ? query : value ? materialLabel(value) : '';
+  const {
+    open,
+    activeIndex,
+    results,
+    filtered,
+    maxResults,
+    setActiveIndex,
+    select,
+    inputProps,
+    listboxProps,
+  } = useCombobox({
+    items: materials,
+    filter: (items, query) => {
+      const q = query.trim().toLowerCase();
+      if (q === '') return items;
+      return items.filter(
+        (m) =>
+          m.name.toLowerCase().includes(q) ||
+          m.manufacturer.toLowerCase().includes(q)
+      );
+    },
+    selectedLabel: value ? materialLabel(value) : '',
+    onSelect: onChange,
+  });
 
   return (
     <div className="relative">
       <Input
         id={id}
-        value={displayValue}
         placeholder="Search material or manufacturer…"
-        autoComplete="off"
-        role="combobox"
-        aria-expanded={open}
         aria-controls={id ? `${id}-listbox` : undefined}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setActiveIndex(0);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => {
-          blurTimer.current = setTimeout(() => setOpen(false), 120);
-        }}
-        onKeyDown={onKeyDown}
+        {...inputProps}
       />
       {open && (
         <div
           id={id ? `${id}-listbox` : undefined}
-          role="listbox"
-          // Keep input focus so the blur timer doesn't close before onClick.
-          onMouseDown={(e) => e.preventDefault()}
           className="border-border bg-popover text-popover-foreground absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md border shadow-md"
+          {...listboxProps}
         >
           {results.length === 0 ? (
             <p className="text-muted-foreground px-3 py-4 text-sm">
@@ -116,7 +80,7 @@ export function MaterialPicker({
                 >
                   <span
                     className="border-border h-4 w-4 shrink-0 rounded-full border"
-                    style={{ backgroundColor: m.color ?? '#94a3b8' }}
+                    style={{ backgroundColor: m.color ?? DEFAULT_MATERIAL_COLOR }}
                     aria-hidden
                   />
                   <span className="min-w-0 flex-1 truncate">
@@ -133,9 +97,9 @@ export function MaterialPicker({
                   </span>
                 </button>
               ))}
-              {filtered.length > MAX_RESULTS && (
+              {filtered.length > maxResults && (
                 <p className="text-muted-foreground px-3 py-2 text-xs">
-                  Showing first {MAX_RESULTS} of {filtered.length} — refine your
+                  Showing first {maxResults} of {filtered.length} — refine your
                   search.
                 </p>
               )}

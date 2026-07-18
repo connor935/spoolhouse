@@ -11,17 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SelectField } from '@/components/select-field';
+import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
 import { updateMaterial } from '@/app/actions/materials';
-import { FILAMENT_TYPES } from '@/lib/filament';
+import { DEFAULT_MATERIAL_COLOR } from '@/lib/filament';
+import { FILAMENT_TYPE_ITEMS } from '@/lib/catalog-filter-items';
+import { describeReviewStatus } from '@/lib/describe-review-status';
 import type { Material } from '@/lib/db/schema';
 import { toast } from 'sonner';
 
@@ -41,7 +37,7 @@ export function EditMaterialDialog({
   const [manufacturer, setManufacturer] = useState(material.manufacturer);
   const [name, setName] = useState(material.name);
   const [filamentType, setFilamentType] = useState(material.filamentType);
-  const [color, setColor] = useState(material.color ?? '#94a3b8');
+  const [color, setColor] = useState(material.color ?? DEFAULT_MATERIAL_COLOR);
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -78,48 +74,27 @@ export function EditMaterialDialog({
         <DialogHeader>
           <DialogTitle>Edit material</DialogTitle>
           <DialogDescription>
-            {isAdmin
-              ? 'Edits publish immediately and keep the current status.'
-              : material.status === 'rejected'
-                ? 'Saving resubmits this material as pending for re-review.'
-                : "Only you can see this until it's approved."}
+            {describeReviewStatus(isAdmin, material.status, 'material')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-m-manufacturer">Manufacturer</Label>
-            <Input
-              id="edit-m-manufacturer"
-              value={manufacturer}
-              onChange={(e) => setManufacturer(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-m-name">Material name</Label>
-            <Input
-              id="edit-m-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+          <ManufacturerNameFields
+            idPrefix="edit-m"
+            manufacturer={manufacturer}
+            onManufacturerChange={setManufacturer}
+            name={name}
+            onNameChange={setName}
+            nameLabel="Material name"
+          />
           <div className="flex items-end gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="edit-m-type">Type</Label>
-              <Select
+              <SelectField
+                id="edit-m-type"
+                items={FILAMENT_TYPE_ITEMS}
                 value={filamentType}
-                onValueChange={(v) => v && setFilamentType(v)}
-              >
-                <SelectTrigger id="edit-m-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FILAMENT_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onValueChange={setFilamentType}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="edit-m-color">Color</Label>

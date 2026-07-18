@@ -4,15 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { FILAMENT_TYPES } from '@/lib/filament';
+import { SlidersHorizontal, X } from 'lucide-react';
+import { SearchInput } from '@/components/search-input';
+import { SelectField } from '@/components/select-field';
+import { ALL_TYPES, TYPE_ITEMS } from '@/lib/catalog-filter-items';
 import { cn } from '@/lib/utils';
 
 export type StockStatus = 'in-stock' | 'empty' | 'all';
@@ -48,12 +43,6 @@ function advancedActive(f: InventoryFilters): boolean {
   return f.filamentType !== null || f.minLeftGrams !== null || f.hideLent;
 }
 
-const ALL_TYPES = '__all__';
-const TYPE_ITEMS = [
-  { value: ALL_TYPES, label: 'All types' },
-  ...FILAMENT_TYPES.map((t) => ({ value: t, label: t })),
-];
-
 export type StatusCounts = { inStock: number; empty: number; all: number };
 
 export function InventoryFilter({
@@ -87,17 +76,12 @@ export function InventoryFilter({
     <div className="border-border bg-card flex w-full flex-1 flex-col gap-3 rounded-lg border px-3 py-3 sm:px-4">
       {/* Always visible: search + status + (mobile) Filters toggle + Clear */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        <div className="relative min-w-40 flex-1">
-          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
-          <Input
-            type="search"
-            value={value.q}
-            onChange={(e) => onChange({ ...value, q: e.target.value })}
-            placeholder="Search material or manufacturer…"
-            className="h-9 pl-8"
-            aria-label="Search materials"
-          />
-        </div>
+        <SearchInput
+          value={value.q}
+          onChange={(q) => onChange({ ...value, q })}
+          placeholder="Search material or manufacturer…"
+          ariaLabel="Search materials"
+        />
 
         <Button
           type="button"
@@ -135,47 +119,25 @@ export function InventoryFilter({
         )}
       >
         {showStatus && (
-          <Select
+          <SelectField
             items={statusItems}
             value={value.status}
             onValueChange={(v) =>
-              v && onChange({ ...value, status: v as StockStatus })
+              onChange({ ...value, status: v as StockStatus })
             }
-          >
-            <SelectTrigger
-              className="h-9 w-32"
-              aria-label="Filter by stock status"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusItems.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            triggerClassName="h-9 w-32"
+            ariaLabel="Filter by stock status"
+          />
         )}
-        <Select
+        <SelectField
           items={TYPE_ITEMS}
           value={value.filamentType ?? ALL_TYPES}
           onValueChange={(v) =>
-            v &&
             onChange({ ...value, filamentType: v === ALL_TYPES ? null : v })
           }
-        >
-          <SelectTrigger className="h-9" aria-label="Filter by filament type">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TYPE_ITEMS.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          triggerClassName="h-9"
+          ariaLabel="Filter by filament type"
+        />
 
         <div className="flex items-center gap-2">
           <Label

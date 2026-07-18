@@ -70,32 +70,29 @@ export async function joinGroup(code: string) {
   return group;
 }
 
-export async function leaveGroup(groupId: string) {
-  const authUser = await requireUser();
+// Shared by leaveGroup/removeMember — never removes the owner's own row.
+async function removeMembership(groupId: string, userId: string) {
   await db
     .delete(groupMembers)
     .where(
       and(
         eq(groupMembers.groupId, groupId),
-        eq(groupMembers.userId, authUser.id),
+        eq(groupMembers.userId, userId),
         ne(groupMembers.role, 'owner')
       )
     );
+}
+
+export async function leaveGroup(groupId: string) {
+  const authUser = await requireUser();
+  await removeMembership(groupId, authUser.id);
   revalidatePath('/groups');
 }
 
 export async function removeMember(groupId: string, memberUserId: string) {
   const authUser = await requireUser();
   await requireOwner(groupId, authUser.id);
-  await db
-    .delete(groupMembers)
-    .where(
-      and(
-        eq(groupMembers.groupId, groupId),
-        eq(groupMembers.userId, memberUserId),
-        ne(groupMembers.role, 'owner')
-      )
-    );
+  await removeMembership(groupId, memberUserId);
   revalidatePath(`/groups/${groupId}`);
 }
 

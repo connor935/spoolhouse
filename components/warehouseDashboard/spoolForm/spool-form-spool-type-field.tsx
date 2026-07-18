@@ -1,11 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
+import { RequestSubmitButton } from '@/components/request-submit-button';
 import { Plus, X } from 'lucide-react';
 import { requestSpoolType } from '@/app/actions/spool-types';
+import { requestEntityToast } from '@/lib/request-entity-toast';
 import { SpoolTypePicker } from '@/components/warehouseDashboard/spoolForm/spool-type-picker';
 import type { SpoolType } from '@/lib/db/schema';
 import { toast } from 'sonner';
@@ -69,11 +71,7 @@ export function SpoolTypeField({
       setManufacturer('');
       setName('');
       setGrams('');
-      toast.success(
-        created.status === 'approved'
-          ? 'Spool type added to the catalog'
-          : 'Spool type requested — you can use it right away'
-      );
+      requestEntityToast('Spool type', created);
     } catch {
       toast.error('Could not request spool type');
     } finally {
@@ -123,32 +121,18 @@ export function SpoolTypeField({
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reqManufacturer" className="text-xs">
-                Manufacturer
-              </Label>
-              <Input
-                id="reqManufacturer"
-                value={manufacturer}
-                onChange={(e) => setManufacturer(e.target.value)}
-                placeholder="e.g. Prusament"
-                className="h-8"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reqName" className="text-xs">
-                Spool name
-              </Label>
-              <Input
-                id="reqName"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Cardboard 1kg"
-                className="h-8"
-              />
-            </div>
-          </div>
+          <ManufacturerNameFields
+            idPrefix="req"
+            manufacturer={manufacturer}
+            onManufacturerChange={setManufacturer}
+            name={name}
+            onNameChange={setName}
+            nameLabel="Spool name"
+            manufacturerPlaceholder="e.g. Prusament"
+            namePlaceholder="e.g. Cardboard 1kg"
+            layout="grid"
+            size="sm"
+          />
           <div className="flex items-end gap-2">
             <div className="flex flex-1 flex-col gap-1.5">
               <Label htmlFor="reqGrams" className="text-xs">
@@ -164,20 +148,12 @@ export function SpoolTypeField({
                 className="h-8"
               />
             </div>
-            <Button
-              type="button"
+            <RequestSubmitButton
+              isAdmin={isAdmin}
+              pending={pending}
               size="sm"
               onClick={handleRequest}
-              disabled={pending}
-            >
-              {pending
-                ? isAdmin
-                  ? 'Adding…'
-                  : 'Requesting…'
-                : isAdmin
-                  ? 'Add'
-                  : 'Request'}
-            </Button>
+            />
           </div>
         </div>
       )}

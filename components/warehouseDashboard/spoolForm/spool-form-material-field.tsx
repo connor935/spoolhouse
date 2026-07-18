@@ -1,20 +1,15 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SelectField } from '@/components/select-field';
+import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
+import { RequestSubmitButton } from '@/components/request-submit-button';
 import { Plus, X } from 'lucide-react';
 import { requestMaterial } from '@/app/actions/materials';
+import { requestEntityToast } from '@/lib/request-entity-toast';
 import { MaterialPicker } from '@/components/warehouseDashboard/spoolForm/material-picker';
-import { FILAMENT_TYPES } from '@/lib/filament';
+import { FILAMENT_TYPE_ITEMS } from '@/lib/catalog-filter-items';
 import type { Material } from '@/lib/db/schema';
 import { toast } from 'sonner';
 
@@ -66,11 +61,7 @@ export function MaterialField({
       setRequesting(false);
       setManufacturer('');
       setName('');
-      toast.success(
-        created.status === 'approved'
-          ? 'Material added to the catalog'
-          : 'Material requested — you can use it right away'
-      );
+      requestEntityToast('Material', created);
     } catch {
       toast.error('Could not request material');
     } finally {
@@ -115,52 +106,30 @@ export function MaterialField({
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reqMManufacturer" className="text-xs">
-                Manufacturer
-              </Label>
-              <Input
-                id="reqMManufacturer"
-                value={manufacturer}
-                onChange={(e) => setManufacturer(e.target.value)}
-                placeholder="e.g. Prusament"
-                className="h-8"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reqMName" className="text-xs">
-                Material name
-              </Label>
-              <Input
-                id="reqMName"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Galaxy Black"
-                className="h-8"
-              />
-            </div>
-          </div>
+          <ManufacturerNameFields
+            idPrefix="reqM"
+            manufacturer={manufacturer}
+            onManufacturerChange={setManufacturer}
+            name={name}
+            onNameChange={setName}
+            nameLabel="Material name"
+            manufacturerPlaceholder="e.g. Prusament"
+            namePlaceholder="e.g. Galaxy Black"
+            layout="grid"
+            size="sm"
+          />
           <div className="flex items-end gap-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="reqMType" className="text-xs">
                 Type
               </Label>
-              <Select
+              <SelectField
+                id="reqMType"
+                items={FILAMENT_TYPE_ITEMS}
                 value={filamentType}
-                onValueChange={(v) => v && setFilamentType(v)}
-              >
-                <SelectTrigger id="reqMType" className="h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FILAMENT_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onValueChange={setFilamentType}
+                triggerClassName="h-8"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="reqMColor" className="text-xs">
@@ -175,20 +144,12 @@ export function MaterialField({
                 aria-label="Material color"
               />
             </div>
-            <Button
-              type="button"
+            <RequestSubmitButton
+              isAdmin={isAdmin}
+              pending={pending}
               size="sm"
               onClick={handleRequest}
-              disabled={pending}
-            >
-              {pending
-                ? isAdmin
-                  ? 'Adding…'
-                  : 'Requesting…'
-                : isAdmin
-                  ? 'Add'
-                  : 'Request'}
-            </Button>
+            />
           </div>
           <p className="text-muted-foreground text-xs">
             {isAdmin

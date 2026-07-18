@@ -130,3 +130,6 @@ export const FILAMENT_TYPES = [
   'HIPS',
   'Other',
 ];
+
+// Swatch color for materials without a `color` set.
+export const DEFAULT_MATERIAL_COLOR = '#94a3b8';

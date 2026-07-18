@@ -12,6 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
 import {
+  DEFAULT_MATERIAL_COLOR,
   formatWeight,
   SpoolView,
   type MaterialInventory,
@@ -91,7 +92,7 @@ export function MaterialDialog({
           <div className="flex items-start gap-3">
             <span
               className="border-border mt-0.5 h-10 w-10 shrink-0 rounded-full border shadow-inner"
-              style={{ backgroundColor: material.color ?? '#94a3b8' }}
+              style={{ backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR }}
               aria-hidden
             />
             <div className="min-w-0 flex-1">
@@ -128,7 +129,7 @@ export function MaterialDialog({
               <span className="flex items-center justify-end gap-2">
                 <span
                   className="border-border h-4 w-4 rounded-full border"
-                  style={{ backgroundColor: material.color ?? '#94a3b8' }}
+                  style={{ backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR }}
                   aria-hidden
                 />
                 <span className="font-mono">{material.color ?? 'N/A'}</span>

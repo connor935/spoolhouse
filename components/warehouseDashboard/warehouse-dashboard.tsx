@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,6 +14,8 @@ import {
 } from '@/components/inventory-filter';
 import { MaterialCard } from '@/components/warehouseDashboard/material-card';
 import { SpoolFormDialog } from '@/components/warehouseDashboard/spoolForm/spool-form-dialog';
+import { useUrlSyncedFilters } from '@/hooks/use-url-synced-filters';
+import { filterGroupStock, visibleMaterialEntries } from '@/lib/inventory-filter';
 import type { MaterialInventory, SpoolView } from '@/lib/filament';
 import type { MyLend } from '@/app/actions/lends';
 import type { Material, SpoolType } from '@/lib/db/schema';
@@ -27,18 +29,6 @@ import { MaterialDialog } from './material-dialog';
 type Tab = 'stock' | `group-${number}`;
 
 type DashboardGroup = { id: string; name: string; stock: SharedSpool[] };
-
-function materialMatches(
-  m: { name: string; manufacturer: string; filamentType: string },
-  f: InventoryFilters
-): boolean {
-  if (f.filamentType && m.filamentType !== f.filamentType) return false;
-  const q = f.q.trim().toLowerCase();
-  if (q === '') return true;
-  return (
-    m.name.toLowerCase().includes(q) || m.manufacturer.toLowerCase().includes(q)
-  );
-}
 
 export function WarehouseDashboard({
   inventory,
@@ -74,20 +64,7 @@ export function WarehouseDashboard({
   const [dialogMaterial, setDialogMaterial] =
     useState<MaterialInventory | null>(null);
 
-  // Mirror tab + filters into the URL (replaceState: shareable links, no
-  // navigation/server round-trip per keystroke, back button stays sane).
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (tab !== 'stock') params.set('tab', tab);
-    if (filters.status !== 'in-stock') params.set('status', filters.status);
-    if (filters.q.trim() !== '') params.set('q', filters.q.trim());
-    if (filters.filamentType) params.set('type', filters.filamentType);
-    if (filters.minLeftGrams !== null)
-      params.set('minLeft', String(filters.minLeftGrams));
-    if (filters.hideLent) params.set('hideLent', '1');
-    const qs = params.toString();
-    window.history.replaceState(null, '', qs ? `/?${qs}` : '/');
-  }, [tab, filters]);
+  useUrlSyncedFilters(tab, filters);
   const [formOpen, setFormOpen] = useState(false);
   const [editingSpool, setEditingSpool] = useState<SpoolView | null>(null);
   const [presetMaterialId, setPresetMaterialId] = useState<string | null>(null);
@@ -114,39 +91,15 @@ export function WarehouseDashboard({
 
   // Which spools are visible in "Your stock" (per material), combined with the
   // status selector + search/filter bar (Epic 5)
-  const visibleByMaterial = useMemo(() => {
-    const spoolFilter = (s: SpoolView) => {
-      if (filters.status === 'in-stock' && s.isEmpty) return false;
-      if (filters.status === 'empty' && !s.isEmpty) return false;
-      if (
-        filters.minLeftGrams !== null &&
-        s.filamentLeftGrams < filters.minLeftGrams
-      )
-        return false;
-      return true;
-    };
-    return inventory
-      .filter((m) => materialMatches(m.material, filters))
-      .map((m) => ({
-        inventory: m,
-        visibleIds: new Set(m.spools.filter(spoolFilter).map((s) => s.id)),
-      }))
-      .filter((entry) => entry.visibleIds.size > 0);
-  }, [inventory, filters]);
+  const visibleByMaterial = useMemo(
+    () => visibleMaterialEntries(inventory, filters),
+    [inventory, filters]
+  );
 
   // Group stock filtered by the same bar (+ hide-lent)
   const filteredGroupStock = useMemo(() => {
     if (!activeGroup) return [];
-    return activeGroup.stock.filter((s) => {
-      if (!materialMatches(s.material, filters)) return false;
-      if (
-        filters.minLeftGrams !== null &&
-        s.filamentLeftGrams < filters.minLeftGrams
-      )
-        return false;
-      if (filters.hideLent && s.lentTo) return false;
-      return true;
-    });
+    return filterGroupStock(activeGroup.stock, filters);
   }, [activeGroup, filters]);
 
   function openCreate(materialId: string | null = null) {
@@ -205,11 +158,6 @@ export function WarehouseDashboard({
     <div className="min-h-screen">
       <AppHeader user={user} unreadCount={unreadCount} />
       <main className="mx-auto flex max-w-7xl flex-col gap-4 p-4 md:gap-6 md:p-6">
-        {/* <FilamentStats
-          materialCount={inventory.length}
-          inStock={inStock}
-          empty={empty}
-        /> */}
         {groups.length > 0 && (
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 overflow-x-auto overflow-y-hidden">

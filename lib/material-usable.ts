@@ -24,3 +24,9 @@ export async function isMaterialUsable(
     );
   return !!m;
 }
+
+export async function assertMaterialUsable(materialId: string, userId: string) {
+  if (!(await isMaterialUsable(materialId, userId))) {
+    throw new Error('Unknown or unavailable material');
+  }
+}

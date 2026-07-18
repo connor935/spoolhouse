@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
+import { RequestSubmitButton } from '@/components/request-submit-button';
 import { requestSpoolType } from '@/app/actions/spool-types';
+import { requestEntityToast } from '@/lib/request-entity-toast';
 import { toast } from 'sonner';
 
 export function RequestSpoolTypeForm({
@@ -33,11 +35,7 @@ export function RequestSpoolTypeForm({
         name: name.trim(),
         emptyWeightGrams,
       });
-      toast.success(
-        created.status === 'approved'
-          ? 'Spool type added to the catalog'
-          : 'Spool type requested — you can use it right away'
-      );
+      requestEntityToast('Spool type', created);
       setManufacturer('');
       setName('');
       setGrams('');
@@ -51,26 +49,17 @@ export function RequestSpoolTypeForm({
 
   return (
     <form onSubmit={onSubmit} className="mt-4 flex flex-col gap-4 sm:max-w-sm">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="st-manufacturer">Manufacturer</Label>
-        <Input
-          id="st-manufacturer"
-          required
-          value={manufacturer}
-          onChange={(e) => setManufacturer(e.target.value)}
-          placeholder="e.g. Prusament"
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="st-name">Spool name</Label>
-        <Input
-          id="st-name"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Cardboard 1kg"
-        />
-      </div>
+      <ManufacturerNameFields
+        idPrefix="st"
+        manufacturer={manufacturer}
+        onManufacturerChange={setManufacturer}
+        name={name}
+        onNameChange={setName}
+        nameLabel="Spool name"
+        manufacturerPlaceholder="e.g. Prusament"
+        namePlaceholder="e.g. Cardboard 1kg"
+        required
+      />
       <div className="flex flex-col gap-2">
         <Label htmlFor="st-grams">Empty spool weight (g)</Label>
         <Input
@@ -83,15 +72,12 @@ export function RequestSpoolTypeForm({
           onChange={(e) => setGrams(e.target.value)}
         />
       </div>
-      <Button type="submit" disabled={pending} className="self-start">
-        {pending
-          ? isAdmin
-            ? 'Adding…'
-            : 'Requesting…'
-          : isAdmin
-            ? 'Add spool type'
-            : 'Request spool type'}
-      </Button>
+      <RequestSubmitButton
+        isAdmin={isAdmin}
+        pending={pending}
+        noun="spool type"
+        className="self-start"
+      />
     </form>
   );
 }

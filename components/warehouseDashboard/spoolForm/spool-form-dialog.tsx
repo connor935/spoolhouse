@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
 import { createSpool, deleteSpool, updateSpool } from '@/app/actions/filaments';
 import { MaterialField } from '@/components/warehouseDashboard/spoolForm/spool-form-material-field';
@@ -24,6 +25,7 @@ import {
   type SpoolView,
 } from '@/lib/filament';
 import type { Material, SpoolType } from '@/lib/db/schema';
+import { useConfirm } from '@/hooks/use-confirm';
 import { toast } from 'sonner';
 
 type Props = {
@@ -48,6 +50,7 @@ export function SpoolFormDialog({
   const editing = Boolean(spool);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const { confirm, dialogProps } = useConfirm();
 
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
     () =>
@@ -137,7 +140,13 @@ export function SpoolFormDialog({
 
   async function handleDelete() {
     if (!spool) return;
-    if (!window.confirm('Delete this spool? This can’t be undone.')) return;
+    const ok = await confirm({
+      title: 'Delete this spool?',
+      description: "This can’t be undone.",
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       setDeleting(true);
       await deleteSpool(spool.id);
@@ -150,109 +159,112 @@ export function SpoolFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{editing ? 'Edit spool' : 'Add new spool'}</DialogTitle>
-          <DialogDescription>
-            {editing
-              ? 'Update this physical spool.'
-              : 'Register a physical spool of a material. Remaining filament is calculated from the weighed total.'}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Edit spool' : 'Add new spool'}</DialogTitle>
+            <DialogDescription>
+              {editing
+                ? 'Update this physical spool.'
+                : 'Register a physical spool of a material. Remaining filament is calculated from the weighed total.'}
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <MaterialField
-            materials={materials}
-            value={selectedMaterial}
-            onChange={setSelectedMaterial}
-            isAdmin={isAdmin}
-          />
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <MaterialField
+              materials={materials}
+              value={selectedMaterial}
+              onChange={setSelectedMaterial}
+              isAdmin={isAdmin}
+            />
 
-          <SpoolTypeField
-            spoolTypes={spoolTypes}
-            value={selectedType}
-            onChange={setSelectedType}
-            defaultManufacturer={selectedMaterial?.manufacturer ?? ''}
-            isAdmin={isAdmin}
-          />
+            <SpoolTypeField
+              spoolTypes={spoolTypes}
+              value={selectedType}
+              onChange={setSelectedType}
+              defaultManufacturer={selectedMaterial?.manufacturer ?? ''}
+              isAdmin={isAdmin}
+            />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="fullFilamentWeight">
-                Full filament weight (g)
-              </Label>
-              <Input
-                id="fullFilamentWeight"
-                type="number"
-                step="1"
-                min="0"
-                value={fullGrams}
-                onChange={(e) => setFullGrams(e.target.value)}
-              />
-              <p className="text-muted-foreground text-xs">
-                Filament on a new spool, e.g. 1000 g.
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="fullFilamentWeight">
+                  Full filament weight (g)
+                </Label>
+                <Input
+                  id="fullFilamentWeight"
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={fullGrams}
+                  onChange={(e) => setFullGrams(e.target.value)}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Filament on a new spool, e.g. 1000 g.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="measuredTotalWeight">
+                  Measured total weight (g)
+                </Label>
+                <Input
+                  id="measuredTotalWeight"
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={measuredGrams}
+                  onChange={(e) => {
+                    setMeasuredDirty(true);
+                    setMeasuredGrams(e.target.value);
+                  }}
+                />
+                <p className="text-muted-foreground text-xs">
+                  {editing || measuredDirty
+                    ? 'Put the whole spool on a scale and enter the value.'
+                    : 'Prefilled for a fresh spool (filament + empty spool) — adjust to your scale value.'}
+                </p>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="measuredTotalWeight">
-                Measured total weight (g)
-              </Label>
-              <Input
-                id="measuredTotalWeight"
-                type="number"
-                step="1"
-                min="0"
-                value={measuredGrams}
-                onChange={(e) => {
-                  setMeasuredDirty(true);
-                  setMeasuredGrams(e.target.value);
-                }}
-              />
-              <p className="text-muted-foreground text-xs">
-                {editing || measuredDirty
-                  ? 'Put the whole spool on a scale and enter the value.'
-                  : 'Prefilled for a fresh spool (filament + empty spool) — adjust to your scale value.'}
-              </p>
+            <div className="border-border bg-secondary/50 flex items-center justify-between rounded-md border px-4 py-3">
+              <span className="text-muted-foreground text-sm">
+                Calculated filament left
+              </span>
+              <span className="text-card-foreground font-mono text-lg font-semibold tabular-nums">
+                {previewLeft !== null ? formatWeight(previewLeft) : '—'}
+              </span>
             </div>
-          </div>
 
-          <div className="border-border bg-secondary/50 flex items-center justify-between rounded-md border px-4 py-3">
-            <span className="text-muted-foreground text-sm">
-              Calculated filament left
-            </span>
-            <span className="text-card-foreground font-mono text-lg font-semibold tabular-nums">
-              {previewLeft !== null ? formatWeight(previewLeft) : '—'}
-            </span>
-          </div>
-
-          <DialogFooter className="mt-2">
-            {editing && spool && (
+            <DialogFooter className="mt-2">
+              {editing && spool && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleting || saving}
+                  className="sm:mr-auto"
+                >
+                  <Trash2 className="mr-1.5 h-4 w-4" />
+                  {deleting ? 'Deleting…' : 'Delete spool'}
+                </Button>
+              )}
               <Button
                 type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={deleting || saving}
-                className="sm:mr-auto"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
               >
-                <Trash2 className="mr-1.5 h-4 w-4" />
-                {deleting ? 'Deleting…' : 'Delete spool'}
+                Cancel
               </Button>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving || deleting}>
-              {saving ? 'Saving...' : editing ? 'Save changes' : 'Add spool'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <Button type="submit" disabled={saving || deleting}>
+                {saving ? 'Saving...' : editing ? 'Save changes' : 'Add spool'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog {...dialogProps} />
+    </>
   );
 }

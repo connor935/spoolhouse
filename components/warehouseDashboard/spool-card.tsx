@@ -30,6 +30,25 @@ export function SpoolCard({
         <span className="w-16 shrink-0 font-mono text-sm font-semibold tabular-nums">
           {formatWeight(spool.filamentLeftGrams)}
         </span>
+        <div className="flex items-center gap-4">
+          {spool.isEmpty ? (
+            <Badge
+              variant="outline"
+              className="border-muted-foreground/30 text-muted-foreground"
+            >
+              Empty
+            </Badge>
+          ) : spool.isLow ? (
+            <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive">
+              Low
+            </Badge>
+          ) : null}
+          {spool.lentToName && (
+            <Badge variant="outline" className="border-accent/40 text-accent">
+              Lent to {spool.lentToName}
+            </Badge>
+          )}
+        </div>
         <div
           className="bg-secondary h-2 w-full overflow-hidden rounded-full"
           role="progressbar"
@@ -42,28 +61,15 @@ export function SpoolCard({
             style={{ width: `${spool.percentLeft}%` }}
           />
         </div>
-        <Button variant="ghost" size="icon" onClick={() => onEdit(spool)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onEdit(spool)}
+          disabled={spool.lentToName != null}
+          aria-label="Edit spool"
+        >
           <Pencil className="h-4 w-4" />
         </Button>
-      </div>
-      <div className="flex items-center gap-4">
-        {spool.isEmpty ? (
-          <Badge
-            variant="outline"
-            className="border-muted-foreground/30 text-muted-foreground"
-          >
-            Empty
-          </Badge>
-        ) : spool.isLow ? (
-          <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive">
-            Low
-          </Badge>
-        ) : null}
-        {spool.lentToName && (
-          <Badge variant="outline" className="border-accent/40 text-accent">
-            Lent to {spool.lentToName}
-          </Badge>
-        )}
       </div>
     </li>
   );
