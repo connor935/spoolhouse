@@ -16,7 +16,6 @@ import {
   SpoolView,
   type MaterialInventory,
 } from '@/lib/filament';
-import { SpoolCard } from './spool-card';
 
 type Props = {
   open: boolean;
@@ -142,45 +141,42 @@ export function MaterialDialog({
           {density && <DetailRow label="Density" value={density} />}
         </div>
 
-        <div>
-          <DetailRow
-            label="Your stock"
-            value={`${spools.length} spool${spools.length === 1 ? '' : 's'} · ${formatWeight(totalLeftGrams)} left`}
-          />
+        <div className="border-border divide-border flex flex-col divide-y">
+          <div className="text-md flex items-center justify-between gap-4 py-2 font-semibold">
+            <span className="">Your Stock</span>
+            <span className="text-right">
+              {`${spools.length} spool ${spools.length === 1 ? '' : 's'} ·
+              ${formatWeight(totalLeftGrams)} left`}
+            </span>
+          </div>
+
           {spools.length > 0 && (
-            <ul className="divide-border border-border divide-y">
-              {spools.map((spool, i) => (
-                <li
-                  key={spool.id}
-                  className="flex items-center justify-between gap-4 px-5 py-2"
-                >
-                  <span className="text-muted-foreground w-10 shrink-0 font-mono text-xs">
-                    #{i + 1}
-                  </span>
-                  <div
-                    className="bg-secondary flex h-2 w-full flex-1 overflow-hidden rounded-full"
-                    role="progressbar"
-                    aria-valuenow={Math.round(spool.percentLeft)}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
+            <table className="mt-2 w-full border-separate border-spacing-y-2 text-left text-sm">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Spool type</th>
+                  <th className="text-right">Weight</th>
+                </tr>
+              </thead>
+              <tbody className="divide-border divide-y">
+                {spools.map((spool, i) => (
+                  <tr
+                    key={spool.id}
+                    className="hover:bg-accent/50 cursor-pointer"
+                    onClick={() => onEditSpool(spool)}
                   >
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        spool.isEmpty
-                          ? 'bg-muted-foreground/30'
-                          : spool.isLow
-                            ? 'bg-destructive'
-                            : 'bg-accent'
-                      }`}
-                      style={{ width: `${spool.percentLeft}%` }}
-                    />
-                  </div>
-                  <span className="w-16 shrink-0 font-mono text-sm font-semibold tabular-nums">
-                    {formatWeight(spool.filamentLeftGrams)}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    <td className="text-muted-foreground w-10 shrink-0 font-mono text-xs">
+                      #{i + 1}
+                    </td>
+                    <td className="col-span-4">{spool.spoolTypeLabel}</td>
+                    <td className="w-16 shrink-0 font-mono text-sm font-semibold tabular-nums">
+                      {formatWeight(spool.filamentLeftGrams)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
 

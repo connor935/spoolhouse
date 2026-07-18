@@ -4,16 +4,9 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Plus, X } from 'lucide-react';
 import { requestSpoolType } from '@/app/actions/spool-types';
-import { spoolTypeLabel } from '@/lib/filament';
+import { SpoolTypePicker } from '@/components/warehouseDashboard/spoolForm/spool-type-picker';
 import type { SpoolType } from '@/lib/db/schema';
 import { toast } from 'sonner';
 
@@ -47,15 +40,6 @@ export function SpoolTypeField({
     const seen = new Set(spoolTypes.map((t) => t.id));
     return [...spoolTypes, ...extras.filter((t) => !seen.has(t.id))];
   }, [spoolTypes, extras]);
-
-  const items = useMemo(
-    () =>
-      all.map((t) => ({
-        value: String(t.id),
-        label: `${spoolTypeLabel(t)}${t.status === 'pending' ? ' — pending' : ''}`,
-      })),
-    [all]
-  );
 
   function openRequest() {
     setRequesting(true);
@@ -112,24 +96,13 @@ export function SpoolTypeField({
           </button>
         )}
       </div>
-      <Select
-        items={items}
-        value={value ? String(value.id) : null}
-        onValueChange={(v) =>
-          v && onChange(all.find((t) => String(t.id) === v) ?? null)
-        }
-      >
-        <SelectTrigger id="spoolType" className="w-full">
-          <SelectValue placeholder="Pick a spool type" />
-        </SelectTrigger>
-        <SelectContent>
-          {items.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SpoolTypePicker
+        id="spoolType"
+        spoolTypes={all}
+        value={value}
+        onChange={onChange}
+        manufacturer={defaultManufacturer}
+      />
       <p className="text-muted-foreground text-xs">
         Determines the empty spool weight
         {value ? `: ${value.emptyWeightGrams} g` : '.'}
