@@ -1,0 +1,6 @@
+# CAD / print files: treat as binary — no line-ending normalization, no line
+# diffs, no merge attempts (STEP is ASCII but a machine artifact, not source).
+*.step binary
+*.stp binary
+*.3mf binary
+*.stl binary
