@@ -3,5 +3,5 @@
 # the zip-based/binary formats are just marked binary.
 *.step filter=lfs diff=lfs merge=lfs -text
 *.stp filter=lfs diff=lfs merge=lfs -text
-*.3mf binary
+*.3mf filter=lfs diff=lfs merge=lfs -text
 *.stl binary
