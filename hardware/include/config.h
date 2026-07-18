@@ -89,5 +89,9 @@ constexpr uint8_t NFC_MISSES_UNTIL_GONE = 6;
 // While the reader is offline, retry initializing it this often
 constexpr uint32_t NFC_REINIT_INTERVAL_MS = 5000;
 constexpr uint32_t DISPLAY_UPDATE_INTERVAL_MS = 200;
+// Cap on how long a display repaint may be deferred while the NFC bus is busy
+// (see nfcBusBusy). Keeps TFT writes off the bus during reads without letting
+// the readout freeze if the reader stays active.
+constexpr uint32_t MAX_DRAW_DEFER_MS = 500;
 // Exponential smoothing for the weight readout (0..1, higher = snappier)
 constexpr float WEIGHT_EMA_ALPHA = 0.3f;

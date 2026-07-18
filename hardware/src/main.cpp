@@ -59,6 +59,13 @@ bool pubTagPresent = false;
 NfcUid pubUid;
 FilamentInfo pubFilament;
 
+// True while the NFC task (core 0) is actively driving its bit-banged bus /
+// energising the reader. The display loop (core 1) reads this and defers its
+// repaint so a TFT SPI write never overlaps an NFC read — that overlap, on a
+// marginal 5 V supply, is what glitches the reset-less ILI9341 to white during
+// tag reads. A hint, not a lock: a single bool is torn-read-safe here.
+volatile bool nfcBusBusy = false;
+
 // Main-loop snapshot of the NFC state (refreshed each loop by syncNfcState).
 bool nfcOk = false;
 NfcUid currentUid;
@@ -109,24 +116,43 @@ void drawStaticUi() {
   drawFooterHint();
 }
 
+// The weight zone is composed off-screen and pushed in one blit: fillRect +
+// redraw directly on the panel flashes a big black band on every 1 g wobble
+// (up to 5x/s), which reads as whole-screen flicker.
+TFT_eSprite weightSprite(&tft);
+
 void drawWeight() {
   const String num = scaleOk ? String((int)lroundf(scale.grams())) : String("no scale");
   if (num == drawnWeight) return;
   drawnWeight = num;
 
-  tft.fillRect(0, WEIGHT_TOP, tft.width(), footerY() - WEIGHT_TOP, TFT_BLACK);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  if (!scaleOk) {
-    tft.setTextDatum(MC_DATUM);
-    tft.drawString("no scale", tft.width() / 2, WEIGHT_CY, 4);
-    return;
+  const int zoneH = footerY() - WEIGHT_TOP;
+  if (!weightSprite.created()) {
+    if (weightSprite.createSprite(tft.width(), zoneH) == nullptr) {
+      // No heap for the sprite — draw directly (flashes, but works)
+      tft.fillRect(0, WEIGHT_TOP, tft.width(), zoneH, TFT_BLACK);
+      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      tft.setTextDatum(MC_DATUM);
+      tft.drawString(num + (scaleOk ? " g" : ""), tft.width() / 2, WEIGHT_CY, 4);
+      return;
+    }
   }
-  // Font 6 (big) has digits only, so draw the "g" unit in font 4 beside it.
-  const int cx = tft.width() / 2;
-  tft.setTextDatum(MR_DATUM);
-  tft.drawString(num, cx + 16, WEIGHT_CY, 6);
-  tft.setTextDatum(ML_DATUM);
-  tft.drawString("g", cx + 24, WEIGHT_CY, 4);
+
+  weightSprite.fillSprite(TFT_BLACK);
+  weightSprite.setTextColor(TFT_WHITE, TFT_BLACK);
+  const int cy = WEIGHT_CY - WEIGHT_TOP;  // sprite-local centre line
+  if (!scaleOk) {
+    weightSprite.setTextDatum(MC_DATUM);
+    weightSprite.drawString("no scale", tft.width() / 2, cy, 4);
+  } else {
+    // Font 6 (big) has digits only, so draw the "g" unit in font 4 beside it.
+    const int cx = tft.width() / 2;
+    weightSprite.setTextDatum(MR_DATUM);
+    weightSprite.drawString(num, cx + 16, cy, 6);
+    weightSprite.setTextDatum(ML_DATUM);
+    weightSprite.drawString("g", cx + 24, cy, 4);
+  }
+  weightSprite.pushSprite(0, WEIGHT_TOP);
 }
 
 // A short identity string for the detail area, so we only repaint on change.
@@ -213,8 +239,12 @@ void drawInfo() {
   }
 }
 
+int drawnWifi = -1;  // last drawn state (-1 = force repaint)
+
 void drawWifiStatus() {
   const bool up = spoolhouse::wifiConnected();
+  if ((int)up == drawnWifi) return;  // repainting every frame flickers the label
+  drawnWifi = (int)up;
   tft.fillRect(tft.width() - 60, 4, 60, 14, TFT_BLACK);
   tft.setTextDatum(TR_DATUM);
   tft.setTextColor(up ? TFT_GREEN : TFT_DARKGREY, TFT_BLACK);
@@ -281,6 +311,7 @@ void nfcTask(void *) {
   uint32_t writeWaitStart = 0;
 
   for (;;) {
+    nfcBusBusy = true;  // reader/bus work follows; cleared before we idle below
     if (!ok) {
       if (millis() - lastInit >= NFC_REINIT_INTERVAL_MS) {
         lastInit = millis();
@@ -288,6 +319,7 @@ void nfcTask(void *) {
         if (ok) Serial.printf("[nfc] %s ready\n", nfc.chipName());
         publishNfc(ok, present, uid, fil);
       }
+      nfcBusBusy = false;
       vTaskDelay(pdMS_TO_TICKS(200));
       continue;
     }
@@ -350,6 +382,7 @@ void nfcTask(void *) {
           cacheFil = FilamentInfo{};
         }
       }
+      nfcBusBusy = false;
       vTaskDelay(pdMS_TO_TICKS(NFC_POLL_INTERVAL_MS));
       continue;
     }
@@ -381,6 +414,7 @@ void nfcTask(void *) {
       Serial.println("[nfc] tag removed");
       publishNfc(ok, present, uid, fil);
     }
+    nfcBusBusy = false;
     vTaskDelay(pdMS_TO_TICKS(NFC_POLL_INTERVAL_MS));
   }
 }
@@ -401,6 +435,7 @@ void overlayMessage(const String &l1, const String &l2, uint16_t color) {
 void restoreUi() {
   drawnWeight = "";
   drawnInfoKey = "";
+  drawnWifi = -1;
   drawStaticUi();
   drawWifiStatus();
   drawWeight();
@@ -785,10 +820,17 @@ void loop() {
   // is showing (resetCountdownSec >= 0) or a tag-write overlay is up — otherwise
   // the weight reading pops through over it.
   if (!writeActive && resetCountdownSec < 0 && now - lastDrawMs >= DISPLAY_UPDATE_INTERVAL_MS) {
-    lastDrawMs = now;
-    drawWeight();
-    drawInfo();
-    drawWifiStatus();
+    // Defer the repaint while the NFC bus is actively transacting so the TFT
+    // write doesn't overlap a reader burst (the white-out trigger during tag
+    // reads). Capped, so the display still refreshes even if NFC stays busy.
+    if (nfcBusBusy && now - lastDrawMs < MAX_DRAW_DEFER_MS) {
+      // skip this frame; try again next loop (~5 ms later)
+    } else {
+      lastDrawMs = now;
+      drawWeight();
+      drawInfo();
+      drawWifiStatus();
+    }
   }
   delay(5);  // yield to the idle task (NFC no longer blocks this loop)
 }
