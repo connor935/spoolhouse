@@ -1,49 +1,57 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { authClient } from "@/lib/auth-client"
-import { toast } from "sonner"
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth-client';
+import { toast } from 'sonner';
 
 export function ResetPasswordForm({ minLength }: { minLength: number }) {
-  const router = useRouter()
-  const token = useSearchParams().get("token")
-  const [password, setPassword] = useState("")
-  const [confirm, setConfirm] = useState("")
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const token = useSearchParams().get('token');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!token) {
     return (
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-destructive">This reset link is invalid or incomplete.</p>
-        <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground">
+        <p className="text-destructive text-sm">
+          This reset link is invalid or incomplete.
+        </p>
+        <Link
+          href="/forgot-password"
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
           Request a new link
         </Link>
       </div>
-    )
+    );
   }
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
     if (password !== confirm) {
-      setError("Passwords don't match")
-      return
+      setError("Passwords don't match");
+      return;
     }
-    setPending(true)
-    setError(null)
-    const { error } = await authClient.resetPassword({ newPassword: password, token: token! })
+    setPending(true);
+    setError(null);
+    const { error } = await authClient.resetPassword({
+      newPassword: password,
+      token: token!,
+    });
     if (error) {
-      setError(error.message ?? "Reset failed — the link may have expired.")
-      setPending(false)
-      return
+      setError(error.message ?? 'Reset failed — the link may have expired.');
+      setPending(false);
+      return;
     }
-    toast.success("Password updated — sign in with your new password")
-    router.push("/login")
+    toast.success('Password updated — sign in with your new password');
+    router.push('/login');
   }
 
   return (
@@ -72,10 +80,14 @@ export function ResetPasswordForm({ minLength }: { minLength: number }) {
           onChange={(e) => setConfirm(e.target.value)}
         />
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" disabled={pending} className="bg-accent text-accent-foreground hover:bg-accent/90">
-        {pending ? "Saving…" : "Set new password"}
+      {error && <p className="text-destructive text-sm">{error}</p>}
+      <Button
+        type="submit"
+        disabled={pending}
+        className="bg-accent text-accent-foreground hover:bg-accent/90"
+      >
+        {pending ? 'Saving…' : 'Set new password'}
       </Button>
     </form>
-  )
+  );
 }

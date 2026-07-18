@@ -1,34 +1,34 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { createGroup } from "@/app/actions/groups"
-import { toast } from "sonner"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { createGroup } from '@/app/actions/groups';
+import { toast } from 'sonner';
 
 export function CreateGroupForm() {
-  const router = useRouter()
-  const [name, setName] = useState("")
-  const [pending, setPending] = useState(false)
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [pending, setPending] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
     if (!name.trim()) {
-      toast.error("Group name is required")
-      return
+      toast.error('Group name is required');
+      return;
     }
-    setPending(true)
+    setPending(true);
     try {
-      const group = await createGroup(name.trim())
-      toast.success("Group created")
-      router.push(`/groups/${group.id}`)
+      const group = await createGroup(name.trim());
+      toast.success('Group created');
+      router.push(`/groups/${group.id}`);
     } catch {
-      toast.error("Could not create group")
-      setPending(false)
+      toast.error('Could not create group');
+      setPending(false);
     }
   }
 
@@ -44,8 +44,8 @@ export function CreateGroupForm() {
         />
       </div>
       <Button type="submit" disabled={pending}>
-        {pending ? "Creating…" : "Create"}
+        {pending ? 'Creating…' : 'Create'}
       </Button>
     </form>
-  )
+  );
 }

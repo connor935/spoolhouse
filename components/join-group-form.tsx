@@ -1,34 +1,34 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { joinGroup } from "@/app/actions/groups"
-import { toast } from "sonner"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { joinGroup } from '@/app/actions/groups';
+import { toast } from 'sonner';
 
 export function JoinGroupForm() {
-  const router = useRouter()
-  const [code, setCode] = useState("")
-  const [pending, setPending] = useState(false)
+  const router = useRouter();
+  const [code, setCode] = useState('');
+  const [pending, setPending] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
     if (!code.trim()) {
-      toast.error("Enter an invite code")
-      return
+      toast.error('Enter an invite code');
+      return;
     }
-    setPending(true)
+    setPending(true);
     try {
-      const group = await joinGroup(code.trim())
-      toast.success(`Joined ${group.name}`)
-      router.push(`/groups/${group.id}`)
+      const group = await joinGroup(code.trim());
+      toast.success(`Joined ${group.name}`);
+      router.push(`/groups/${group.id}`);
     } catch {
-      toast.error("Invalid invite code")
-      setPending(false)
+      toast.error('Invalid invite code');
+      setPending(false);
     }
   }
 
@@ -44,8 +44,8 @@ export function JoinGroupForm() {
         />
       </div>
       <Button type="submit" disabled={pending}>
-        {pending ? "Joining…" : "Join"}
+        {pending ? 'Joining…' : 'Join'}
       </Button>
     </form>
-  )
+  );
 }

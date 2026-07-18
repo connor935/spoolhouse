@@ -1,51 +1,55 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { requestMaterial } from "@/app/actions/materials"
-import { FILAMENT_TYPES } from "@/lib/filament"
-import { toast } from "sonner"
+} from '@/components/ui/select';
+import { requestMaterial } from '@/app/actions/materials';
+import { FILAMENT_TYPES } from '@/lib/filament';
+import { toast } from 'sonner';
 
-export function RequestMaterialForm({ isAdmin = false }: { isAdmin?: boolean }) {
-  const router = useRouter()
-  const [manufacturer, setManufacturer] = useState("")
-  const [name, setName] = useState("")
-  const [filamentType, setFilamentType] = useState("PLA")
-  const [color, setColor] = useState("#1c7ed6")
-  const [pending, setPending] = useState(false)
+export function RequestMaterialForm({
+  isAdmin = false,
+}: {
+  isAdmin?: boolean;
+}) {
+  const router = useRouter();
+  const [manufacturer, setManufacturer] = useState('');
+  const [name, setName] = useState('');
+  const [filamentType, setFilamentType] = useState('PLA');
+  const [color, setColor] = useState('#1c7ed6');
+  const [pending, setPending] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setPending(true)
+    e.preventDefault();
+    setPending(true);
     try {
       const created = await requestMaterial({
         manufacturer: manufacturer.trim(),
         name: name.trim(),
         filamentType,
         color,
-      })
+      });
       toast.success(
-        created.status === "approved"
-          ? "Material added to the catalog"
-          : "Material requested — you can use it right away",
-      )
-      setManufacturer("")
-      setName("")
-      router.refresh()
+        created.status === 'approved'
+          ? 'Material added to the catalog'
+          : 'Material requested — you can use it right away'
+      );
+      setManufacturer('');
+      setName('');
+      router.refresh();
     } catch {
-      toast.error("Could not request material")
+      toast.error('Could not request material');
     } finally {
-      setPending(false)
+      setPending(false);
     }
   }
 
@@ -74,7 +78,10 @@ export function RequestMaterialForm({ isAdmin = false }: { isAdmin?: boolean }) 
       <div className="flex items-end gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="m-type">Type</Label>
-          <Select value={filamentType} onValueChange={(v) => v && setFilamentType(v)}>
+          <Select
+            value={filamentType}
+            onValueChange={(v) => v && setFilamentType(v)}
+          >
             <SelectTrigger id="m-type">
               <SelectValue />
             </SelectTrigger>
@@ -94,7 +101,7 @@ export function RequestMaterialForm({ isAdmin = false }: { isAdmin?: boolean }) 
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            className="h-9 w-14 cursor-pointer rounded-md border border-input bg-transparent p-1"
+            className="border-input h-9 w-14 cursor-pointer rounded-md border bg-transparent p-1"
             aria-label="Material color"
           />
         </div>
@@ -102,12 +109,12 @@ export function RequestMaterialForm({ isAdmin = false }: { isAdmin?: boolean }) 
       <Button type="submit" disabled={pending} className="self-start">
         {pending
           ? isAdmin
-            ? "Adding…"
-            : "Requesting…"
+            ? 'Adding…'
+            : 'Requesting…'
           : isAdmin
-            ? "Add material"
-            : "Request material"}
+            ? 'Add material'
+            : 'Request material'}
       </Button>
     </form>
-  )
+  );
 }

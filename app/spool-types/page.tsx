@@ -1,21 +1,21 @@
-import { PageShell } from "@/components/page-shell"
-import { RequestSpoolTypeForm } from "@/components/request-spool-type-form"
-import { SpoolTypeCatalogRow } from "@/components/spool-type-catalog-row"
-import { getSpoolTypeCatalog } from "@/app/actions/spool-types"
-import { requireUser } from "@/lib/auth-session"
+import { PageShell } from '@/components/page-shell';
+import { RequestSpoolTypeForm } from '@/components/request-spool-type-form';
+import { SpoolTypeCatalogRow } from '@/components/spool-type-catalog-row';
+import { getSpoolTypeCatalog } from '@/app/actions/spool-types';
+import { requireUser } from '@/lib/auth-session';
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic';
 
 export default async function SpoolTypesPage() {
-  const user = await requireUser()
-  const isAdmin = user.role === "admin"
-  const types = await getSpoolTypeCatalog()
+  const user = await requireUser();
+  const isAdmin = user.role === 'admin';
+  const types = await getSpoolTypeCatalog();
 
-  const byManufacturer = new Map<string, typeof types>()
+  const byManufacturer = new Map<string, typeof types>();
   for (const t of types) {
-    const list = byManufacturer.get(t.manufacturer) ?? []
-    list.push(t)
-    byManufacturer.set(t.manufacturer, list)
+    const list = byManufacturer.get(t.manufacturer) ?? [];
+    list.push(t);
+    byManufacturer.set(t.manufacturer, list);
   }
 
   return (
@@ -24,27 +24,38 @@ export default async function SpoolTypesPage() {
       description={
         isAdmin
           ? "Global spool types and their empty weights. Missing one? Add it below — as an admin it's published straight away."
-          : "Global spool types and their empty weights. Missing one? Request it below — you can use it immediately while an admin reviews it."
+          : 'Global spool types and their empty weights. Missing one? Request it below — you can use it immediately while an admin reviews it.'
       }
     >
       {[...byManufacturer.entries()].map(([manufacturer, list]) => (
-        <section key={manufacturer} className="mt-6 rounded-lg border border-border bg-card">
-          <h2 className="border-b border-border px-6 py-3 font-semibold">{manufacturer}</h2>
-          <ul className="divide-y divide-border">
+        <section
+          key={manufacturer}
+          className="border-border bg-card mt-6 rounded-lg border"
+        >
+          <h2 className="border-border border-b px-6 py-3 font-semibold">
+            {manufacturer}
+          </h2>
+          <ul className="divide-border divide-y">
             {list.map((t) => (
-              <SpoolTypeCatalogRow key={t.id} spoolType={t} currentUserId={user.id} />
+              <SpoolTypeCatalogRow
+                key={t.id}
+                spoolType={t}
+                currentUserId={user.id}
+              />
             ))}
           </ul>
         </section>
       ))}
 
-      <section className="mt-6 rounded-lg border border-border bg-card p-6">
-        <h2 className="font-semibold">{isAdmin ? "Add a new spool type" : "Request a new spool type"}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <section className="border-border bg-card mt-6 rounded-lg border p-6">
+        <h2 className="font-semibold">
+          {isAdmin ? 'Add a new spool type' : 'Request a new spool type'}
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm">
           Weigh a bare, empty spool and enter its details.
         </p>
         <RequestSpoolTypeForm isAdmin={isAdmin} />
       </section>
     </PageShell>
-  )
+  );
 }

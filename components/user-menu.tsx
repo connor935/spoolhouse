@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   CircleUser,
   Disc3,
@@ -25,9 +25,9 @@ import {
   Sun,
   Users,
   UsersRound,
-} from "lucide-react";
-import { useTheme } from "next-themes";
-import { authClient } from "@/lib/auth-client";
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { authClient } from '@/lib/auth-client';
 
 export function UserMenu({
   name,
@@ -41,13 +41,13 @@ export function UserMenu({
 
   async function signOut() {
     await authClient.signOut();
-    router.push("/login");
+    router.push('/login');
     router.refresh();
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground outline-none transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
+      <DropdownMenuTrigger className="text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:ring-ring inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm transition-colors outline-none focus-visible:ring-2">
         <CircleUser className="h-5 w-5" />
         <span className="hidden sm:inline">{name}</span>
       </DropdownMenuTrigger>

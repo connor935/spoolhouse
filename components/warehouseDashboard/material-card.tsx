@@ -29,35 +29,38 @@ export function MaterialCard({
   return (
     <div className="border-border bg-card hover:border-accent/40 flex flex-col rounded-lg border transition-colors">
       <div className="flex items-start justify-between gap-3 p-5 pb-3">
-        <div className="flex items-start gap-3">
+        <div className="flex flex-1 items-start gap-3">
           <span
             className="border-border mt-0.5 h-9 w-9 shrink-0 rounded-full border shadow-inner"
             style={{ backgroundColor: swatch }}
             aria-hidden
           />
-          <div className="min-w-0">
-            <h3 className="text-card-foreground truncate leading-tight font-medium">
-              {material.name}
-            </h3>
-            <div className="text-muted-foreground flex gap-2 text-sm">
+          <div className="w-full min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-card-foreground line-clamp-2 leading-tight font-medium">
+                {material.name}
+              </h3>
+              <div className="flex min-w-0 shrink-0 items-center gap-2">
+                {material.status === 'pending' && (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    Pending review
+                  </Badge>
+                )}
+                <Badge variant="secondary" className="font-mono text-xs">
+                  {material.filamentType}
+                </Badge>
+              </div>
+            </div>
+            <div className="text-muted-foreground flex min-w-0 text-sm">
               <p className="truncate">{material.manufacturer}</p>
-              <p>|</p>
+              <p className="mx-1">·</p>
               <p>
-                {spools.length} spool{spools.length === 1 ? '' : 's'} ·{' '}
-                {formatWeight(totalLeftGrams)} left
+                {spools.length} spool{spools.length === 1 ? '' : 's'}
               </p>
+              <p className="mx-1">·</p>
+              <p>{formatWeight(totalLeftGrams)} left</p>
             </div>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Badge variant="secondary" className="font-mono text-xs">
-            {material.filamentType}
-          </Badge>
-          {material.status === 'pending' && (
-            <Badge variant="outline" className="text-muted-foreground">
-              Pending review
-            </Badge>
-          )}
         </div>
       </div>
 
