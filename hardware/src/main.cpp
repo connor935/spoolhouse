@@ -306,6 +306,9 @@ void nfcTask(void *) {
           tag_write::setStatus(tag_write::Status::Writing);
           opentag::TagData td;
           tag_write::copyData(td);
+          debuglog::add("write data: " + String(td.manufacturer) + " / " + String(td.name) +
+                        " (" + String(td.type) + ") nom=" + td.nominalWeightGrams + "g empty=" +
+                        td.emptyWeightGrams + "g");
           // Size the OpenTag3D record to the tag: read its capability container
           // (page 3, byte 2 ×8 = user bytes) so big tags get the full record.
           uint8_t cc[4] = {0};
@@ -320,6 +323,11 @@ void nfcTask(void *) {
           if (wrote) {
             tag_write::setStatus(tag_write::Status::Done);
             debuglog::add("write ok uid=" + wu.toHexString() + " len=" + len + " cap=" + capacity);
+            if (td.emptyWeightGrams > 0 && capacity < 204) {
+              // OpenTag3D stores the empty weight at byte 0xAC, beyond an
+              // NTAG213's 144 bytes — it is silently absent on small tags.
+              debuglog::add("note: empty weight NOT on tag (needs NTAG215/216)");
+            }
           } else {
             // Figure out why. A blank MIFARE Classic answers auth with the
             // default key but rejects NTAG writes — the most common mistake.
@@ -335,6 +343,11 @@ void nfcTask(void *) {
           writeWaitStart = 0;
           present = false;  // force a fresh read/decode of the just-written tag
           misses = 0;
+          // The tag's content just changed (even a failed write may have
+          // altered pages) — drop the cached decode or the display would keep
+          // showing the pre-write data after the re-detect.
+          cacheUid = NfcUid{};
+          cacheFil = FilamentInfo{};
         }
       }
       vTaskDelay(pdMS_TO_TICKS(NFC_POLL_INTERVAL_MS));
