@@ -1,0 +1,894 @@
+{
+  "version": 1,
+  "name": "Spoolhouse Scale",
+  "nodes": [
+    {
+      "id": "bfcn74b8",
+      "type": "board",
+      "position": {
+        "x": 688,
+        "y": 272
+      },
+      "width": 196,
+      "height": 600,
+      "data": {
+        "label": "CYD",
+        "color": "#f59e0b"
+      },
+      "measured": {
+        "width": 196,
+        "height": 600
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "t5qn7fj7",
+      "type": "board",
+      "position": {
+        "x": 360,
+        "y": 272
+      },
+      "width": 188,
+      "height": 280,
+      "data": {
+        "label": "CLRC663",
+        "color": "#0ea5e9"
+      },
+      "measured": {
+        "width": 188,
+        "height": 280
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "5jgtps1n",
+      "type": "board",
+      "position": {
+        "x": 184,
+        "y": 664
+      },
+      "width": 356,
+      "height": 224,
+      "data": {
+        "label": "HX711",
+        "color": "#10b981"
+      },
+      "measured": {
+        "width": 356,
+        "height": 224
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "0ici9ed8",
+      "type": "board",
+      "position": {
+        "x": -336,
+        "y": 472
+      },
+      "width": 180,
+      "height": 168,
+      "data": {
+        "label": "Weight Sensor (BL)",
+        "color": "#ef4444"
+      },
+      "measured": {
+        "width": 180,
+        "height": 168
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "81xs8264",
+      "type": "board",
+      "position": {
+        "x": -64,
+        "y": 472
+      },
+      "width": 180,
+      "height": 168,
+      "data": {
+        "label": "Weight Sensor (BR)",
+        "color": "#ef4444"
+      },
+      "measured": {
+        "width": 180,
+        "height": 168
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "vlmnh0ga",
+      "type": "board",
+      "position": {
+        "x": -344,
+        "y": 272
+      },
+      "width": 188,
+      "height": 168,
+      "data": {
+        "label": "Weight Sensor (TL)",
+        "color": "#ef4444"
+      },
+      "measured": {
+        "width": 188,
+        "height": 168
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "rgn8fhl2",
+      "type": "board",
+      "position": {
+        "x": -64,
+        "y": 272
+      },
+      "width": 180,
+      "height": 168,
+      "data": {
+        "label": "Weight Sensor (TR)",
+        "color": "#ef4444"
+      },
+      "measured": {
+        "width": 180,
+        "height": 168
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "vly89z8t",
+      "type": "connector",
+      "position": {
+        "x": 32,
+        "y": 424
+      },
+      "data": {
+        "label": "CH1",
+        "pinCount": 4,
+        "side": "left",
+        "pinLabels": {
+          "1": "GND",
+          "2": "IO22",
+          "3": "IO27",
+          "4": "3V3"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "parentId": "bfcn74b8",
+      "measured": {
+        "width": 130,
+        "height": 125
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "li2ltqpm",
+      "type": "connector",
+      "position": {
+        "x": 32,
+        "y": 40
+      },
+      "data": {
+        "label": "TF Card",
+        "pinCount": 9,
+        "side": "left",
+        "pinLabels": {
+          "1": "DAT2",
+          "2": "CD/DAT3 (IO5)",
+          "3": "CMD (IO23)",
+          "4": "3V3",
+          "5": "CLK (IO18)",
+          "6": "GND",
+          "7": "DAT0 (IO19)",
+          "8": "DAT1",
+          "9": "CD"
+        },
+        "partId": null,
+        "accessories": [],
+        "hasShell": true,
+        "pinDesignations": {
+          "8": "",
+          "9": ""
+        }
+      },
+      "parentId": "bfcn74b8",
+      "measured": {
+        "width": 130,
+        "height": 259
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "0quzclgx",
+      "type": "connector",
+      "position": {
+        "x": 24,
+        "y": 40
+      },
+      "data": {
+        "label": "J1",
+        "pinCount": 8,
+        "side": "right",
+        "pinLabels": {
+          "1": "NSS/SDA",
+          "2": "SCK/SCL",
+          "3": "MOSI",
+          "4": "MISO",
+          "5": "IRQ",
+          "6": "GND",
+          "7": "SD",
+          "8": "3V3"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 213
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "t5qn7fj7"
+    },
+    {
+      "id": "0gu3431r",
+      "type": "connector",
+      "position": {
+        "x": 192,
+        "y": 32
+      },
+      "data": {
+        "label": "J2",
+        "pinCount": 4,
+        "side": "right",
+        "pinLabels": {
+          "1": "GND",
+          "2": "DT",
+          "3": "SCK",
+          "4": "VCC"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "parentId": "5jgtps1n",
+      "measured": {
+        "width": 130,
+        "height": 125
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "4z8uggri",
+      "type": "connector",
+      "position": {
+        "x": 32,
+        "y": 32
+      },
+      "data": {
+        "label": "J3",
+        "pinCount": 6,
+        "side": "left",
+        "pinLabels": {
+          "1": "E+",
+          "2": "E-",
+          "3": "A-",
+          "4": "A+",
+          "5": "B-",
+          "6": "B+"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "parentId": "5jgtps1n",
+      "measured": {
+        "width": 130,
+        "height": 169
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "svj4vs6h",
+      "type": "connector",
+      "position": {
+        "x": 24,
+        "y": 40
+      },
+      "data": {
+        "label": "J4",
+        "pinCount": 3,
+        "side": "right",
+        "pinLabels": {
+          "1": "+",
+          "2": "C",
+          "3": "-"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 103
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "vlmnh0ga"
+    },
+    {
+      "id": "imzaeevc",
+      "type": "connector",
+      "position": {
+        "x": 24,
+        "y": 40
+      },
+      "data": {
+        "label": "J5",
+        "pinCount": 3,
+        "side": "left",
+        "pinLabels": {
+          "1": "+",
+          "2": "C",
+          "3": "-"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 103
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "rgn8fhl2"
+    },
+    {
+      "id": "3mak8017",
+      "type": "connector",
+      "position": {
+        "x": 16,
+        "y": 40
+      },
+      "data": {
+        "label": "J6",
+        "pinCount": 3,
+        "side": "right",
+        "pinLabels": {
+          "1": "+",
+          "2": "C",
+          "3": "-"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "parentId": "0ici9ed8",
+      "measured": {
+        "width": 130,
+        "height": 103
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "3a82yfet",
+      "type": "connector",
+      "position": {
+        "x": 24,
+        "y": 40
+      },
+      "data": {
+        "label": "J7",
+        "pinCount": 3,
+        "side": "left",
+        "pinLabels": {
+          "1": "+",
+          "2": "C",
+          "3": "-"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 103
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "81xs8264"
+    },
+    {
+      "id": "tdb4mblq",
+      "type": "connector",
+      "position": {
+        "x": 32,
+        "y": 320
+      },
+      "data": {
+        "label": "J8",
+        "pinCount": 1,
+        "side": "left",
+        "pinLabels": {
+          "1": "3V3"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 59
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "bfcn74b8"
+    }
+  ],
+  "edges": [
+    {
+      "type": "wire",
+      "source": "svj4vs6h",
+      "sourceHandle": "pin-3",
+      "target": "imzaeevc",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "BU",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__svj4vs6hpin-3-imzaeevcpin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "3mak8017",
+      "sourceHandle": "pin-3",
+      "target": "3a82yfet",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "BU",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__3mak8017pin-3-3a82yfetpin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "imzaeevc",
+      "sourceHandle": "pin-1",
+      "target": "3a82yfet",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "WH",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__imzaeevcpin-1-3a82yfetpin-1",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "svj4vs6h",
+      "sourceHandle": "pin-1",
+      "target": "3mak8017",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "WH",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__svj4vs6hpin-1-3mak8017pin-1",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "svj4vs6h",
+      "sourceHandle": "pin-2",
+      "target": "4z8uggri",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": [],
+        "points": [
+          {
+            "x": -128,
+            "y": 392
+          },
+          {
+            "x": -40,
+            "y": 768
+          }
+        ],
+        "name": "C_TL",
+        "labelOffset": {
+          "x": 211.18484876430932,
+          "y": 203.18484876430932
+        }
+      },
+      "id": "xy-edge__svj4vs6hpin-2-4z8uggripin-1",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "imzaeevc",
+      "sourceHandle": "pin-2",
+      "target": "4z8uggri",
+      "targetHandle": "pin-4",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": [],
+        "points": [
+          {
+            "x": -104,
+            "y": 392
+          },
+          {
+            "x": -32,
+            "y": 736
+          }
+        ],
+        "name": "C_TR",
+        "labelOffset": {
+          "x": 91.2057314850638,
+          "y": 179.20573148506378
+        }
+      },
+      "id": "xy-edge__imzaeevcpin-2-4z8uggripin-4",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "3a82yfet",
+      "sourceHandle": "pin-2",
+      "target": "4z8uggri",
+      "targetHandle": "pin-2",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": [],
+        "points": [
+          {
+            "x": -24,
+            "y": 704
+          }
+        ],
+        "name": "C_BR",
+        "labelOffset": {
+          "x": -32.957537213589994,
+          "y": 192
+        }
+      },
+      "id": "xy-edge__3a82yfetpin-2-4z8uggripin-2",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "3mak8017",
+      "sourceHandle": "pin-2",
+      "target": "4z8uggri",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": [],
+        "points": [
+          {
+            "x": -56,
+            "y": 784
+          }
+        ],
+        "name": "C_BL",
+        "labelOffset": {
+          "x": 171.54052496796191,
+          "y": 75.54052496796191
+        }
+      },
+      "id": "xy-edge__3mak8017pin-2-4z8uggripin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0gu3431r",
+      "sourceHandle": "pin-1",
+      "target": "vly89z8t",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "BK",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0gu3431rpin-1-vly89z8tpin-1",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0gu3431r",
+      "sourceHandle": "pin-2",
+      "target": "vly89z8t",
+      "targetHandle": "pin-2",
+      "data": {
+        "color": "TQ",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0gu3431rpin-2-vly89z8tpin-2",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0gu3431r",
+      "sourceHandle": "pin-3",
+      "target": "vly89z8t",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "PK",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0gu3431rpin-3-vly89z8tpin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0gu3431r",
+      "sourceHandle": "pin-4",
+      "target": "vly89z8t",
+      "targetHandle": "pin-4",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0gu3431rpin-4-vly89z8tpin-4",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-6",
+      "target": "li2ltqpm",
+      "targetHandle": "shell",
+      "data": {
+        "color": "BK",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-6-li2ltqpmshell",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-7",
+      "target": "0quzclgx",
+      "targetHandle": "pin-6",
+      "data": {
+        "color": "BK",
+        "stripe": "BK",
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-7-0quzclgxpin-6",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-1",
+      "target": "li2ltqpm",
+      "targetHandle": "pin-2",
+      "data": {
+        "color": "VT",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-1-li2ltqpmpin-2",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-3",
+      "target": "li2ltqpm",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "OG",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-3-li2ltqpmpin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-2",
+      "target": "li2ltqpm",
+      "targetHandle": "pin-5",
+      "data": {
+        "color": "PK",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-2-li2ltqpmpin-5",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-4",
+      "target": "li2ltqpm",
+      "targetHandle": "pin-7",
+      "data": {
+        "color": "YE",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-4-li2ltqpmpin-7",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-8",
+      "target": "tdb4mblq",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-8-tdb4mblqpin-1",
+      "selected": false
+    }
+  ],
+  "cables": [],
+  "parts": [
+    {
+      "id": "fqiry9hw",
+      "type": "Mounting Hardware",
+      "mpn": "Heat Set Insert M3",
+      "manufacturer": "Ruthex",
+      "description": "https://amzn.eu/d/0b9HPckK",
+      "cost": 0.09,
+      "manualQty": 26
+    },
+    {
+      "id": "62g0grqo",
+      "type": "Screw",
+      "mpn": "Countersunk M3x6",
+      "cost": 0.04,
+      "manualQty": 26
+    },
+    {
+      "id": "ziob7tes",
+      "type": "PCB",
+      "mpn": "HX711",
+      "description": "https://amzn.eu/d/09gSECSa",
+      "cost": 1.6,
+      "manualQty": 1
+    },
+    {
+      "id": "z6igt2la",
+      "type": "PCB",
+      "mpn": "CLRC663",
+      "description": "https://de.aliexpress.com/item/1005009206202001.html",
+      "cost": 11.07,
+      "manualQty": 1
+    },
+    {
+      "id": "blrrtrmg",
+      "type": "PCB",
+      "mpn": "Cheap Yellow Display",
+      "description": "https://amzn.eu/d/08TuXSqS",
+      "cost": 17,
+      "manualQty": 1
+    },
+    {
+      "id": "u32rbyta",
+      "type": "Ext",
+      "mpn": "Kitchen Scale",
+      "description": "https://amzn.eu/d/0i4XcGJX",
+      "manufacturer": "Söhnle",
+      "cost": 15,
+      "manualQty": 1
+    },
+    {
+      "id": "8ughzlvr",
+      "type": "Ext",
+      "mpn": "Felt Glider 50mm",
+      "description": "https://amzn.eu/d/08yTZHSM",
+      "cost": 0.28,
+      "manualQty": 4
+    },
+    {
+      "id": "mrmi7fhd",
+      "type": "wire",
+      "mpn": "Misc Wires",
+      "cost": 1,
+      "manualQty": 1
+    },
+    {
+      "id": "y3ent21a",
+      "type": "Filament",
+      "mpn": "Bambulab PLA",
+      "cost": 16,
+      "manualQty": 0.4
+    }
+  ],
+  "assembly": "# Spoolhouse Scale — Assembly\n\nBuild the Spoolhouse scale from a donor kitchen scale, an ESP32 **Cheap Yellow\nDisplay** (CYD), an **HX711** load-cell amplifier, and a **CLRC663** NFC reader,\nheld together by a set of printed parts.\n\n## What you need\n\n**Printed parts** — PLA, PETG, or any other material:\n\n| Part | Quantity |\n|---|---|\n| Sensor foot | 4 |\n| Sensor base | 4 |\n| MainPlate | 1 |\n| MainboardHousing | 1 |\n| CoverFront / CoverBack | 1 each |\n\n> Tip: print the sensor feet/bases and the two covers in a contrasting color.\n\n**Hardware & electronics**\n\n- Donor kitchen scale (provides the 4 weight sensors and their mounting clips)\n- ESP32 Cheap Yellow Display (ESP32-2432S028R)\n- HX711 load-cell amplifier\n- CLRC663 NFC reader\n- 26 heat-set inserts\n- 26 M3×6 countersunk screws (16 for the sensors, 6 for the covers, 4 for the CYD)\n- 4 felt pads, 50 mm\n\n**Tools:** soldering iron, hot-air gun (recommended for desoldering), small flat\nscrewdriver, glue.\n\n## 1. Print the parts\n\nPrint everything in the table above. Sensor foot and sensor base are separate\nparts so the print supports can be removed.\n\nPress the 26 heat-set inserts into the holes in the MainPlate and the\nMainboardHousing.\n\n## 2. Strip the kitchen scale & fit the sensor feet\n\n1. Remove the rubber pads from the bottom of the scale and unhinge the clips\n   with a small screwdriver. **Keep the clips** — they are reused later.\n2. Open the scale housing and slide the weight sensors out of the upper housing.\n3. Unsolder the sensor wires from the scale's mainboard.\n4. Slide each weight sensor into a sensor base and attach the bases to the\n   MainPlate with the 16 M3×6 countersunk screws.\n5. Clip a sensor foot onto each sensor using the clips saved in step 1.\n6. Stick a 50 mm felt pad onto each sensor foot — it covers the clip slots and\n   keeps the scale from scratching soft surfaces.\n\n## 3. Prepare the Cheap Yellow Display\n\nDesolder the TF-card slot and the connectors marked **P3** and **CN1**\n(preferably with a hot-air gun). The sensor wires are soldered to these pads. Mount the CYD with 4 M3x6 countersunk screws to the MainboardHousing.\n\n## 4. Wiring\n\n1. Glue the HX711 into the center of the MainPlate.\n2. Place the CLRC663 on the MainPlate and melt the printed guide over the\n   reader with the soldering iron so it is locked in place.\n3. Solder all connections according to the wiring diagram.\n\n## 5. Finishing touches\n\nFasten the covers with the 6 M3×6 countersunk screws — this simultaneously\nclamps the MainboardHousing to the MainPlate.\n\nBuild and flash the firmware over the USB-C connector (only the first flash\nneeds a cable — later updates go over WiFi, see the manual below).\n\n---\n\n# Spoolhouse Scale — Manual\n\nA WiFi filament scale built on an ESP32 **Cheap Yellow Display** (CYD). Put a spool\non it, and it reads the weight and — if the spool has an NFC tag — its filament\ndetails, then uploads the reading to your Spoolhouse server with one tap.\n\n- **Display**: current weight (zeroable) + decoded filament info\n- **NFC**: reads Bambu Lab (and, experimentally, Creality / OpenTag3D) spool tags\n- **Upload**: sends the measured weight to Spoolhouse over WiFi (registers or refreshes the spool by its tag)\n- **Config**: a built-in web page for setup, calibration, and firmware updates — no cable needed after first flash\n\n\n## 1. Quick start\n\n1. **Power it on** (USB-C). On first boot with no saved WiFi it opens a setup\n   Access Point — see [First-time setup](#2-first-time-setup-wifi).\n2. Once connected, the display shows the weight and **\"tap screen to tare\"**.\n3. **Place a spool.** If its tag is recognized, its material/colour/details appear\n   and the hint changes to **\"tap screen to upload\"**.\n4. **Tap the screen.** It measures for 5 seconds, then shows **\"Uploaded!\"** — the\n   weight is now in Spoolhouse.\n5. Manage everything from a browser at **http://spoolhouse-scale.local/**\n   (see [The config page](#5-the-config-page)).\n\n\n## 2. First-time setup (WiFi)\n\nIf the scale can't reach a known WiFi network, it starts a **setup portal**:\n\n1. The screen shows **\"WiFi setup — join `Spoolhouse-Setup`, open 192.168.4.1\"**.\n2. On your phone/laptop, join the **`Spoolhouse-Setup`** WiFi network.\n3. A captive portal opens (or browse to **http://192.168.4.1**). Choose:\n   - your **WiFi network** and enter its **password**,\n   - the **Spoolhouse API token** (`sph_…`, from the web app's *Account → API tokens*),\n   - the **Spoolhouse base URL** (e.g. `https://spoolhouse.example.com`).\n4. Save. The device reboots and connects. Done.\n\n> Only 2.4 GHz WiFi is supported (the ESP32 has no 5 GHz radio).\n\nAfter setup you can change the token / base URL any time from the\n[config page](#5-the-config-page) — the portal only appears when WiFi is down.\n\n\n## 3. Everyday use\n\n### Weighing & uploading\n- **Empty scale reads 0 g** (it tares on boot).\n- **Tare (zero):** when no recognized spool is present, **tap the screen** (or press\n  the on-board BOOT button). The footer shows \"tap screen to tare\". The device waits\n  **1 second** for the tap's wobble to settle, then measures for **2 seconds**\n  (averaging like an upload, see below) — keep hands off until it shows **\"Tared\"**.\n- **Weigh + upload:** place a tagged spool → its details appear and the footer shows\n  \"tap screen to upload\" → **tap the screen**. The device:\n  1. waits **1 second** for the tap's wobble to settle,\n  2. measures the weight for **4 seconds**,\n  3. averages the middle of the readings (discarding the noisy 5 % extremes),\n  4. uploads that weight to Spoolhouse, and\n  5. shows **\"Uploaded!\"** with the value.\n\nThe upload calls `POST /api/v1/spools/weigh`, which **registers** the spool on first\nsight (creating the material/spool-type from the tag) or **refreshes** its weight\nthereafter. New spools register with an assumed **250 g empty-spool weight** — adjust\nthe spool type in the web app for exact \"filament remaining\".\n\n### What the display shows\n- Top: title + WiFi indicator.\n- Middle: spool info when a tag is recognized — manufacturer, material, a colour\n  swatch, nominal weight / diameter / length, spool ID, production date.\n- If a tag isn't recognized: \"Unknown tag\" + its UID.\n- Bottom: the large weight readout, then the tap hint.\n\n### Supported filament tags\n- **Bambu Lab** — fully supported and verified (MIFARE Classic; keys derived from the\n  tag UID).\n- **OpenTag3D** ([opentag3d.info](https://opentag3d.info/spec)) — the device both\n  **reads and writes** this open format (NDEF on NTAG21x). This is what\n  [writing a tag](#35-writing-a-tag-for-a-spool-without-one) produces.\n- **Creality** and **OpenPrintTag** — decoders are implemented but **not yet verified\n  on real tags**; treat as experimental.\n\n### 3.5 Writing a tag for a spool without one\nGive a \"dumb\" (tag-less) spool its own NFC tag so the scale recognises it like a smart\nspool. You need a **blank NFC tag** (NTAG21x — see the note below).\n\n1. Open the [config page](#5-the-config-page) → **Write custom tag**.\n2. Fill in manufacturer, material name, filament type (e.g. `PLA`), colour, nominal\n   filament weight, and empty-spool weight.\n3. Press **Write tag**. The device screen shows **\"Hold blank tag to the reader\"**.\n4. Hold the blank tag against the NFC reader. It writes an **OpenTag3D** record and shows\n   **\"Tag written\"**; the page confirms too. (Press *cancel* on the page to abort.)\n5. Stick the tag on the spool. From now on, placing it on the scale identifies it and\n   uploads its weight like any smart spool — its NFC UID becomes the spool's unique id.\n\n> **Tag type:** any **NTAG213/215/216** works. The **empty-spool weight** lives at a\n> high offset in the OpenTag3D layout that only fits **NTAG215/216**; on a smaller\n> **NTAG213** everything else is written and the empty weight falls back to the 250 g\n> default (adjust the spool type in the web app). MIFARE Classic tags can't be written.\n\n\n## 4. Calibrating the weight\n\nDo this once (or whenever readings drift). Easiest via the [config page](#5-the-config-page):\n\n1. Remove everything from the scale, press **Tare (zero)**.\n2. Place a **known weight** (e.g. a 500 g calibration weight).\n3. Enter that weight in grams and press **Calibrate**.\n\nThe device computes and stores the calibration factor (counts/gram) and applies it\nimmediately — no reflash. It's kept in flash and survives reboots (a factory reset\nreturns it to the firmware default).\n\n\n## 5. The config page\n\nOpen **http://spoolhouse-scale.local/** (or the device's IP, e.g.\n`http://192.168.1.184/`) from any device on the same network.\n\n> Use **http://**, not `https://` — the device serves plain HTTP.\n> The page has **no login** (it's meant for your trusted LAN). Form submissions are\n> protected against cross-site requests.\n\nSections:\n- **Weight** — live reading + **Tare (zero)**.\n- **Calibrate** — guided calibration (see [above](#4-calibrating-the-weight)).\n- **Spoolhouse server** — change the **base URL** and **API token** (leave the token\n  blank to keep the current one).\n- **Write custom tag** — encode a blank NFC tag for a tag-less spool\n  (see [3.5](#35-writing-a-tag-for-a-spool-without-one)).\n- **Display** — **Reset display** re-initialises the screen if it has gone blank/white\n  (see the troubleshooting note); the device keeps running on WiFi meanwhile.\n- **Firmware update** — upload a new `.bin` (see below).\n\nThe page follows the Spoolhouse web-app design and your phone's light/dark theme.\n\n\n## 6. Updating the firmware\n\nThree ways, no case-opening needed after the first flash:\n\n### A. Browser upload (easiest)\n1. Build the firmware (`pio run -e cyd`) — the file is `hardware/.pio/build/cyd/firmware.bin`.\n2. On the config page → **Firmware update** → choose the `.bin` → **Upload & flash**.\n3. The screen shows progress; the device reboots into the new firmware.\n\n### B. Over-the-air from PlatformIO\n```sh\npio run -e cyd_ota -t upload --upload-port spoolhouse-scale.local\n# or use the device IP; add the OTA password if set:\n#   --upload-flags \"--auth=<OTA_PASSWORD>\"\n```\n> On Windows you may need to allow the PlatformIO Python through the firewall the\n> first time (it receives the image transfer).\n\n### C. USB\n```sh\npio run -e cyd -t upload\n```\n\nIf a bad/incompatible image is uploaded, the update fails safely and the device keeps\nrunning the current firmware (it only reboots on success).\n\n\n## 7. Factory reset\n\nErases the saved WiFi, API token, base URL, and calibration (reverting to the\ncompiled defaults) and reopens the setup portal.\n\n1. **Press and hold the touchscreen.**\n2. At **10 s** a countdown warning appears; at **15 s** it turns red. *Release any\n   time before 20 s to cancel.*\n3. At **20 s** a confirmation screen shows **Go back** and **RESET**.\n4. **Lift your finger**, then deliberately **tap RESET** to wipe. Tapping anywhere\n   else (or waiting) cancels — so an accidental hold can't reset the device.\n\nAfter a reset the scale boots into the WiFi setup portal.\n\n## 8. Hardware & wiring\n\nBoard: **ESP32-2432S028R \"Cheap Yellow Display\"** (ILI9341 TFT + XPT2046 touch).\n\n| Peripheral | Signal | ESP32 pin |\n|---|---|---|\n| HX711 load cell (5 kg) | DT | IO22 |\n| | SCK | IO27 |\n| PN532 NFC (SPI mode) | MOSI | IO23 |\n| | MISO | IO19 |\n| | SCK | IO18 |\n| | SS | IO5 (former SD-card CS pad; SD holder removed) |\n| XPT2046 touch (on-board) | CLK / CS / MOSI / MISO / IRQ | IO25 / IO33 / IO32 / IO39 / IO36 |\n\nNotes:\n- The TFT uses the CYD's stock wiring on the **HSPI** peripheral. Touch uses the\n  **VSPI** peripheral. The PN532 is **bit-banged software SPI** on its own pins, and\n  runs on a **separate CPU core** so NFC reads don't stutter the display.\n- The PN532's SS must go to a real GPIO (IO5), **not** ground — it wakes on a falling\n  SS edge and stays silent if SS is tied low.\n\n\n## 9. Troubleshooting\n\n| Symptom | Cause / fix |\n|---|---|\n| `spoolhouse-scale.local` won't load | Use **http://**, not https. If mDNS `.local` doesn't resolve, use the device's IP (shown by your router, or on the serial log as `[wifi] connected: <ip>`). |\n| Setup AP appears unexpectedly | The saved WiFi wasn't reachable. Re-enter it in the portal. |\n| NFC not detected / \"NFC reader offline\" | Check the PN532 wiring, especially **SS → IO5** (not GND) and MOSI/MISO not swapped. The reader re-initialises every few seconds. |\n| Tag shows \"Unknown tag\" | Not a supported tag (only Bambu Lab is verified), or a transient read — re-seat the spool. |\n| Colours look wrong on the display | The panel runs inverted + a gamma tweak is applied in firmware; if a swatch still looks off, it's the tag's actual (often muted) colour. |\n| Weight is negative or wildly off | Re-calibrate (Section 4). The load-cell polarity sets the sign automatically during calibration. |\n| Screen goes white but the device still responds on WiFi | The ILI9341 has no wired reset line, so a brief power/SPI glitch — most often when the NFC reader energises during a tag read on a marginal 5 V supply — can blank it while the ESP32 keeps running. Hit **Reset display** on the config page to recover without a reboot (or power-cycle). Mitigations in firmware: a conservative 40 MHz TFT clock, and the display repaint is held off while the NFC bus is actively reading so the two don't overlap. A solid 5 V supply / good cable is the real cure (the CYD's USB VCC is often marginal). |\n| Screen shows noise on boot, then whites out and the device drops off WiFi too | A full **brownout** (thin/long USB VCC line) resetting the whole board when WiFi powers up. Use a solid 5 V source / good cable; the serial reset reason `RTCWDT_BROWN_OUT_RESET` confirms it. |\n| Serial port keeps dropping when flashing | Flaky USB **data** lines — use OTA/browser updates instead, or a known-good cable/port. |\n\n\n## 10. Building from source\n\nRequires [PlatformIO](https://platformio.org/).\n\n1. Copy `hardware/include/secrets.h.example` → `hardware/include/secrets.h` and fill in\n   WiFi (optional fallback), `SPOOLHOUSE_URL`, `SPOOLHOUSE_TOKEN`, and `OTA_PASSWORD`.\n   `secrets.h` is git-ignored.\n2. Build & flash:\n   ```sh\n   pio run -e cyd -t upload        # USB\n   pio device monitor              # serial log @ 115200\n   ```\n3. Partition scheme is **`min_spiffs`** (two OTA app slots) so over-the-air / browser\n   updates work — don't switch to `huge_app`, which has a single app slot and can't OTA.\n\nThe source is under `hardware/src/` (`main.cpp`, `scale.*`, `nfc/`, `spool/`, `net/`,\n`config_store.*`). Runtime config (token, URL, calibration, WiFi) lives in NVS; the\n`secrets.h` values are only compile-time defaults / fallbacks.\n"
+}

@@ -1,3 +1,81 @@
+# Spoolhouse Scale — Assembly
+
+Build the Spoolhouse scale from a donor kitchen scale, an ESP32 **Cheap Yellow
+Display** (CYD), an **HX711** load-cell amplifier, and a **CLRC663** NFC reader,
+held together by a set of printed parts.
+
+## What you need
+
+**Printed parts** — PLA, PETG, or any other material:
+
+| Part | Quantity |
+|---|---|
+| Sensor foot | 4 |
+| Sensor base | 4 |
+| MainPlate | 1 |
+| MainboardHousing | 1 |
+| CoverFront / CoverBack | 1 each |
+
+> Tip: print the sensor feet/bases and the two covers in a contrasting color.
+
+**Hardware & electronics**
+
+- Donor kitchen scale (provides the 4 weight sensors and their mounting clips)
+- ESP32 Cheap Yellow Display (ESP32-2432S028R)
+- HX711 load-cell amplifier
+- CLRC663 NFC reader
+- 26 heat-set inserts
+- 26 M3×6 countersunk screws (16 for the sensors, 6 for the covers, 4 for the CYD)
+- 4 felt pads, 50 mm
+
+**Tools:** soldering iron, hot-air gun (recommended for desoldering), small flat
+screwdriver, glue.
+
+## 1. Print the parts
+
+Print everything in the table above. Sensor foot and sensor base are separate
+parts so the print supports can be removed.
+
+Press the 26 heat-set inserts into the holes in the MainPlate and the
+MainboardHousing.
+
+## 2. Strip the kitchen scale & fit the sensor feet
+
+1. Remove the rubber pads from the bottom of the scale and unhinge the clips
+   with a small screwdriver. **Keep the clips** — they are reused later.
+2. Open the scale housing and slide the weight sensors out of the upper housing.
+3. Unsolder the sensor wires from the scale's mainboard.
+4. Slide each weight sensor into a sensor base and attach the bases to the
+   MainPlate with the 16 M3×6 countersunk screws.
+5. Clip a sensor foot onto each sensor using the clips saved in step 1.
+6. Stick a 50 mm felt pad onto each sensor foot — it covers the clip slots and
+   keeps the scale from scratching soft surfaces.
+
+## 3. Prepare the Cheap Yellow Display
+
+Desolder the TF-card slot and the connectors marked **P3** and **CN1**
+(preferably with a hot-air gun). The sensor wires are soldered to these pads. Mount the CYD with 4 M3x6 countersunk screws to the MainboardHousing.
+
+## 4. Wiring
+
+1. Glue the HX711 into the center of the MainPlate.
+2. Place the CLRC663 on the MainPlate and melt the printed guide over the
+   reader with the soldering iron so it is locked in place.
+3. Solder all connections according to the wiring diagram.
+
+## 5. Finishing touches
+
+Fasten the covers with the 6 M3×6 countersunk screws — this simultaneously
+clamps the MainboardHousing to the MainPlate.
+
+Build and flash the firmware over the USB-C connector (only the first flash
+needs a cable — later updates go over WiFi, see the manual below).
+
+<br>
+
+---
+<br>
+
 # Spoolhouse Scale — Manual
 
 A WiFi filament scale built on an ESP32 **Cheap Yellow Display** (CYD). Put a spool
@@ -9,7 +87,6 @@ details, then uploads the reading to your Spoolhouse server with one tap.
 - **Upload**: sends the measured weight to Spoolhouse over WiFi (registers or refreshes the spool by its tag)
 - **Config**: a built-in web page for setup, calibration, and firmware updates — no cable needed after first flash
 
----
 
 ## 1. Quick start
 
@@ -23,7 +100,6 @@ details, then uploads the reading to your Spoolhouse server with one tap.
 5. Manage everything from a browser at **http://spoolhouse-scale.local/**
    (see [The config page](#5-the-config-page)).
 
----
 
 ## 2. First-time setup (WiFi)
 
@@ -98,7 +174,6 @@ spool. You need a **blank NFC tag** (NTAG21x — see the note below).
 > **NTAG213** everything else is written and the empty weight falls back to the 250 g
 > default (adjust the spool type in the web app). MIFARE Classic tags can't be written.
 
----
 
 ## 4. Calibrating the weight
 
@@ -112,7 +187,6 @@ The device computes and stores the calibration factor (counts/gram) and applies 
 immediately — no reflash. It's kept in flash and survives reboots (a factory reset
 returns it to the firmware default).
 
----
 
 ## 5. The config page
 
@@ -136,15 +210,13 @@ Sections:
 
 The page follows the Spoolhouse web-app design and your phone's light/dark theme.
 
----
 
 ## 6. Updating the firmware
 
 Three ways, no case-opening needed after the first flash:
 
 ### A. Browser upload (easiest)
-1. Build the firmware (`pio run -e cyd`) — the file is
-   `hardware/.pio/build/cyd/firmware.bin`.
+1. Build the firmware (`pio run -e cyd`) — the file is `hardware/.pio/build/cyd/firmware.bin`.
 2. On the config page → **Firmware update** → choose the `.bin` → **Upload & flash**.
 3. The screen shows progress; the device reboots into the new firmware.
 
@@ -165,7 +237,6 @@ pio run -e cyd -t upload
 If a bad/incompatible image is uploaded, the update fails safely and the device keeps
 running the current firmware (it only reboots on success).
 
----
 
 ## 7. Factory reset
 
@@ -180,8 +251,6 @@ compiled defaults) and reopens the setup portal.
    else (or waiting) cancels — so an accidental hold can't reset the device.
 
 After a reset the scale boots into the WiFi setup portal.
-
----
 
 ## 8. Hardware & wiring
 
@@ -204,7 +273,6 @@ Notes:
 - The PN532's SS must go to a real GPIO (IO5), **not** ground — it wakes on a falling
   SS edge and stays silent if SS is tied low.
 
----
 
 ## 9. Troubleshooting
 
@@ -216,11 +284,10 @@ Notes:
 | Tag shows "Unknown tag" | Not a supported tag (only Bambu Lab is verified), or a transient read — re-seat the spool. |
 | Colours look wrong on the display | The panel runs inverted + a gamma tweak is applied in firmware; if a swatch still looks off, it's the tag's actual (often muted) colour. |
 | Weight is negative or wildly off | Re-calibrate (Section 4). The load-cell polarity sets the sign automatically during calibration. |
-| Screen goes white but the device still responds on WiFi | The ILI9341 has no wired reset line, so a brief power/SPI glitch can blank it while the ESP32 keeps running. Hit **Reset display** on the config page to recover without a reboot (or just power-cycle). The firmware runs the panel at a conservative 40 MHz SPI clock to reduce this; a solid 5 V supply / good cable helps most (the CYD's USB VCC is often marginal). |
+| Screen goes white but the device still responds on WiFi | The ILI9341 has no wired reset line, so a brief power/SPI glitch — most often when the NFC reader energises during a tag read on a marginal 5 V supply — can blank it while the ESP32 keeps running. Hit **Reset display** on the config page to recover without a reboot (or power-cycle). Mitigations in firmware: a conservative 40 MHz TFT clock, and the display repaint is held off while the NFC bus is actively reading so the two don't overlap. A solid 5 V supply / good cable is the real cure (the CYD's USB VCC is often marginal). |
 | Screen shows noise on boot, then whites out and the device drops off WiFi too | A full **brownout** (thin/long USB VCC line) resetting the whole board when WiFi powers up. Use a solid 5 V source / good cable; the serial reset reason `RTCWDT_BROWN_OUT_RESET` confirms it. |
 | Serial port keeps dropping when flashing | Flaky USB **data** lines — use OTA/browser updates instead, or a known-good cable/port. |
 
----
 
 ## 10. Building from source
 
