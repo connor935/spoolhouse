@@ -217,7 +217,7 @@ export function WarehouseDashboard({
                 <TabsList>
                   <TabsTrigger value="stock">
                     <Package className="mr-1 h-3.5 w-3.5" />
-                    Your stock
+                    Your stock {allSpools.length > 0 && `(${allSpools.length})`}
                   </TabsTrigger>
                   {groups.map((g) => (
                     <TabsTrigger key={g.id} value={`group-${g.id}`}>

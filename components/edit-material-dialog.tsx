@@ -29,10 +29,13 @@ export function EditMaterialDialog({
   material,
   open,
   onOpenChange,
+  isAdmin = false,
 }: {
   material: Material;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Admin edits keep the status; a submitter editing a rejected entry resubmits.
+  isAdmin?: boolean;
 }) {
   const router = useRouter();
   const [manufacturer, setManufacturer] = useState(material.manufacturer);
@@ -56,7 +59,7 @@ export function EditMaterialDialog({
         color,
       });
       toast.success(
-        material.status === 'rejected'
+        !isAdmin && material.status === 'rejected'
           ? 'Resubmitted for review'
           : 'Material updated'
       );
@@ -75,9 +78,11 @@ export function EditMaterialDialog({
         <DialogHeader>
           <DialogTitle>Edit material</DialogTitle>
           <DialogDescription>
-            {material.status === 'rejected'
-              ? 'Saving resubmits this material as pending for re-review.'
-              : "Only you can see this until it's approved."}
+            {isAdmin
+              ? 'Edits publish immediately and keep the current status.'
+              : material.status === 'rejected'
+                ? 'Saving resubmits this material as pending for re-review.'
+                : "Only you can see this until it's approved."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

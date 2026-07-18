@@ -21,10 +21,12 @@ export function EditSpoolTypeDialog({
   spoolType,
   open,
   onOpenChange,
+  isAdmin = false,
 }: {
   spoolType: SpoolType;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isAdmin?: boolean;
 }) {
   const router = useRouter();
   const [manufacturer, setManufacturer] = useState(spoolType.manufacturer);
@@ -51,7 +53,7 @@ export function EditSpoolTypeDialog({
         emptyWeightGrams,
       });
       toast.success(
-        spoolType.status === 'rejected'
+        !isAdmin && spoolType.status === 'rejected'
           ? 'Resubmitted for review'
           : 'Spool type updated'
       );
@@ -70,9 +72,11 @@ export function EditSpoolTypeDialog({
         <DialogHeader>
           <DialogTitle>Edit spool type</DialogTitle>
           <DialogDescription>
-            {spoolType.status === 'rejected'
-              ? 'Saving resubmits this spool type as pending for re-review.'
-              : "Only you can see this until it's approved."}
+            {isAdmin
+              ? 'Edits publish immediately and keep the current status.'
+              : spoolType.status === 'rejected'
+                ? 'Saving resubmits this spool type as pending for re-review.'
+                : "Only you can see this until it's approved."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
