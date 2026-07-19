@@ -29,7 +29,7 @@ peripheral on its own dedicated pins. Only the external sensors below need wirin
 |---|---|---|
 | HX711 (5 kg cell) | DT | IO22 |
 | | SCK | IO27 |
-| PN532 (SPI mode) | MOSI | IO23 |
+| CLRC663 (SPI mode) | MOSI | IO23 |
 | | MISO | IO19 |
 | | SCK | IO18 |
 | | SS | IO5 (the former SD-card CS pad) |
@@ -38,12 +38,11 @@ peripheral on its own dedicated pins. Only the external sensors below need wirin
 Notes:
 
 - The **SD-card holder is removed** from this board; its CS pad (IO5) is repurposed as
-  the PN532 chip select. Grounding the PN532's SS does **not** work — the chip wakes on
-  a falling SS edge after power-up and stays silent without one.
-- The PN532 is driven as **software SPI** (bit-banged), which frees the VSPI hardware
-  peripheral for the touchscreen. The Adafruit PN532 driver is also unreliable over ESP32
-  hardware SPI with clone modules, and UID polling doesn't need the speed. A side effect
-  is that a MIFARE auth occasionally fails on first contact, so decoders retry a few times.
+  the CLRC663 chip select. The chip select must go to a real GPIO, **not** ground — SPI
+  register accesses are framed by chip-select edges.
+- The CLRC663 is driven as **software SPI** (bit-banged), which frees the VSPI hardware
+  peripheral for the touchscreen; UID polling doesn't need hardware-SPI speed. A MIFARE
+  auth can still occasionally fail on first contact, so decoders retry a few times.
 - Touch tare uses only press *detection* (no coordinate mapping), so it needs no
   calibration — any touch tares.
 
@@ -68,11 +67,12 @@ independently.
 `nfc_reader.h` defines the `NfcReader` interface: `begin()`, `readUid()`, `chipName()`,
 and — for encrypted vendor tags — `mifareReadBlock()` (re-select + authenticate a sector
 with a 6-byte key + read a block) guarded by `supportsMifareClassic()`. `main.cpp` and the
-spool decoders only talk to this interface. The PN532 implementation is in
-`pn532_reader.{h,cpp}`.
+spool decoders only talk to this interface. The active implementation is the **CLRC663**
+(`clrc663_reader.{h,cpp}`, via the iwanders/MFRC630 library); a PN532 implementation
+(`pn532_reader.{h,cpp}`) is kept as an alternate.
 
-When the **CLRC663** arrives: add `clrc663_reader.{h,cpp}` implementing `NfcReader`, then
-swap the one instance line in `main.cpp` (`NfcReader &nfc = …`). Nothing else changes.
+Swapping readers is the one instance line in `main.cpp` (`NfcReader &nfc = …`).
+Nothing else changes.
 
 ### Spool tag formats — `src/spool/`
 
@@ -93,9 +93,8 @@ The Bambu key derivation is community-reverse-engineered and published for
 interoperability. The Creality format is only partially documented publicly (no reliable
 weight field), so that decoder surfaces manufacturer, material id and colour. OpenTag3D is
 read via the NTAG page path (`readNtagPages` on `NfcReader`); the sibling **OpenPrintTag**
-spec is similar but distinct and is best paired with the incoming **CLRC663** — a future
-decoder in this same interface.
+spec is similar but distinct — a future decoder in this same interface.
 
 Adding a manufacturer: implement `SpoolDecoder` in a new `src/spool/*_decoder.{h,cpp}` and
-register it in `main.cpp`. Swapping in the CLRC663 later is just a new `NfcReader` plus the
-one instance line in `main.cpp`; no decoder changes.
+register it in `main.cpp`. Reader and decoders are independent — swapping the NFC chip
+never touches the decoders, and vice versa.

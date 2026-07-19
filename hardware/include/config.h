@@ -28,8 +28,8 @@ constexpr uint8_t PIN_LED_BLUE = 17;
 
 // ---- Tare input ----
 // Primary: the resistive touchscreen (any touch = tare). The XPT2046 sits on
-// its own pins, wired to the free VSPI peripheral (the PN532 is bit-banged, so
-// VSPI hardware is unused). Press detection needs no calibration.
+// its own pins, wired to the free VSPI peripheral (the CLRC663 is bit-banged,
+// so VSPI hardware is unused). Press detection needs no calibration.
 constexpr uint8_t PIN_TOUCH_SCK = 25;
 constexpr uint8_t PIN_TOUCH_CS = 33;
 constexpr uint8_t PIN_TOUCH_MOSI = 32;

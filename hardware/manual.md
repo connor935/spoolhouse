@@ -252,35 +252,14 @@ compiled defaults) and reopens the setup portal.
 
 After a reset the scale boots into the WiFi setup portal.
 
-## 8. Hardware & wiring
 
-Board: **ESP32-2432S028R "Cheap Yellow Display"** (ILI9341 TFT + XPT2046 touch).
-
-| Peripheral | Signal | ESP32 pin |
-|---|---|---|
-| HX711 load cell (5 kg) | DT | IO22 |
-| | SCK | IO27 |
-| PN532 NFC (SPI mode) | MOSI | IO23 |
-| | MISO | IO19 |
-| | SCK | IO18 |
-| | SS | IO5 (former SD-card CS pad; SD holder removed) |
-| XPT2046 touch (on-board) | CLK / CS / MOSI / MISO / IRQ | IO25 / IO33 / IO32 / IO39 / IO36 |
-
-Notes:
-- The TFT uses the CYD's stock wiring on the **HSPI** peripheral. Touch uses the
-  **VSPI** peripheral. The PN532 is **bit-banged software SPI** on its own pins, and
-  runs on a **separate CPU core** so NFC reads don't stutter the display.
-- The PN532's SS must go to a real GPIO (IO5), **not** ground — it wakes on a falling
-  SS edge and stays silent if SS is tied low.
-
-
-## 9. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
 | `spoolhouse-scale.local` won't load | Use **http://**, not https. If mDNS `.local` doesn't resolve, use the device's IP (shown by your router, or on the serial log as `[wifi] connected: <ip>`). |
 | Setup AP appears unexpectedly | The saved WiFi wasn't reachable. Re-enter it in the portal. |
-| NFC not detected / "NFC reader offline" | Check the PN532 wiring, especially **SS → IO5** (not GND) and MOSI/MISO not swapped. The reader re-initialises every few seconds. |
+| NFC not detected / "NFC reader offline" | Check the CLRC663 wiring, MOSI/MISO not swapped. The reader re-initialises every few seconds. |
 | Tag shows "Unknown tag" | Not a supported tag (only Bambu Lab is verified), or a transient read — re-seat the spool. |
 | Colours look wrong on the display | The panel runs inverted + a gamma tweak is applied in firmware; if a swatch still looks off, it's the tag's actual (often muted) colour. |
 | Weight is negative or wildly off | Re-calibrate (Section 4). The load-cell polarity sets the sign automatically during calibration. |
@@ -289,7 +268,7 @@ Notes:
 | Serial port keeps dropping when flashing | Flaky USB **data** lines — use OTA/browser updates instead, or a known-good cable/port. |
 
 
-## 10. Building from source
+## 9. Building from source
 
 Requires [PlatformIO](https://platformio.org/).
 
