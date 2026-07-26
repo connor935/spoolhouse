@@ -30,6 +30,20 @@ const trustedOrigins = [
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: 'sqlite' }),
   trustedOrigins,
+  user: {
+    additionalFields: {
+      // Custom flag: this user's material/spool-type submissions auto-approve
+      // (see lib/catalog.ts). `input: false` blocks self-assignment at
+      // signup/update — only admins set it via app/actions/users.ts. Declaring
+      // it here carries the (typed) field on the session user, so requireUser()
+      // exposes it without any extra query.
+      trustedContributor: {
+        type: 'boolean',
+        defaultValue: false,
+        input: false,
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     disableSignUp: !signupAllowed,

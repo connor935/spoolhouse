@@ -11,41 +11,26 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
+import { MaterialPropertiesSection } from '@/components/warehouseDashboard/material-properties-section';
 import {
   DEFAULT_MATERIAL_COLOR,
   formatWeight,
   SpoolView,
   type MaterialInventory,
 } from '@/lib/filament';
+import type { MaterialPropertyView } from '@/lib/material-properties';
+import type { Property } from '@/lib/db/schema';
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   inventoryMaterial: MaterialInventory | null;
+  propertyValues: MaterialPropertyView[];
+  propertyDefinitions: Property[];
+  isAdmin: boolean;
   onAddSpool?: (materialId: string) => void;
   onEditSpool: (s: SpoolView) => void;
 };
-
-// Format a temperature range: hides when both null, collapses when min == max.
-function formatRange(
-  min: number | null,
-  max: number | null,
-  unit: string
-): string | null {
-  if (min === null && max === null) return null;
-  if (min !== null && max !== null && min !== max)
-    return `${min}–${max} ${unit}`;
-  return `${min ?? max} ${unit}`;
-}
-
-function formatDiameters(diametersMm: string | null): string | null {
-  if (!diametersMm) return null;
-  const list = diametersMm
-    .split(',')
-    .map((d) => d.trim())
-    .filter(Boolean);
-  return list.length ? `${list.join(', ')} mm` : null;
-}
 
 function DetailRow({
   label,
@@ -66,6 +51,9 @@ export function MaterialDialog({
   open,
   onOpenChange,
   inventoryMaterial,
+  propertyValues,
+  propertyDefinitions,
+  isAdmin,
   onAddSpool,
   onEditSpool,
 }: Props) {
@@ -73,17 +61,6 @@ export function MaterialDialog({
   if (!inventoryMaterial || !material) return null;
 
   const { spools, totalLeftGrams } = inventoryMaterial;
-  const extruder = formatRange(
-    material.extruderTempMinC,
-    material.extruderTempMaxC,
-    '°C'
-  );
-  const bed = formatRange(material.bedTempMinC, material.bedTempMaxC, '°C');
-  const diameters = formatDiameters(material.diametersMm);
-  const density =
-    material.densityGCm3 !== null ? `${material.densityGCm3} g/cm³` : null;
-
-  const hasReferenceData = Boolean(extruder || bed || diameters || density);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -136,11 +113,14 @@ export function MaterialDialog({
               </span>
             }
           />
-          {diameters && <DetailRow label="Diameter" value={diameters} />}
-          {extruder && <DetailRow label="Extruder temp" value={extruder} />}
-          {bed && <DetailRow label="Bed temp" value={bed} />}
-          {density && <DetailRow label="Density" value={density} />}
         </div>
+
+        <MaterialPropertiesSection
+          materialId={material.id}
+          values={propertyValues}
+          definitions={propertyDefinitions}
+          isAdmin={isAdmin}
+        />
 
         <div className="border-border divide-border flex flex-col divide-y">
           <div className="text-md flex items-center justify-between gap-4 py-2 font-semibold">
@@ -180,13 +160,6 @@ export function MaterialDialog({
             </table>
           )}
         </div>
-
-        {!hasReferenceData && (
-          <p className="text-muted-foreground text-xs">
-            No reference data (diameter, temperatures, density) for this
-            material yet.
-          </p>
-        )}
 
         <DialogFooter className="mt-2">
           <Button

@@ -2,6 +2,7 @@
 
 import { materials, spools, type Material } from '@/lib/db/schema';
 import { createCatalogActions } from '@/lib/catalog';
+import { deleteMaterialPropertiesFor } from '@/lib/material-properties';
 import { materialSchema, parseOrThrow } from '@/lib/schemas';
 
 type MaterialInput = {
@@ -25,6 +26,7 @@ const actions = createCatalogActions<Material, MaterialInput>({
   notFoundMessage: 'Material not found',
   notAuthorizedMessage: 'Not authorized to edit this material',
   inUseMessage: 'Material is in use by existing spools',
+  onRemove: deleteMaterialPropertiesFor,
 });
 
 // Materials the current user may attach spools to: all approved ones, plus

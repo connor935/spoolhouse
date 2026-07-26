@@ -20,6 +20,12 @@ export const user = sqliteTable('user', {
   banned: integer('banned', { mode: 'boolean' }).default(false),
   banReason: text('ban_reason'),
   banExpires: integer('ban_expires', { mode: 'timestamp_ms' }),
+  // Custom (non-better-auth) field: the user's catalog submissions auto-approve
+  // like an admin's. Toggled by admins on /admin/users; declared in lib/auth.ts
+  // `user.additionalFields` so it rides on the session user object.
+  trustedContributor: integer('trusted_contributor', {
+    mode: 'boolean',
+  }).default(false),
 });
 
 export const session = sqliteTable(

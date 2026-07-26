@@ -3,10 +3,13 @@ import { getMyGroups } from '@/app/actions/groups';
 import { getActiveLendsForOwner, getMyLends } from '@/app/actions/lends';
 import { getUsableMaterials } from '@/app/actions/materials';
 import { getUnreadCount } from '@/app/actions/notifications';
+import { getPropertyDefinitions } from '@/app/actions/properties';
 import { getUsableSpoolTypes } from '@/app/actions/spool-types';
 import { WarehouseDashboard } from '@/components/warehouseDashboard/warehouse-dashboard';
 import { requireUser } from '@/lib/auth-session';
 import { groupInventory } from '@/lib/filament';
+import { getPropertiesForMaterials } from '@/lib/material-properties';
+import { parseConstraints } from '@/lib/property-filter';
 import { getSharedFilaments } from '@/lib/sharing';
 
 export const dynamic = 'force-dynamic';
@@ -32,6 +35,7 @@ export default async function Page({
     filamentType: str(params.type) || null,
     minLeftGrams: Number.isNaN(minLeftParsed) ? null : minLeftParsed,
     hideLent: str(params.hideLent) === '1',
+    propertyConstraints: parseConstraints(str(params.props)),
   };
   const [
     rows,
@@ -41,6 +45,7 @@ export default async function Page({
     myGroups,
     unreadCount,
     myLends,
+    propertyDefinitions,
   ] = await Promise.all([
     getInventory(),
     getUsableMaterials(),
@@ -49,6 +54,7 @@ export default async function Page({
     getMyGroups(),
     getUnreadCount(),
     getMyLends(),
+    getPropertyDefinitions(),
   ]);
   const groups = await Promise.all(
     myGroups.map(async ({ group }) => ({
@@ -61,6 +67,9 @@ export default async function Page({
     activeLends.map((l) => [l.spoolId, l.borrowerName])
   );
   const inventory = groupInventory(rows, lentToBySpoolId);
+  const propertiesByMaterialId = await getPropertiesForMaterials(
+    inventory.map((m) => m.material.id)
+  );
   return (
     <WarehouseDashboard
       inventory={inventory}
@@ -72,6 +81,8 @@ export default async function Page({
       user={{ id: user.id, name: user.name, isAdmin: user.role === 'admin' }}
       initialTab={initialTab}
       initialFilters={initialFilters}
+      propertiesByMaterialId={propertiesByMaterialId}
+      propertyDefinitions={propertyDefinitions}
     />
   );
 }

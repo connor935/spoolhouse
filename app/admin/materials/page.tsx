@@ -2,13 +2,21 @@ import Link from 'next/link';
 import { MaterialCatalog } from '@/components/material-catalog';
 import { PageShell } from '@/components/page-shell';
 import { getAllMaterialsForAdmin } from '@/app/actions/materials';
+import { getPropertyDefinitions } from '@/app/actions/properties';
 import { requireAdmin } from '@/lib/auth-session';
+import { getPropertiesForMaterials } from '@/lib/material-properties';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminMaterialsPage() {
   const admin = await requireAdmin();
-  const materials = await getAllMaterialsForAdmin();
+  const [materials, propertyDefinitions] = await Promise.all([
+    getAllMaterialsForAdmin(),
+    getPropertyDefinitions(),
+  ]);
+  const propertiesByMaterialId = await getPropertiesForMaterials(
+    materials.map((m) => m.id)
+  );
 
   return (
     <PageShell
@@ -25,7 +33,13 @@ export default async function AdminMaterialsPage() {
         </>
       }
     >
-      <MaterialCatalog materials={materials} currentUserId={admin.id} isAdmin />
+      <MaterialCatalog
+        materials={materials}
+        currentUserId={admin.id}
+        isAdmin
+        propertiesByMaterialId={propertiesByMaterialId}
+        propertyDefinitions={propertyDefinitions}
+      />
     </PageShell>
   );
 }

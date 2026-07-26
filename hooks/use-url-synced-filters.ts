@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { serializeConstraints } from '@/lib/property-filter';
 import type { InventoryFilters } from '@/components/inventory-filter';
 
 // Mirrors the dashboard's tab + filter state into the URL (replaceState: no
@@ -16,6 +17,8 @@ export function useUrlSyncedFilters(tab: string, filters: InventoryFilters) {
     if (filters.minLeftGrams !== null)
       params.set('minLeft', String(filters.minLeftGrams));
     if (filters.hideLent) params.set('hideLent', '1');
+    const props = serializeConstraints(filters.propertyConstraints);
+    if (props) params.set('props', props);
     const qs = params.toString();
     window.history.replaceState(null, '', qs ? `/?${qs}` : '/');
   }, [tab, filters]);

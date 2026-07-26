@@ -3,24 +3,29 @@
 import { Badge } from '@/components/ui/badge';
 import { CatalogRow } from '@/components/catalog-row';
 import { EditMaterialDialog } from '@/components/edit-material-dialog';
+import { MaterialPropertiesSection } from '@/components/warehouseDashboard/material-properties-section';
 import {
   approveMaterial,
   deleteMaterial,
   rejectMaterial,
   type MaterialWithUsage,
 } from '@/app/actions/materials';
-import type { Material } from '@/lib/db/schema';
+import type { Material, Property } from '@/lib/db/schema';
+import type { MaterialPropertyView } from '@/lib/material-properties';
 import { DEFAULT_MATERIAL_COLOR } from '@/lib/filament';
 
 export function MaterialCatalogRow({
   material,
   currentUserId,
   isAdmin = false,
+  properties,
+  definitions,
 }: {
   material: Material | MaterialWithUsage;
   currentUserId: string;
-  // Admin rows get edit-any + approve/reject (pending) + delete.
   isAdmin?: boolean;
+  properties: MaterialPropertyView[];
+  definitions: Property[];
 }) {
   const spoolCount = 'spoolCount' in material ? material.spoolCount : 0;
 
@@ -54,6 +59,14 @@ export function MaterialCatalogRow({
           onOpenChange={onOpenChange}
         />
       )}
+      details={
+        <MaterialPropertiesSection
+          materialId={material.id}
+          values={properties}
+          definitions={definitions}
+          isAdmin={isAdmin}
+        />
+      }
     />
   );
 }

@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import {
   integer,
-  real,
   sqliteTable,
   text,
   unique,
@@ -66,14 +65,8 @@ export const materials = sqliteTable('materials', {
   // Stable identity for entries seeded from SpoolmanDB (import idempotence).
   // NULL for user/admin-created entries. See scripts/import-spoolmandb.ts.
   externalKey: text('external_key').unique(),
-  // Extra reference data seeded from SpoolmanDB (data-only for now, no UI yet).
-  // All nullable; on re-import backfilled only where NULL (never overwritten).
-  densityGCm3: real('density_g_cm3'),
-  diametersMm: text('diameters_mm'), // comma-joined, e.g. "1.75" or "1.75,2.85"
-  extruderTempMinC: integer('extruder_temp_min_c'),
-  extruderTempMaxC: integer('extruder_temp_max_c'),
-  bedTempMinC: integer('bed_temp_min_c'),
-  bedTempMaxC: integer('bed_temp_max_c'),
+  // Datasheet reference data (density, diameters, temps, and anything added
+  // later) lives in the generic material_properties table below, not here.
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -81,6 +74,58 @@ export const materials = sqliteTable('materials', {
     .notNull()
     .default(sql`(unixepoch())`),
 });
+
+// Admin-curated property definitions (small stable vocabulary, no review
+// flow). `key` is a stable machine identifier ('density', 'extruder_temp', …)
+// used by migrations and the SpoolmanDB importer — set at creation, never
+// edited afterwards.
+export const properties = sqliteTable('properties', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  key: text('key').notNull().unique(),
+  name: text('name').notNull(), // display label, e.g. "Tensile strength"
+  unit: text('unit'), // e.g. "MPa", "°C"; NULL for unitless
+  description: text('description'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+
+// Wiki-style datasheet values: material × property → free-text value (unit
+// lives on the definition). Any logged-in user may add/edit; a non-admin
+// edit resets `verified` until an admin verifies it. Import/migration-seeded
+// rows are verified with submittedById NULL.
+export const materialProperties = sqliteTable(
+  'material_properties',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    materialId: text('material_id')
+      .notNull()
+      .references(() => materials.id, { onDelete: 'cascade' }),
+    propertyId: text('property_id')
+      .notNull()
+      .references(() => properties.id, { onDelete: 'cascade' }),
+    value: text('value').notNull(),
+    verified: integer('verified', { mode: 'boolean' }).notNull().default(false),
+    // Who last set the value; NULL for seeded rows or deleted users.
+    submittedById: text('submitted_by_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [unique().on(t.materialId, t.propertyId)]
+);
 
 // A physical spool of a material. DB table name stays "filaments" (SQLite
 // table renames fight drizzle-kit's interactive prompts); TS calls it spools.
@@ -139,6 +184,10 @@ export type Material = typeof materials.$inferSelect;
 export type NewMaterial = typeof materials.$inferInsert;
 export type SpoolType = typeof spoolTypes.$inferSelect;
 export type NewSpoolType = typeof spoolTypes.$inferInsert;
+export type Property = typeof properties.$inferSelect;
+export type NewProperty = typeof properties.$inferInsert;
+export type MaterialProperty = typeof materialProperties.$inferSelect;
+export type NewMaterialProperty = typeof materialProperties.$inferInsert;
 
 // Invite-only groups of nearby users that pool their (selectively) shared
 // spools into a browsable group stock — see .claude/epic-4.md.

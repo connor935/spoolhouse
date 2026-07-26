@@ -71,6 +71,27 @@
       "when": 1784221007614,
       "tag": "0009_unique_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1784986790045,
+      "tag": "0010_hesitant_silverclaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1784986833132,
+      "tag": "0011_seed_material_properties",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1784986905878,
+      "tag": "0012_nosy_otto_octavius",
+      "breakpoints": true
     }
   ]
 }

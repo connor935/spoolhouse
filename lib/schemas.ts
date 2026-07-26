@@ -61,6 +61,36 @@ export const spoolBodySchema = z.object({
 // one field.
 export const measuredWeightSchema = weightGrams('measuredTotalWeightGrams', 0);
 
+const optionalTrimmed = z
+  .string()
+  .nullish()
+  .transform((v) => (v && v.trim() ? v.trim() : null));
+
+// Admin-managed property definitions. `key` is the immutable machine slug
+// (only settable at creation — updatePropertyDefinition never touches it).
+export const propertyDefinitionSchema = z.object({
+  key: z
+    .string()
+    .trim()
+    .min(1, 'Key is required')
+    .regex(/^[a-z0-9_]+$/, 'Key must be a lowercase slug (a–z, 0–9, _)'),
+  name: trimmedNonEmpty('Name is required'),
+  unit: optionalTrimmed,
+  description: optionalTrimmed,
+});
+
+// The editable fields of a definition (everything but the immutable key).
+export const propertyDefinitionEditSchema = propertyDefinitionSchema.omit({
+  key: true,
+});
+
+// Wiki-style value set on a material.
+export const materialPropertyValueSchema = z.object({
+  materialId: idString('materialId'),
+  propertyId: idString('propertyId'),
+  value: z.string().trim().min(1, 'Value is required').max(200),
+});
+
 // Maps the first Zod issue to the app's `{code, message}` REST error shape.
 export function firstIssueMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? 'Invalid input';

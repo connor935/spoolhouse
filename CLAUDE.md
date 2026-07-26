@@ -94,7 +94,7 @@ in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-page
 |---|---|
 | `lib/filament.ts` | Domain logic: gram math, thresholds, `SpoolView`, `MaterialInventory`, `toSpoolView`, `groupInventory`, `formatWeight`, `materialLabel`, `spoolTypeLabel`, `FILAMENT_TYPES` |
 | `app/actions/spool-types.ts` / `app/actions/materials.ts` | Catalog actions (usable/catalog queries, request, admin approve/reject) — same pattern for both |
-| `lib/db/schema.ts` | Drizzle tables (`materials`, `spools` [DB: "filaments"], `spoolTypes`, `groups`, `groupMembers`, `filamentShareOverrides` [material-level], `lends`, `notifications`) + inferred types (re-exports auth schema) |
+| `lib/db/schema.ts` | Drizzle tables (`materials`, `spools` [DB: "filaments"], `spoolTypes`, `properties` + `materialProperties` [datasheet values], `groups`, `groupMembers`, `filamentShareOverrides` [material-level], `lends`, `notifications`) + inferred types (re-exports auth schema) |
 | `components/page-shell.tsx` | Shared sub-page layout (width, back-link, title, bell) — use on every sub-page |
 | `lib/notifications.ts` / `app/actions/notifications.ts` | Notification writer helper / read actions (`getUnreadCount`, `getNotifications`, `markAllRead`) |
 | `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
@@ -124,7 +124,8 @@ in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-page
 - Remaining filament: `filamentLeftGrams = measuredTotalWeightGrams − spoolType.emptyWeightGrams` (clamped ≥ 0)
 - Re-weigh (`setMeasuredWeight`) is allowed for the **owner and the current borrower** (active lend) — the borrower re-weighs from the Borrows tab ("Borrowed by you" section)
 - **Empty** when `filamentLeftGrams ≤ 5`; **Low** when `percentLeft ≤ 15%`
-- **Materials & spool types** are both global catalogs with `status` `approved | pending | rejected` and identical request→review workflows (`requestMaterial`/`requestSpoolType`): a pending entry is **immediately usable by its submitter**, visible to others only after approval; rejection never breaks existing references. Usable-rules: `assertMaterialUsable`/`assertSpoolTypeUsable` + `getUsableMaterials`/`getUsableSpoolTypes`.
+- **Materials & spool types** are both global catalogs with `status` `approved | pending | rejected` and identical request→review workflows (`requestMaterial`/`requestSpoolType`): a pending entry is **immediately usable by its submitter**, visible to others only after approval; rejection never breaks existing references. Usable-rules: `assertMaterialUsable`/`assertSpoolTypeUsable` + `getUsableMaterials`/`getUsableSpoolTypes`. **Auto-approve** applies to admins AND **trusted contributors** (a `user.trustedContributor` flag toggled by admins on `/admin/users`, declared as a better-auth `additionalFields` in `lib/auth.ts` so it rides the session user; the auto-approve check lives once in `lib/catalog.ts` `request()`).
+- **Material properties** (`properties` = admin-curated definitions with an immutable machine `key` + name/unit/description; `materialProperties` = value rows, unique per material×property): datasheet data (density, diameters, temps — migrated out of the old `materials` extra columns — plus tensile strength, hardness, etc.). **Definitions are admin-only** (managed on `/admin/properties`, `components/property-admin-list.tsx`, no review flow). **Values are wiki-style**: any logged-in user sets/edits a value via `setMaterialProperty` (effective immediately), which records `submittedById` and sets `verified` = the editor is admin; non-admin edits show an "unverified" badge until an admin `verifyMaterialProperty`s them; delete is admin-only. Actions in `app/actions/properties.ts`; read helper `getPropertiesForMaterials` (`lib/material-properties.ts`) feeds both the dashboard material dialog (`material-properties-section.tsx`) and the REST API. The delete-a-material path clears value rows via the catalog factory's `onRemove` hook (FK cascade is inert at runtime — see below).
 - **Catalog UI is one generalized component** per catalog (`components/material-catalog.tsx` / `spool-type-catalog.tsx`): a searchable, manufacturer-grouped, capped (150 rows) list. `/materials` + `/spool-types` render it read-only (own pending/rejected editable); `/admin/materials` + `/admin/spool-types` render the **same** component with `isAdmin` — adds a status filter + "Review pending" shortcut and inline Approve/Reject/Delete + edit-any on each row (`material-catalog-row.tsx` / `spool-type-catalog-row.tsx`). All admin actions are server-enforced (`requireAdmin`), so the inline controls are pure UX. Admin pages fetch `getAllMaterialsForAdmin`/`getAllSpoolTypesForAdmin` (all rows + `spoolCount` for the delete guard).
 - **Spools** (DB table still named `filaments`, TS export `spools` — deliberate, avoids SQLite rename migrations): a physical spool references `materialId` + `spoolTypeId` + weights. The dashboard groups spools by material (`groupInventory`); adding another spool of the same material is one click on the material card.
 - **Sharing is material-level**: a member's whitelist/blacklist overrides reference material ids (all their spools of it, incl. future ones). Lending stays per physical spool. Group stock is grouped by material across owners.
@@ -184,8 +185,12 @@ per manufacturer), NOT the compiled 50k-row output, and dedupes hard:
 - **Colors** dedupe by normalized name within a line (not exact hex — the same
   named color drifts a few hex points between lines; first swatch kept).
 - One material per (line, color); the empty-spool weights become spool types.
-- **Extra data** (density, diameters, extruder/bed temps) is stored on
-  `materials` **data-only for now — no UI yet** (surface it later, step by step).
+- **Datasheet data** (density, diameters, extruder/bed temps) is seeded into the
+  generic `material_properties` table as **verified** values (`submittedById` NULL),
+  formatted the way the UI displays them (en-dash ranges, comma-space diameter lists).
+  The four property definitions (`density`/`diameter`/`extruder_temp`/`bed_temp`) must
+  already exist (migration `0011`); the importer aborts if they're missing. Seeding is
+  **insert-only per material×property pair** — re-crawls never clobber a user/admin edit.
 
 **Insert-only / idempotent** via a unique `externalKey` on both tables
 (`spoolmandb:<mfr>:<line>:<color>` and `…:spool:<type>:<weight>`): a re-run skips

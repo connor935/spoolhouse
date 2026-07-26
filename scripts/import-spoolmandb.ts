@@ -12,9 +12,12 @@
 //
 // INSERT-ONLY / idempotent: re-running never overwrites or deletes existing
 // rows. Rows carry a stable `externalKey`; a re-import skips known keys,
-// "claims" matching manual rows (sets only externalKey + backfills NULL extra
-// columns), or inserts new approved rows. The extra SpoolmanDB data (density,
-// diameters, temps) is stored on materials data-only for now (no UI yet).
+// "claims" matching manual rows (sets only externalKey), or inserts new
+// approved rows. The extra SpoolmanDB data (density, diameters, temps) is
+// seeded into the generic `material_properties` table as verified values —
+// insert-only (a missing material×property pair), so re-crawls never clobber
+// a user's or admin's edits. Its four property definitions must already exist
+// (seeded by migration 0011); the script aborts if they're missing.
 //
 // Known limitation: if upstream RENAMES a product/color its externalKey
 // changes, so the old row lingers and a new row inserts. Delete the stale one
@@ -23,10 +26,16 @@
 // Run under Node 24 (better-sqlite3 native module): the npm script uses tsx;
 // invoke via `fnm exec --using=v24.18.0 npm run db:import -- ...` if your shell
 // defaults to another Node.
-import { and, eq, isNull } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '../lib/db';
-import { materials, spoolTypes } from '../lib/db/schema';
+import { materialProperties, materials, properties, spoolTypes } from '../lib/db/schema';
 import { FILAMENT_TYPES } from '../lib/filament';
+
+// Property definition keys the importer seeds (must match migration 0011).
+const PROPERTY_KEYS = ['density', 'diameter', 'extruder_temp', 'bed_temp'] as const;
+type PropertyKey = (typeof PROPERTY_KEYS)[number];
+// Formatted, unit-less values keyed by property (unit lives on the definition).
+type ExtraProps = Partial<Record<PropertyKey, string>>;
 
 const RAW_BASE =
   'https://raw.githubusercontent.com/Icezaza2543/SpoolmanDB-Community/main/filaments';
@@ -161,12 +170,7 @@ type MaterialCandidate = {
   filamentType: string;
   color: string; // "#rrggbb"
   hex: string; // normalized, no "#", for claim matching
-  densityGCm3: number | null;
-  diametersMm: string | null;
-  extruderTempMinC: number | null;
-  extruderTempMaxC: number | null;
-  bedTempMinC: number | null;
-  bedTempMaxC: number | null;
+  props: ExtraProps;
 };
 
 type SpoolTypeCandidate = {
@@ -176,27 +180,29 @@ type SpoolTypeCandidate = {
   emptyWeightGrams: number;
 };
 
-type ExtraData = Pick<
-  MaterialCandidate,
-  | 'densityGCm3'
-  | 'diametersMm'
-  | 'extruderTempMinC'
-  | 'extruderTempMaxC'
-  | 'bedTempMinC'
-  | 'bedTempMaxC'
->;
+// Collapse a temp range/scalar to the same unit-less string form the migration
+// produced: single number when min==max or only one bound; en-dash range
+// otherwise (e.g. "190–220").
+function formatTemp(
+  range: [number, number] | undefined,
+  scalar: number | undefined
+): string | undefined {
+  if (range) {
+    const [min, max] = range;
+    return min === max ? String(min) : `${min}–${max}`;
+  }
+  return typeof scalar === 'number' ? String(scalar) : undefined;
+}
 
-function extractExtra(p: SourceProduct): ExtraData {
-  const ex = p.extruder_temp_range;
-  const bed = p.bed_temp_range;
-  return {
-    densityGCm3: typeof p.density === 'number' ? p.density : null,
-    diametersMm: p.diameters?.length ? p.diameters.map(String).join(',') : null,
-    extruderTempMinC: ex ? ex[0] : (p.extruder_temp ?? null),
-    extruderTempMaxC: ex ? ex[1] : (p.extruder_temp ?? null),
-    bedTempMinC: bed ? bed[0] : (p.bed_temp ?? null),
-    bedTempMaxC: bed ? bed[1] : (p.bed_temp ?? null),
-  };
+function extractExtra(p: SourceProduct): ExtraProps {
+  const out: ExtraProps = {};
+  if (typeof p.density === 'number') out.density = String(p.density);
+  if (p.diameters?.length) out.diameter = p.diameters.map(String).join(', ');
+  const ext = formatTemp(p.extruder_temp_range, p.extruder_temp);
+  if (ext !== undefined) out.extruder_temp = ext;
+  const bed = formatTemp(p.bed_temp_range, p.bed_temp);
+  if (bed !== undefined) out.bed_temp = bed;
+  return out;
 }
 
 function buildCandidates(
@@ -233,18 +239,18 @@ function buildCandidates(
     // (not exact hex — the same named color drifts a few hex points between
     // a manufacturer's product lines; that's redundancy, not a real variant).
     // First occurrence wins its hex (kept only as a swatch).
-    const byColor = new Map<string, { color: SourceColor; hex: string; extra: ExtraData }>();
+    const byColor = new Map<string, { color: SourceColor; hex: string; props: ExtraProps }>();
     for (const p of line.members) {
-      const extra = extractExtra(p);
+      const props = extractExtra(p);
       for (const c of p.colors ?? []) {
         const hex = normalizeHex(c);
         if (!hex) continue;
         const slug = normName(c.name).replace(/\s+/g, '-');
         if (!slug || byColor.has(slug)) continue;
-        byColor.set(slug, { color: c, hex, extra });
+        byColor.set(slug, { color: c, hex, props });
       }
     }
-    for (const [slug, { color, hex, extra }] of byColor) {
+    for (const [slug, { color, hex, props }] of byColor) {
       const externalKey = `spoolmandb:${mfrSlug}:${line.lineKey}:${slug}`;
       if (seenMatKey.has(externalKey)) continue;
       seenMatKey.add(externalKey);
@@ -256,7 +262,7 @@ function buildCandidates(
         filamentType: line.type,
         color: `#${hex}`,
         hex,
-        ...extra,
+        props,
       });
     }
   }
@@ -284,23 +290,54 @@ function buildCandidates(
   return { mats, spools };
 }
 
-// --- DB upsert (insert-only + claim + NULL-backfill) ---
+// --- DB upsert (insert-only + claim; datasheet values seeded separately) ---
 
-// Build an update object of only the extra columns that are NULL on `row` and
-// present on the candidate — never overwrites an existing value.
-function nullBackfill<T extends Record<string, unknown>>(
-  row: Record<string, unknown>,
-  extra: T
-): Partial<T> {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(extra)) {
-    if (v !== null && v !== undefined && (row[k] === null || row[k] === undefined))
-      out[k] = v;
+// Property seeding context, loaded once in main() and threaded through.
+type PropContext = {
+  // property key -> property definition id
+  idByKey: Map<string, string>;
+  // "materialId:propertyId" pairs that already exist (insert-only guard)
+  existingPairs: Set<string>;
+};
+
+// Insert-only seed of a material's datasheet values: a (material, property)
+// pair is written once and never touched again, so re-crawls preserve any
+// user/admin edits. Returns how many value rows were seeded. `materialId` is
+// null in dry-run inserts (the material was never written) — then it just
+// counts the values that would be seeded.
+async function seedProps(
+  materialId: string | null,
+  props: ExtraProps,
+  ctx: PropContext,
+  dryRun: boolean
+): Promise<number> {
+  let seeded = 0;
+  for (const key of PROPERTY_KEYS) {
+    const value = props[key];
+    if (value === undefined) continue;
+    const propertyId = ctx.idByKey.get(key);
+    if (!propertyId) continue;
+    if (materialId === null) {
+      seeded++; // dry-run insert: no id yet, just count
+      continue;
+    }
+    const pair = `${materialId}:${propertyId}`;
+    if (ctx.existingPairs.has(pair)) continue;
+    ctx.existingPairs.add(pair);
+    seeded++;
+    if (!dryRun)
+      await db
+        .insert(materialProperties)
+        .values({ materialId, propertyId, value, verified: true });
   }
-  return out as Partial<T>;
+  return seeded;
 }
 
-async function upsertMaterials(cands: MaterialCandidate[], dryRun: boolean) {
+async function upsertMaterials(
+  cands: MaterialCandidate[],
+  ctx: PropContext,
+  dryRun: boolean
+) {
   const existing = await db.select().from(materials);
   const byKey = new Map<string, (typeof existing)[number]>();
   const claimable: typeof existing = [];
@@ -312,26 +349,14 @@ async function upsertMaterials(cands: MaterialCandidate[], dryRun: boolean) {
   let inserted = 0,
     claimed = 0,
     skipped = 0,
-    enriched = 0;
+    enriched = 0; // datasheet value rows seeded
 
   for (const c of cands) {
-    const extra: ExtraData = {
-      densityGCm3: c.densityGCm3,
-      diametersMm: c.diametersMm,
-      extruderTempMinC: c.extruderTempMinC,
-      extruderTempMaxC: c.extruderTempMaxC,
-      bedTempMinC: c.bedTempMinC,
-      bedTempMaxC: c.bedTempMaxC,
-    };
-
     const known = byKey.get(c.externalKey);
     if (known) {
-      const patch = nullBackfill(known, extra);
-      if (Object.keys(patch).length > 0) {
-        enriched++;
-        if (!dryRun)
-          await db.update(materials).set(patch).where(eq(materials.id, known.id));
-      }
+      // known.id is a real id only for pre-existing rows; within-run dup
+      // placeholders have no id and get no property seeding.
+      if (known.id) enriched += await seedProps(known.id, c.props, ctx, dryRun);
       skipped++;
       continue;
     }
@@ -350,21 +375,30 @@ async function upsertMaterials(cands: MaterialCandidate[], dryRun: boolean) {
     if (match) {
       usedClaim.add(match.id);
       claimed++;
-      const patch = { externalKey: c.externalKey, ...nullBackfill(match, extra) };
       if (!dryRun)
-        await db.update(materials).set(patch).where(eq(materials.id, match.id));
+        await db
+          .update(materials)
+          .set({ externalKey: c.externalKey })
+          .where(eq(materials.id, match.id));
+      enriched += await seedProps(match.id, c.props, ctx, dryRun);
     } else {
       inserted++;
-      if (!dryRun)
-        await db.insert(materials).values({
-          manufacturer: c.manufacturer,
-          name: c.name,
-          filamentType: c.filamentType,
-          color: c.color,
-          status: 'approved',
-          externalKey: c.externalKey,
-          ...extra,
-        });
+      if (!dryRun) {
+        const [row] = await db
+          .insert(materials)
+          .values({
+            manufacturer: c.manufacturer,
+            name: c.name,
+            filamentType: c.filamentType,
+            color: c.color,
+            status: 'approved',
+            externalKey: c.externalKey,
+          })
+          .returning({ id: materials.id });
+        enriched += await seedProps(row.id, c.props, ctx, dryRun);
+      } else {
+        enriched += await seedProps(null, c.props, ctx, dryRun);
+      }
     }
     byKey.set(c.externalKey, {} as (typeof existing)[number]); // avoid dup within run
   }
@@ -468,6 +502,31 @@ async function main() {
       `  type filter:   ${typeFilter ? [...typeFilter].join(', ') : '(all)'}\n`
   );
 
+  // Property-seeding context: definitions must exist (migration 0011) and we
+  // prefetch existing material×property pairs once for the insert-only guard.
+  const defs = await db
+    .select({ id: properties.id, key: properties.key })
+    .from(properties);
+  const idByKey = new Map(defs.map((d) => [d.key, d.id]));
+  const missing = PROPERTY_KEYS.filter((k) => !idByKey.has(k));
+  if (missing.length) {
+    console.error(
+      `✗ Missing property definitions: ${missing.join(', ')}. ` +
+        `Run the app once so migrations apply, then re-run the import.`
+    );
+    process.exit(1);
+  }
+  const existingPairs = new Set<string>();
+  for (const mp of await db
+    .select({
+      materialId: materialProperties.materialId,
+      propertyId: materialProperties.propertyId,
+    })
+    .from(materialProperties)) {
+    existingPairs.add(`${mp.materialId}:${mp.propertyId}`);
+  }
+  const propCtx: PropContext = { idByKey, existingPairs };
+
   const totals = { mInserted: 0, mClaimed: 0, mSkipped: 0, mEnriched: 0, sInserted: 0, sClaimed: 0, sSkipped: 0 };
 
   for (const slug of manufacturers) {
@@ -496,11 +555,11 @@ async function main() {
       if (stSample.length) console.log(`  spool types e.g. ${stSample.join(' · ')}`);
     }
 
-    const m = await upsertMaterials(mats, dryRun);
+    const m = await upsertMaterials(mats, propCtx, dryRun);
     const s = await upsertSpoolTypes(spools, dryRun);
     console.log(
       `✓ ${file.manufacturer}: materials ${m.inserted} inserted / ${m.claimed} claimed / ${m.skipped} skipped` +
-        (m.enriched ? ` (${m.enriched} enriched)` : '') +
+        (m.enriched ? ` (${m.enriched} property values seeded)` : '') +
         ` · spool types ${s.inserted} inserted / ${s.claimed} claimed / ${s.skipped} skipped`
     );
     totals.mInserted += m.inserted;
@@ -514,7 +573,7 @@ async function main() {
 
   console.log(
     `\nTotal: materials +${totals.mInserted} inserted, ${totals.mClaimed} claimed, ${totals.mSkipped} skipped` +
-      (totals.mEnriched ? ` (${totals.mEnriched} enriched)` : '') +
+      (totals.mEnriched ? ` (${totals.mEnriched} property values seeded)` : '') +
       `\n       spool types +${totals.sInserted} inserted, ${totals.sClaimed} claimed, ${totals.sSkipped} skipped` +
       (dryRun ? '\n(dry run — nothing written)' : '')
   );

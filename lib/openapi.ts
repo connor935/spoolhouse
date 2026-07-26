@@ -347,8 +347,31 @@ export const openApiSpec = {
           filamentType: { type: 'string', enum: FILAMENT_TYPES },
           color: { type: 'string', nullable: true, example: '#BB3D43' },
           status: { type: 'string', enum: ['approved', 'pending'] },
+          properties: {
+            type: 'array',
+            description:
+              'Read-only datasheet values (density, temps, tensile strength, …). `verified` is false for community-entered values not yet reviewed by an admin.',
+            items: {
+              type: 'object',
+              properties: {
+                key: { type: 'string', example: 'density' },
+                name: { type: 'string', example: 'Density' },
+                unit: { type: 'string', nullable: true, example: 'g/cm³' },
+                value: { type: 'string', example: '1.24' },
+                verified: { type: 'boolean' },
+              },
+              required: ['key', 'name', 'unit', 'value', 'verified'],
+            },
+          },
         },
-        required: ['id', 'manufacturer', 'name', 'filamentType', 'status'],
+        required: [
+          'id',
+          'manufacturer',
+          'name',
+          'filamentType',
+          'status',
+          'properties',
+        ],
       },
       SpoolType: {
         type: 'object',

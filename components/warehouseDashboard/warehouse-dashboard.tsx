@@ -9,6 +9,7 @@ import { BorrowsDialog } from '@/components/warehouseDashboard/borrows-dialog';
 import { GroupStock } from '@/components/group-stock';
 import {
   InventoryFilter,
+  InventoryFilterPanel,
   filtersActive,
   type InventoryFilters,
 } from '@/components/inventory-filter';
@@ -18,7 +19,8 @@ import { useUrlSyncedFilters } from '@/hooks/use-url-synced-filters';
 import { filterGroupStock, visibleMaterialEntries } from '@/lib/inventory-filter';
 import type { MaterialInventory, SpoolView } from '@/lib/filament';
 import type { MyLend } from '@/app/actions/lends';
-import type { Material, SpoolType } from '@/lib/db/schema';
+import type { Material, Property, SpoolType } from '@/lib/db/schema';
+import type { MaterialPropertyView } from '@/lib/material-properties';
 import type { SharedSpool } from '@/lib/sharing';
 import Link from 'next/link';
 import { AppHeader } from '../app-header';
@@ -40,6 +42,8 @@ export function WarehouseDashboard({
   user,
   initialTab,
   initialFilters,
+  propertiesByMaterialId,
+  propertyDefinitions,
 }: {
   inventory: MaterialInventory[];
   usableMaterials: Material[];
@@ -50,6 +54,8 @@ export function WarehouseDashboard({
   user: { id: string; name: string; isAdmin: boolean };
   initialTab: string;
   initialFilters: InventoryFilters;
+  propertiesByMaterialId: Record<string, MaterialPropertyView[]>;
+  propertyDefinitions: Property[];
 }) {
   const validTabs = new Set<string>([
     'stock',
@@ -59,10 +65,13 @@ export function WarehouseDashboard({
     validTabs.has(initialTab) ? (initialTab as Tab) : 'stock'
   );
   const [filters, setFilters] = useState<InventoryFilters>(initialFilters);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [borrowsOpen, setBorrowsOpen] = useState(false);
   const [openMaterialDialog, setOpenMaterialDialog] = useState(false);
-  const [dialogMaterial, setDialogMaterial] =
-    useState<MaterialInventory | null>(null);
+  // Store the id, not the object: after router.refresh() the inventory array
+  // is rebuilt, so deriving the material (and its properties) from the fresh
+  // data keeps an open dialog in sync with just-saved property edits.
+  const [dialogMaterialId, setDialogMaterialId] = useState<string | null>(null);
 
   useUrlSyncedFilters(tab, filters);
   const [formOpen, setFormOpen] = useState(false);
@@ -92,15 +101,15 @@ export function WarehouseDashboard({
   // Which spools are visible in "Your stock" (per material), combined with the
   // status selector + search/filter bar (Epic 5)
   const visibleByMaterial = useMemo(
-    () => visibleMaterialEntries(inventory, filters),
-    [inventory, filters]
+    () => visibleMaterialEntries(inventory, filters, propertiesByMaterialId),
+    [inventory, filters, propertiesByMaterialId]
   );
 
   // Group stock filtered by the same bar (+ hide-lent)
   const filteredGroupStock = useMemo(() => {
     if (!activeGroup) return [];
-    return filterGroupStock(activeGroup.stock, filters);
-  }, [activeGroup, filters]);
+    return filterGroupStock(activeGroup.stock, filters, propertiesByMaterialId);
+  }, [activeGroup, filters, propertiesByMaterialId]);
 
   function openCreate(materialId: string | null = null) {
     setEditingSpool(null);
@@ -117,9 +126,14 @@ export function WarehouseDashboard({
   }
 
   function openMaterialDetails(m: MaterialInventory) {
-    setDialogMaterial(m);
+    setDialogMaterialId(m.material.id);
     setOpenMaterialDialog(true);
   }
+
+  // Derived from the current inventory so it reflects fresh data after a
+  // router.refresh() (e.g. a just-saved property value).
+  const dialogMaterial =
+    inventory.find((m) => m.material.id === dialogMaterialId) ?? null;
 
   // Borrows + Add spool. Rendered twice: pinned to the tabs row on desktop
   // (`full={false}`, natural width) and as a full-width row under the filter on
@@ -154,6 +168,21 @@ export function WarehouseDashboard({
     </>
   );
 
+  const filterPanel = (
+    <InventoryFilterPanel
+      value={filters}
+      onChange={setFilters}
+      showStatus={activeGroup === null}
+      showHideLent={activeGroup !== null}
+      statusCounts={{
+        inStock: inStock.length,
+        empty: empty.length,
+        all: allSpools.length,
+      }}
+      propertyDefinitions={propertyDefinitions}
+    />
+  );
+
   return (
     <div className="min-h-screen">
       <AppHeader user={user} unreadCount={unreadCount} />
@@ -183,21 +212,16 @@ export function WarehouseDashboard({
           </div>
         )}
 
-        <div className="flex w-full flex-col items-center gap-4 md:flex-row">
+        <div className="flex w-full flex-col items-center gap-4 md:flex-row md:items-start">
           <InventoryFilter
             value={filters}
             onChange={setFilters}
-            showStatus={activeGroup === null}
-            showHideLent={activeGroup !== null}
-            statusCounts={{
-              inStock: inStock.length,
-              empty: empty.length,
-              all: allSpools.length,
-            }}
+            filtersOpen={filtersOpen}
+            onToggleFilters={() => setFiltersOpen((o) => !o)}
           />
-          {/* Mobile: actions in one row under the filter. On desktop with groups
-              they live in the tabs row (hidden here); without groups they sit
-              inline beside the filter. */}
+          {/* Mobile: actions in one row under the filter. On desktop with
+              groups they live in the tabs row (hidden here); without groups
+              they sit inline beside the filter. */}
           <div
             className={cn(
               'flex gap-2',
@@ -207,6 +231,9 @@ export function WarehouseDashboard({
             {renderActions(true)}
           </div>
         </div>
+
+        {/* Advanced filters drop in below the bar on every device. */}
+        {filtersOpen && filterPanel}
 
         {activeGroup ? (
           <section className="flex flex-col gap-4">
@@ -292,6 +319,11 @@ export function WarehouseDashboard({
         open={openMaterialDialog}
         onOpenChange={setOpenMaterialDialog}
         inventoryMaterial={dialogMaterial}
+        propertyValues={
+          dialogMaterialId ? (propertiesByMaterialId[dialogMaterialId] ?? []) : []
+        }
+        propertyDefinitions={propertyDefinitions}
+        isAdmin={user.isAdmin}
         onAddSpool={openCreate}
         onEditSpool={openEdit}
       />

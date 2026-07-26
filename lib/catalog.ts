@@ -30,14 +30,13 @@ type CatalogConfig<TInput> = {
     createdAt: SQLiteColumn;
     updatedAt: SQLiteColumn;
   };
-  // The `spools` column referencing this catalog's rows (materialId / spoolTypeId).
   spoolFkColumn: SQLiteColumn;
-  // [public catalog page, admin management page]
   revalidatePaths: readonly [string, string];
   validate: (input: TInput) => Record<string, unknown>;
   notFoundMessage: string;
   notAuthorizedMessage: string;
   inUseMessage: string;
+  onRemove?: (id: string) => Promise<void>;
 };
 
 export function createCatalogActions<TRow extends CatalogRow, TInput>(
@@ -51,6 +50,7 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     notFoundMessage,
     notAuthorizedMessage,
     inUseMessage,
+    onRemove,
   } = config;
 
   function revalidateCatalog() {
@@ -71,18 +71,20 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
   }
 
   // Any user can submit; it lands as `pending` and is immediately usable by
-  // the submitter. Admin submissions are auto-approved (self-reviewed).
+  // the submitter. Admin AND trusted-contributor submissions are auto-approved
+  // (self-reviewed) — see lib/auth.ts for the trustedContributor field.
   async function request(input: TInput): Promise<TRow> {
     const user = await requireUser();
     const values = validate(input);
-    const isAdmin = user.role === 'admin';
+    const autoApprove =
+      user.role === 'admin' || user.trustedContributor === true;
     const [created] = await db
       .insert(table)
       .values({
         ...values,
-        status: isAdmin ? 'approved' : 'pending',
+        status: autoApprove ? 'approved' : 'pending',
         submittedById: user.id,
-        reviewedById: isAdmin ? user.id : undefined,
+        reviewedById: autoApprove ? user.id : undefined,
       })
       .returning();
     revalidateCatalog();
@@ -171,6 +173,7 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
       .from(spools)
       .where(eq(spoolFkColumn, id));
     if (usage.count > 0) throw new Error(inUseMessage);
+    await onRemove?.(id);
     await db.delete(table).where(eq(table.id, id));
     revalidateCatalog();
   }

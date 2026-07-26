@@ -38,6 +38,10 @@ export function Catalog<T extends CatalogEntity>({
   searchAriaLabel,
   emptyText,
   extraFilter,
+  extraControls,
+  extraPredicate,
+  extraActive = false,
+  onClearExtra,
   renderRow,
 }: {
   items: T[];
@@ -46,6 +50,10 @@ export function Catalog<T extends CatalogEntity>({
   searchAriaLabel: string;
   emptyText: string;
   extraFilter?: ExtraFilter<T>;
+  extraControls?: ReactNode;
+  extraPredicate?: (item: T) => boolean;
+  extraActive?: boolean;
+  onClearExtra?: () => void;
   renderRow: (item: T) => ReactNode;
 }) {
   const [query, setQuery] = useState('');
@@ -57,6 +65,7 @@ export function Catalog<T extends CatalogEntity>({
     return items.filter((item) => {
       if (extraFilter?.value && !extraFilter.matches(item, extraFilter.value))
         return false;
+      if (extraPredicate && !extraPredicate(item)) return false;
       if (status && item.status !== status) return false;
       if (q === '') return true;
       return (
@@ -64,7 +73,7 @@ export function Catalog<T extends CatalogEntity>({
         item.manufacturer.toLowerCase().includes(q)
       );
     });
-  }, [items, query, status, extraFilter]);
+  }, [items, query, status, extraFilter, extraPredicate]);
 
   const groups = useMemo(() => {
     const map = new Map<string, T[]>();
@@ -80,7 +89,11 @@ export function Catalog<T extends CatalogEntity>({
     () => items.filter((item) => item.status === 'pending').length,
     [items]
   );
-  const active = query.trim() !== '' || status !== null || !!extraFilter?.value;
+  const active =
+    query.trim() !== '' ||
+    status !== null ||
+    !!extraFilter?.value ||
+    extraActive;
 
   return (
     <div className="mt-4 flex flex-col gap-4">
@@ -132,6 +145,7 @@ export function Catalog<T extends CatalogEntity>({
               setQuery('');
               setStatus(null);
               extraFilter?.onChange(null);
+              onClearExtra?.();
             }}
           >
             <X className="mr-1 h-3.5 w-3.5" />
@@ -142,6 +156,8 @@ export function Catalog<T extends CatalogEntity>({
           {filtered.length} of {items.length}
         </span>
       </div>
+
+      {extraControls}
 
       {groups.length === 0 ? (
         <div className="border-border bg-card/50 text-muted-foreground rounded-lg border border-dashed px-6 py-12 text-center text-sm">

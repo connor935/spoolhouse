@@ -22,6 +22,7 @@ import {
   Monitor,
   Moon,
   Settings,
+  SlidersHorizontal,
   Sun,
   Users,
   UsersRound,
@@ -87,6 +88,10 @@ export function UserMenu({
               <DropdownMenuItem render={<Link href="/admin/spool-types" />}>
                 <ListChecks className="mr-2 h-4 w-4" />
                 Review spool types
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/admin/properties" />}>
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
+                Properties
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </>

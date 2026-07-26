@@ -2,14 +2,22 @@ import { MaterialCatalog } from '@/components/material-catalog';
 import { PageShell } from '@/components/page-shell';
 import { RequestMaterialForm } from '@/components/request-material-form';
 import { getMaterialCatalog } from '@/app/actions/materials';
+import { getPropertyDefinitions } from '@/app/actions/properties';
 import { requireUser } from '@/lib/auth-session';
+import { getPropertiesForMaterials } from '@/lib/material-properties';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MaterialsPage() {
   const user = await requireUser();
   const isAdmin = user.role === 'admin';
-  const catalog = await getMaterialCatalog();
+  const [catalog, propertyDefinitions] = await Promise.all([
+    getMaterialCatalog(),
+    getPropertyDefinitions(),
+  ]);
+  const propertiesByMaterialId = await getPropertiesForMaterials(
+    catalog.map((m) => m.id)
+  );
 
   return (
     <PageShell
@@ -20,7 +28,12 @@ export default async function MaterialsPage() {
           : 'Global material catalog. Missing one? Request it below — you can use it immediately while an admin reviews it.'
       }
     >
-      <MaterialCatalog materials={catalog} currentUserId={user.id} />
+      <MaterialCatalog
+        materials={catalog}
+        currentUserId={user.id}
+        propertiesByMaterialId={propertiesByMaterialId}
+        propertyDefinitions={propertyDefinitions}
+      />
 
       <section className="border-border bg-card mt-6 rounded-lg border p-6">
         <h2 className="font-semibold">

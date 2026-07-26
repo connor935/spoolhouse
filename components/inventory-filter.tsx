@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { SearchInput } from '@/components/search-input';
 import { SelectField } from '@/components/select-field';
+import { MaterialPropertyFilter } from '@/components/material-property-filter';
 import { ALL_TYPES, TYPE_ITEMS } from '@/lib/catalog-filter-items';
-import { cn } from '@/lib/utils';
+import {
+  anyConstraintActive,
+  type PropertyConstraint,
+} from '@/lib/property-filter';
+import type { Property } from '@/lib/db/schema';
 
 export type StockStatus = 'in-stock' | 'empty' | 'all';
 
@@ -18,6 +22,7 @@ export type InventoryFilters = {
   filamentType: string | null; // null = all types
   minLeftGrams: number | null;
   hideLent: boolean; // only meaningful on group tabs
+  propertyConstraints: PropertyConstraint[]; // datasheet-property range filters
 };
 
 export const EMPTY_FILTERS: InventoryFilters = {
@@ -26,6 +31,7 @@ export const EMPTY_FILTERS: InventoryFilters = {
   filamentType: null,
   minLeftGrams: null,
   hideLent: false,
+  propertyConstraints: [],
 };
 
 // `status` is a view selector, not a removable filter chip — deliberately excluded.
@@ -34,32 +40,94 @@ export function filtersActive(f: InventoryFilters): boolean {
     f.q.trim() !== '' ||
     f.filamentType !== null ||
     f.minLeftGrams !== null ||
-    f.hideLent
+    f.hideLent ||
+    anyConstraintActive(f.propertyConstraints)
   );
 }
 
-// The advanced filters that live behind the mobile "Filters" toggle.
+// The advanced filters that live in the toggled side panel.
 function advancedActive(f: InventoryFilters): boolean {
-  return f.filamentType !== null || f.minLeftGrams !== null || f.hideLent;
+  return (
+    f.filamentType !== null ||
+    f.minLeftGrams !== null ||
+    f.hideLent ||
+    anyConstraintActive(f.propertyConstraints)
+  );
 }
 
 export type StatusCounts = { inStock: number; empty: number; all: number };
 
+// The top bar: search + a Filters toggle (opens the side panel below) + Clear.
+// The advanced controls live in <InventoryFilterPanel> so they can render as a
+// sidebar next to the content grid.
 export function InventoryFilter({
+  value,
+  onChange,
+  filtersOpen,
+  onToggleFilters,
+}: {
+  value: InventoryFilters;
+  onChange: (next: InventoryFilters) => void;
+  filtersOpen: boolean;
+  onToggleFilters: () => void;
+}) {
+  return (
+    <div className="border-border bg-card flex w-full flex-1 flex-wrap items-center gap-2 rounded-lg border px-3 py-3 sm:gap-3 sm:px-4">
+      <SearchInput
+        value={value.q}
+        onChange={(q) => onChange({ ...value, q })}
+        placeholder="Search material or manufacturer…"
+        ariaLabel="Search materials"
+      />
+
+      <Button
+        type="button"
+        size="sm"
+        variant={filtersOpen ? 'default' : 'outline'}
+        className="relative h-9"
+        onClick={onToggleFilters}
+        aria-expanded={filtersOpen}
+      >
+        <SlidersHorizontal className="mr-1 h-4 w-4" />
+        Filters
+        {advancedActive(value) && (
+          <span className="bg-accent absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full" />
+        )}
+      </Button>
+
+      {filtersActive(value) && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-muted-foreground h-9"
+          onClick={() => onChange({ ...EMPTY_FILTERS, status: value.status })}
+        >
+          <X className="mr-1 h-3.5 w-3.5" />
+          Clear
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// The advanced-filter panel, rendered as a sidebar beside the content grid
+// (full-width above it on mobile). Stock status + filament type + min-left
+// (+ hide-lent on group tabs) + the faceted datasheet-property filters.
+export function InventoryFilterPanel({
   value,
   onChange,
   showHideLent,
   showStatus,
   statusCounts,
+  propertyDefinitions,
 }: {
   value: InventoryFilters;
   onChange: (next: InventoryFilters) => void;
   showHideLent: boolean;
   showStatus: boolean;
   statusCounts?: StatusCounts;
+  propertyDefinitions: Property[];
 }) {
-  const [expanded, setExpanded] = useState(false);
-
   const statusItems = [
     {
       value: 'in-stock',
@@ -73,113 +141,75 @@ export function InventoryFilter({
   ];
 
   return (
-    <div className="border-border bg-card flex w-full flex-1 flex-col gap-3 rounded-lg border px-3 py-3 sm:px-4">
-      {/* Always visible: search + status + (mobile) Filters toggle + Clear */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        <SearchInput
-          value={value.q}
-          onChange={(q) => onChange({ ...value, q })}
-          placeholder="Search material or manufacturer…"
-          ariaLabel="Search materials"
-        />
+    <div className="border-border bg-card flex flex-col gap-3 rounded-lg border px-3 py-3 sm:px-4">
+      <span className="font-semibold">Filters</span>
 
-        <Button
-          type="button"
-          size="sm"
-          variant={expanded ? 'default' : 'outline'}
-          className="relative h-9"
-          onClick={() => setExpanded((e) => !e)}
-          aria-expanded={expanded}
-        >
-          <SlidersHorizontal className="mr-1 h-4 w-4" />
-          Filters
-          {advancedActive(value) && (
-            <span className="bg-accent absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full" />
-          )}
-        </Button>
-
-        {filtersActive(value) && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-muted-foreground h-9"
-            onClick={() => onChange({ ...EMPTY_FILTERS, status: value.status })}
-          >
-            <X className="mr-1 h-3.5 w-3.5" />
-            Clear
-          </Button>
-        )}
-      </div>
-
-      {/* Advanced: type + min-left (+ hide-lent). Collapsed on mobile, inline on desktop. */}
-      <div
-        className={cn(
-          'border-border flex-wrap items-center gap-4 border-t pt-3',
-          expanded ? 'flex' : 'hidden'
-        )}
-      >
-        {showStatus && (
-          <SelectField
-            items={statusItems}
-            value={value.status}
-            onValueChange={(v) =>
-              onChange({ ...value, status: v as StockStatus })
-            }
-            triggerClassName="h-9 w-32"
-            ariaLabel="Filter by stock status"
-          />
-        )}
+      {showStatus && (
         <SelectField
-          items={TYPE_ITEMS}
-          value={value.filamentType ?? ALL_TYPES}
-          onValueChange={(v) =>
-            onChange({ ...value, filamentType: v === ALL_TYPES ? null : v })
-          }
-          triggerClassName="h-9"
-          ariaLabel="Filter by filament type"
+          items={statusItems}
+          value={value.status}
+          onValueChange={(v) => onChange({ ...value, status: v as StockStatus })}
+          triggerClassName="h-9 w-full"
+          ariaLabel="Filter by stock status"
         />
+      )}
+      <SelectField
+        items={TYPE_ITEMS}
+        value={value.filamentType ?? ALL_TYPES}
+        onValueChange={(v) =>
+          onChange({ ...value, filamentType: v === ALL_TYPES ? null : v })
+        }
+        triggerClassName="h-9 w-full"
+        ariaLabel="Filter by filament type"
+      />
 
-        <div className="flex items-center gap-2">
-          <Label
-            htmlFor="min-left"
-            className="text-muted-foreground text-xs whitespace-nowrap"
-          >
-            Min. left (g)
-          </Label>
-          <Input
-            id="min-left"
-            type="number"
-            step="1"
-            min="0"
-            value={
-              value.minLeftGrams === null ? '' : String(value.minLeftGrams)
-            }
-            onChange={(e) => {
-              const parsed = Number.parseInt(e.target.value, 10);
-              onChange({
-                ...value,
-                minLeftGrams: Number.isNaN(parsed) ? null : parsed,
-              });
-            }}
-            placeholder="e.g. 300"
-            className="h-9 w-24 font-mono"
-          />
-        </div>
-
-        {showHideLent && (
-          <label className="flex items-center gap-2 text-sm whitespace-nowrap">
-            <input
-              type="checkbox"
-              checked={value.hideLent}
-              onChange={(e) =>
-                onChange({ ...value, hideLent: e.target.checked })
-              }
-              className="border-input h-4 w-4 rounded"
-            />
-            Hide lent spools
-          </label>
-        )}
+      <div className="flex items-center justify-between gap-2">
+        <Label
+          htmlFor="min-left"
+          className="text-muted-foreground text-xs whitespace-nowrap"
+        >
+          Min. left (g)
+        </Label>
+        <Input
+          id="min-left"
+          type="number"
+          step="1"
+          min="0"
+          value={value.minLeftGrams === null ? '' : String(value.minLeftGrams)}
+          onChange={(e) => {
+            const parsed = Number.parseInt(e.target.value, 10);
+            onChange({
+              ...value,
+              minLeftGrams: Number.isNaN(parsed) ? null : parsed,
+            });
+          }}
+          placeholder="e.g. 300"
+          className="h-9 w-24 font-mono"
+        />
       </div>
+
+      {showHideLent && (
+        <label className="flex items-center gap-2 text-sm whitespace-nowrap">
+          <input
+            type="checkbox"
+            checked={value.hideLent}
+            onChange={(e) => onChange({ ...value, hideLent: e.target.checked })}
+            className="border-input h-4 w-4 rounded"
+          />
+          Hide lent spools
+        </label>
+      )}
+
+      {propertyDefinitions.length > 0 && (
+        <MaterialPropertyFilter
+          bare
+          definitions={propertyDefinitions}
+          constraints={value.propertyConstraints}
+          onChange={(propertyConstraints) =>
+            onChange({ ...value, propertyConstraints })
+          }
+        />
+      )}
     </div>
   );
 }

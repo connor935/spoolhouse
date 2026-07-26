@@ -1,15 +1,28 @@
 import type { MaterialInventory, SpoolView } from '@/lib/filament';
+import type { MaterialPropertyView } from '@/lib/material-properties';
+import { materialMatchesConstraints } from '@/lib/property-filter';
 import type { SharedSpool } from '@/lib/sharing';
 import type { InventoryFilters } from '@/components/inventory-filter';
+
+// Property values keyed by material id, for the datasheet-property range filter.
+type PropsByMaterial = Record<string, MaterialPropertyView[]>;
 
 // Pure filtering helpers for the dashboard's search/filter bar, shared by the
 // "Your stock" (per-material) and group-stock views.
 
 export function materialMatches(
-  m: { name: string; manufacturer: string; filamentType: string },
-  f: InventoryFilters
+  m: { id: string; name: string; manufacturer: string; filamentType: string },
+  f: InventoryFilters,
+  propsByMaterial: PropsByMaterial
 ): boolean {
   if (f.filamentType && m.filamentType !== f.filamentType) return false;
+  if (
+    !materialMatchesConstraints(
+      propsByMaterial[m.id] ?? [],
+      f.propertyConstraints
+    )
+  )
+    return false;
   const q = f.q.trim().toLowerCase();
   if (q === '') return true;
   return (
@@ -32,10 +45,11 @@ function spoolMatchesStatus(s: SpoolView, filters: InventoryFilters): boolean {
 // status selector + search/filter bar.
 export function visibleMaterialEntries(
   inventory: MaterialInventory[],
-  filters: InventoryFilters
+  filters: InventoryFilters,
+  propsByMaterial: PropsByMaterial
 ) {
   return inventory
-    .filter((m) => materialMatches(m.material, filters))
+    .filter((m) => materialMatches(m.material, filters, propsByMaterial))
     .map((m) => ({
       inventory: m,
       visibleIds: new Set(
@@ -48,10 +62,11 @@ export function visibleMaterialEntries(
 // Group stock filtered by the same bar (+ hide-lent).
 export function filterGroupStock(
   stock: SharedSpool[],
-  filters: InventoryFilters
+  filters: InventoryFilters,
+  propsByMaterial: PropsByMaterial
 ): SharedSpool[] {
   return stock.filter((s) => {
-    if (!materialMatches(s.material, filters)) return false;
+    if (!materialMatches(s.material, filters, propsByMaterial)) return false;
     if (
       filters.minLeftGrams !== null &&
       s.filamentLeftGrams < filters.minLeftGrams
