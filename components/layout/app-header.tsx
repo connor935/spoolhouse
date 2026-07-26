@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { Plus, Boxes, Disc3, UsersRound } from 'lucide-react';
-import { NotificationBell } from '@/components/notification-bell';
-import { UserMenu } from '@/components/user-menu';
+import { NotificationBell } from '@/components/notifications/notification-bell';
+import { UserMenu } from '@/components/layout/user-menu';
 import Link from 'next/link';
 
 export function AppHeader({

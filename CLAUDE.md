@@ -48,7 +48,7 @@ Backups: copy `data/spoolhouse.db`. Target deployment is a single self-hosted Li
 - **Drizzle ORM + better-sqlite3** for data access (SQLite file, migrations via drizzle-kit)
 - **better-auth** for authentication (see Auth section)
 - `lucide-react` icons, `sonner` toasts
-- **Theming:** `next-themes` (`components/theme-provider.tsx`, wrapped in `app/layout.tsx`, default = system, class strategy). Light/dark/system switch lives in the user menu. All colors come from the oklch tokens in `app/globals.css` (`:root` + `.dark`) — petrol/blue accent (hue ~205–210), cool neutrals; never hardcode colors in components
+- **Theming:** `next-themes` (`components/layout/theme-provider.tsx`, wrapped in `app/layout.tsx`, default = system, class strategy). Light/dark/system switch lives in the user menu. All colors come from the oklch tokens in `app/globals.css` (`:root` + `.dark`) — petrol/blue accent (hue ~205–210), cool neutrals; never hardcode colors in components
 
 ## Architecture
 
@@ -71,7 +71,7 @@ Mutations go through server actions in `app/actions/filaments.ts` (`createSpool`
 
 **Groups, sharing & lending**: invite-only groups pool members' (selectively) shared spools.
 The dashboard is the primary surface — **one tab per group** (browse + request via `GroupStock`)
-and a **"Borrows" tab** (`components/borrows-panel.tsx`, fed by `getMyLends()`) showing all lends
+and a **"Borrows" tab** (`components/dashboard/borrows-panel.tsx`, fed by `getMyLends()`) showing all lends
 across groups: incoming requests (approve/decline), own requests (cancel), lent out (mark returned),
 borrowed, history. `/groups` + `/groups/[id]` are **management only** (membership, sharing settings,
 owner tools — no stock/lend UI there). Pending requests are visible on stock cards
@@ -82,11 +82,33 @@ owner tools — no stock/lend UI there). Pending requests are visible on stock c
 Bell with unread count in the dashboard header and in every `PageShell`; `/notifications` lists them
 and marks all read on open. **Borrow-request notifications are actionable**: `getNotifications`
 joins the lend's current status, and clicking such a row opens an approve/decline dialog
-(`components/notifications-list.tsx`). No polling — counts refresh per page load.
+(`components/notifications/notifications-list.tsx`). No polling — counts refresh per page load.
 
 **Sub-page layout**: every page except the dashboard and `/groups/join/[code]` renders inside
-`components/page-shell.tsx` (`max-w-3xl` container, back-link, title). The notification bell lives
-in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-pages — use PageShell.**
+`components/layout/page-shell.tsx` (`max-w-3xl` container, back-link, title). The notification bell
+lives in `components/layout/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-pages — use
+PageShell.**
+
+### Component folders
+
+`components/` is grouped by feature, one level deep (plus `dashboard/spool-form/`). All folder and
+file names are kebab-case. **Put a new component in the folder of the surface that owns it; only
+promote to `common/` once a second feature imports it.**
+
+| Folder | Contents |
+|---|---|
+| `ui/` | shadcn/Base-UI primitives — never hand-edit for feature needs |
+| `common/` | Cross-cutting widgets used by 2+ features: `confirm-dialog`, `search-input`, `select-field`, `manufacturer-name-fields`, `request-submit-button` |
+| `layout/` | App chrome mounted by layouts/pages: `page-shell`, `app-header`, `user-menu`, `theme-provider`, `live-refresh` |
+| `dashboard/` | The `/` surface: `warehouse-dashboard`, `material-card`, `spool-card`, `material-dialog`, `inventory-filter`, `borrows-dialog`/`borrows-panel`, + `spool-form/` (add/edit-spool dialog, fields, pickers) |
+| `catalog/` | `/materials` + `/spool-types` (+ their admin twins): generic `catalog`/`catalog-row` and the material/spool-type list, row, edit-dialog and request-form pairs |
+| `materials/` | Material-property UI shared by catalog **and** dashboard: `material-properties-section`, `material-property-filter` |
+| `groups/` | `/groups` + `/groups/[id]` + group stock: create/join forms, `group-stock`, sharing settings, owner tools |
+| `notifications/` | `notification-bell` (rendered by layout chrome) and `notifications-list` |
+| `auth/` | `auth-card` shell + login/signup/reset-password forms |
+| `account/` | `/account` sections: `account-forms`, `api-tokens-section` |
+| `admin/` | Admin-only surfaces with no catalog equivalent: `create-user-form`, `trusted-contributor-toggle`, `property-admin-list` |
+| `api-docs/` | `swagger-docs` (the `/api-docs` Swagger UI client wrapper) |
 
 ### Key files
 
@@ -95,7 +117,7 @@ in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-page
 | `lib/filament.ts` | Domain logic: gram math, thresholds, `SpoolView`, `MaterialInventory`, `toSpoolView`, `groupInventory`, `formatWeight`, `materialLabel`, `spoolTypeLabel`, `FILAMENT_TYPES` |
 | `app/actions/spool-types.ts` / `app/actions/materials.ts` | Catalog actions (usable/catalog queries, request, admin approve/reject) — same pattern for both |
 | `lib/db/schema.ts` | Drizzle tables (`materials`, `spools` [DB: "filaments"], `spoolTypes`, `properties` + `materialProperties` [datasheet values], `groups`, `groupMembers`, `filamentShareOverrides` [material-level], `lends`, `notifications`) + inferred types (re-exports auth schema) |
-| `components/page-shell.tsx` | Shared sub-page layout (width, back-link, title, bell) — use on every sub-page |
+| `components/layout/page-shell.tsx` | Shared sub-page layout (width, back-link, title, bell) — use on every sub-page |
 | `lib/notifications.ts` / `app/actions/notifications.ts` | Notification writer helper / read actions (`getUnreadCount`, `getNotifications`, `markAllRead`) |
 | `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
 | `lib/auth-session.ts` | `requireUser()` / `requireAdmin()` — mandatory in protected pages & actions |
@@ -106,11 +128,11 @@ in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-page
 | `lib/sharing.ts` | `getSharedFilaments(groupId)` — single source of truth resolving each member's share mode into the group's pooled stock; `getMembership(groupId, userId)` |
 | `app/actions/groups.ts` | Group CRUD, membership, invite codes, `updateShareSettings` |
 | `app/actions/lends.ts` | Lend lifecycle: `requestLend`, `approveLend`, `declineLend`, `markReturned`, `cancelLendRequest`, `getMyLends` (cross-group, feeds Borrows tab), `getActiveLendsForOwner` — mutations write notifications |
-| `components/borrows-panel.tsx` / `notifications-list.tsx` | Dashboard Borrows tab / actionable notification list with approve-decline dialog |
-| `components/warehouse-dashboard.tsx` | Main client UI: stats, tabs (incl. Borrows + per-group), dialog state |
-| `components/material-card.tsx` | Material card with per-spool rows (re-weigh, edit/delete, lent badge) + add-spool |
-| `components/spool-form-dialog.tsx` | Add/edit spool: material + spool-type pickers with inline request flows |
-| `components/group-stock.tsx` / `group-lend-requests.tsx` / `group-lend-history.tsx` / `group-sharing-settings.tsx` / `group-owner-tools.tsx` | `/groups/[id]` page sections |
+| `components/dashboard/borrows-panel.tsx` / `notifications/notifications-list.tsx` | Dashboard Borrows tab / actionable notification list with approve-decline dialog |
+| `components/dashboard/warehouse-dashboard.tsx` | Main client UI: stats, tabs (incl. Borrows + per-group), dialog state |
+| `components/dashboard/material-card.tsx` | Material card with per-spool rows (re-weigh, edit/delete, lent badge) + add-spool |
+| `components/dashboard/spool-form/spool-form-dialog.tsx` | Add/edit spool: material + spool-type pickers with inline request flows |
+| `components/groups/group-stock.tsx` / `group-sharing-settings.tsx` / `group-owner-tools.tsx` | `/groups/[id]` page sections + the dashboard's per-group stock tab |
 | `lib/api-auth.ts` | REST-API token auth: `generateApiToken`, `authenticateApiRequest(request)`, `apiError`/`unauthorized` helpers |
 | `lib/spool-type-usable.ts` | `isSpoolTypeUsable`/`assertSpoolTypeUsable` — shared by server actions and REST API |
 | `app/actions/api-tokens.ts` | API-token management actions (create/list/revoke) backing the `/account` section |
@@ -125,8 +147,8 @@ in `components/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-page
 - Re-weigh (`setMeasuredWeight`) is allowed for the **owner and the current borrower** (active lend) — the borrower re-weighs from the Borrows tab ("Borrowed by you" section)
 - **Empty** when `filamentLeftGrams ≤ 5`; **Low** when `percentLeft ≤ 15%`
 - **Materials & spool types** are both global catalogs with `status` `approved | pending | rejected` and identical request→review workflows (`requestMaterial`/`requestSpoolType`): a pending entry is **immediately usable by its submitter**, visible to others only after approval; rejection never breaks existing references. Usable-rules: `assertMaterialUsable`/`assertSpoolTypeUsable` + `getUsableMaterials`/`getUsableSpoolTypes`. **Auto-approve** applies to admins AND **trusted contributors** (a `user.trustedContributor` flag toggled by admins on `/admin/users`, declared as a better-auth `additionalFields` in `lib/auth.ts` so it rides the session user; the auto-approve check lives once in `lib/catalog.ts` `request()`).
-- **Material properties** (`properties` = admin-curated definitions with an immutable machine `key` + name/unit/description; `materialProperties` = value rows, unique per material×property): datasheet data (density, diameters, temps — migrated out of the old `materials` extra columns — plus tensile strength, hardness, etc.). **Definitions are admin-only** (managed on `/admin/properties`, `components/property-admin-list.tsx`, no review flow). **Values are wiki-style**: any logged-in user sets/edits a value via `setMaterialProperty` (effective immediately), which records `submittedById` and sets `verified` = the editor is admin; non-admin edits show an "unverified" badge until an admin `verifyMaterialProperty`s them; delete is admin-only. Actions in `app/actions/properties.ts`; read helper `getPropertiesForMaterials` (`lib/material-properties.ts`) feeds both the dashboard material dialog (`material-properties-section.tsx`) and the REST API. The delete-a-material path clears value rows via the catalog factory's `onRemove` hook (FK cascade is inert at runtime — see below).
-- **Catalog UI is one generalized component** per catalog (`components/material-catalog.tsx` / `spool-type-catalog.tsx`): a searchable, manufacturer-grouped, capped (150 rows) list. `/materials` + `/spool-types` render it read-only (own pending/rejected editable); `/admin/materials` + `/admin/spool-types` render the **same** component with `isAdmin` — adds a status filter + "Review pending" shortcut and inline Approve/Reject/Delete + edit-any on each row (`material-catalog-row.tsx` / `spool-type-catalog-row.tsx`). All admin actions are server-enforced (`requireAdmin`), so the inline controls are pure UX. Admin pages fetch `getAllMaterialsForAdmin`/`getAllSpoolTypesForAdmin` (all rows + `spoolCount` for the delete guard).
+- **Material properties** (`properties` = admin-curated definitions with an immutable machine `key` + name/unit/description; `materialProperties` = value rows, unique per material×property): datasheet data (density, diameters, temps — migrated out of the old `materials` extra columns — plus tensile strength, hardness, etc.). **Definitions are admin-only** (managed on `/admin/properties`, `components/admin/property-admin-list.tsx`, no review flow). **Values are wiki-style**: any logged-in user sets/edits a value via `setMaterialProperty` (effective immediately), which records `submittedById` and sets `verified` = the editor is admin; non-admin edits show an "unverified" badge until an admin `verifyMaterialProperty`s them; delete is admin-only. Actions in `app/actions/properties.ts`; read helper `getPropertiesForMaterials` (`lib/material-properties.ts`) feeds both the dashboard material dialog and the catalog rows (`components/materials/material-properties-section.tsx`) and the REST API. The delete-a-material path clears value rows via the catalog factory's `onRemove` hook (FK cascade is inert at runtime — see below).
+- **Catalog UI is one generalized component** per catalog (`components/catalog/material-catalog.tsx` / `spool-type-catalog.tsx`): a searchable, manufacturer-grouped, capped (150 rows) list. `/materials` + `/spool-types` render it read-only (own pending/rejected editable); `/admin/materials` + `/admin/spool-types` render the **same** component with `isAdmin` — adds a status filter + "Review pending" shortcut and inline Approve/Reject/Delete + edit-any on each row (`material-catalog-row.tsx` / `spool-type-catalog-row.tsx`). All admin actions are server-enforced (`requireAdmin`), so the inline controls are pure UX. Admin pages fetch `getAllMaterialsForAdmin`/`getAllSpoolTypesForAdmin` (all rows + `spoolCount` for the delete guard).
 - **Spools** (DB table still named `filaments`, TS export `spools` — deliberate, avoids SQLite rename migrations): a physical spool references `materialId` + `spoolTypeId` + weights. The dashboard groups spools by material (`groupInventory`); adding another spool of the same material is one click on the material card.
 - **Sharing is material-level**: a member's whitelist/blacklist overrides reference material ids (all their spools of it, incl. future ones). Lending stays per physical spool. Group stock is grouped by material across owners.
 - Filament types: PLA, PETG, ABS, ASA, TPU, Nylon, PC, PVA, HIPS, Other (`FILAMENT_TYPES` in `lib/filament.ts`)
@@ -202,7 +224,7 @@ Run under Node 24 (`fnm exec --using=v24.18.0 npm run db:import -- …`) for the
 better-sqlite3 native module.
 
 Because the catalog then holds hundreds/thousands of materials, the add-spool
-dialog uses a **searchable combobox** (`components/warehouseDashboard/spoolForm/
+dialog uses a **searchable combobox** (`components/dashboard/spool-form/
 material-picker.tsx`), not a Select — client-side filter on name + manufacturer,
 capped at 50 visible.
 

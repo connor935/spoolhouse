@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { PageShell } from '@/components/page-shell';
-import { SpoolTypeCatalog } from '@/components/spool-type-catalog';
+import { PageShell } from '@/components/layout/page-shell';
+import { SpoolTypeCatalog } from '@/components/catalog/spool-type-catalog';
 import { getAllSpoolTypesForAdmin } from '@/app/actions/spool-types';
 import { requireAdmin } from '@/lib/auth-session';
 

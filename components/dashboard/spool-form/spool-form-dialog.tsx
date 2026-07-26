@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ConfirmDialog } from '@/components/confirm-dialog';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { Trash2 } from 'lucide-react';
 import { createSpool, deleteSpool, updateSpool } from '@/app/actions/filaments';
-import { MaterialField } from '@/components/warehouseDashboard/spoolForm/spool-form-material-field';
-import { SpoolTypeField } from '@/components/warehouseDashboard/spoolForm/spool-form-spool-type-field';
+import { MaterialField } from '@/components/dashboard/spool-form/spool-form-material-field';
+import { SpoolTypeField } from '@/components/dashboard/spool-form/spool-form-spool-type-field';
 import {
   computeFilamentLeft,
   formatWeight,

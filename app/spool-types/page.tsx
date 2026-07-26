@@ -1,6 +1,6 @@
-import { PageShell } from '@/components/page-shell';
-import { RequestSpoolTypeForm } from '@/components/request-spool-type-form';
-import { SpoolTypeCatalog } from '@/components/spool-type-catalog';
+import { PageShell } from '@/components/layout/page-shell';
+import { RequestSpoolTypeForm } from '@/components/catalog/request-spool-type-form';
+import { SpoolTypeCatalog } from '@/components/catalog/spool-type-catalog';
 import { getSpoolTypeCatalog } from '@/app/actions/spool-types';
 import { requireUser } from '@/lib/auth-session';
 

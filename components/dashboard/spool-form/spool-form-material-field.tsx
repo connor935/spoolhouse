@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { Label } from '@/components/ui/label';
-import { SelectField } from '@/components/select-field';
-import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
-import { RequestSubmitButton } from '@/components/request-submit-button';
+import { SelectField } from '@/components/common/select-field';
+import { ManufacturerNameFields } from '@/components/common/manufacturer-name-fields';
+import { RequestSubmitButton } from '@/components/common/request-submit-button';
 import { Plus, X } from 'lucide-react';
 import { requestMaterial } from '@/app/actions/materials';
 import { requestEntityToast } from '@/lib/request-entity-toast';
-import { MaterialPicker } from '@/components/warehouseDashboard/spoolForm/material-picker';
+import { MaterialPicker } from '@/components/dashboard/spool-form/material-picker';
 import { FILAMENT_TYPE_ITEMS } from '@/lib/catalog-filter-items';
 import type { Material } from '@/lib/db/schema';
 import { toast } from 'sonner';

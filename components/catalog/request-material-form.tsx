@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
-import { SelectField } from '@/components/select-field';
-import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
-import { RequestSubmitButton } from '@/components/request-submit-button';
+import { SelectField } from '@/components/common/select-field';
+import { ManufacturerNameFields } from '@/components/common/manufacturer-name-fields';
+import { RequestSubmitButton } from '@/components/common/request-submit-button';
 import { requestMaterial } from '@/app/actions/materials';
 import { requestEntityToast } from '@/lib/request-entity-toast';
 import { FILAMENT_TYPE_ITEMS } from '@/lib/catalog-filter-items';

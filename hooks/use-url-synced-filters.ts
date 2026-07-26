@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { serializeConstraints } from '@/lib/property-filter';
-import type { InventoryFilters } from '@/components/inventory-filter';
+import type { InventoryFilters } from '@/components/dashboard/inventory-filter';
 
 // Mirrors the dashboard's tab + filter state into the URL (replaceState: no
 // navigation/server round-trip per keystroke, back button stays sane) so the

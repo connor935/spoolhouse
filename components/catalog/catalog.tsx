@@ -3,8 +3,8 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { SearchInput } from '@/components/search-input';
-import { SelectField } from '@/components/select-field';
+import { SearchInput } from '@/components/common/search-input';
+import { SelectField } from '@/components/common/select-field';
 import { ALL_STATUS, STATUS_ITEMS } from '@/lib/catalog-filter-items';
 
 const MAX_ROWS = 150;

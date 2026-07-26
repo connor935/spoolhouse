@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { SwaggerDocs } from '@/components/swagger-docs';
+import { SwaggerDocs } from '@/components/api-docs/swagger-docs';
 import { requireUser } from '@/lib/auth-session';
 
 export const dynamic = 'force-dynamic';

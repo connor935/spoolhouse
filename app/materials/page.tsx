@@ -1,6 +1,6 @@
-import { MaterialCatalog } from '@/components/material-catalog';
-import { PageShell } from '@/components/page-shell';
-import { RequestMaterialForm } from '@/components/request-material-form';
+import { MaterialCatalog } from '@/components/catalog/material-catalog';
+import { PageShell } from '@/components/layout/page-shell';
+import { RequestMaterialForm } from '@/components/catalog/request-material-form';
 import { getMaterialCatalog } from '@/app/actions/materials';
 import { getPropertyDefinitions } from '@/app/actions/properties';
 import { requireUser } from '@/lib/auth-session';

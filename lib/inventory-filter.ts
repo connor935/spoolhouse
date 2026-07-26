@@ -2,7 +2,7 @@ import type { MaterialInventory, SpoolView } from '@/lib/filament';
 import type { MaterialPropertyView } from '@/lib/material-properties';
 import { materialMatchesConstraints } from '@/lib/property-filter';
 import type { SharedSpool } from '@/lib/sharing';
-import type { InventoryFilters } from '@/components/inventory-filter';
+import type { InventoryFilters } from '@/components/dashboard/inventory-filter';
 
 // Property values keyed by material id, for the datasheet-property range filter.
 type PropsByMaterial = Record<string, MaterialPropertyView[]>;

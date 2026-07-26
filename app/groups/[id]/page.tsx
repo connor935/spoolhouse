@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getGroupDetail } from '@/app/actions/groups';
 import { getInventory } from '@/app/actions/filaments';
-import { GroupSharingSettings } from '@/components/group-sharing-settings';
-import { GroupOwnerTools } from '@/components/group-owner-tools';
-import { PageShell } from '@/components/page-shell';
+import { GroupSharingSettings } from '@/components/groups/group-sharing-settings';
+import { GroupOwnerTools } from '@/components/groups/group-owner-tools';
+import { PageShell } from '@/components/layout/page-shell';
 import { requireUser } from '@/lib/auth-session';
 import type { Material } from '@/lib/db/schema';
 

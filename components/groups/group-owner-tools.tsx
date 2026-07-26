@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ConfirmDialog } from '@/components/confirm-dialog';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { Copy, RefreshCw, Trash2, UserMinus } from 'lucide-react';
 import {
   deleteGroup,

@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Catalog } from '@/components/catalog';
-import { MaterialCatalogRow } from '@/components/material-catalog-row';
-import { MaterialPropertyFilter } from '@/components/material-property-filter';
+import { Catalog } from '@/components/catalog/catalog';
+import { MaterialCatalogRow } from '@/components/catalog/material-catalog-row';
+import { MaterialPropertyFilter } from '@/components/materials/material-property-filter';
 import type { MaterialWithUsage } from '@/app/actions/materials';
 import { ALL_TYPES, TYPE_ITEMS } from '@/lib/catalog-filter-items';
 import type { MaterialPropertyView } from '@/lib/material-properties';

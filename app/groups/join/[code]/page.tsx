@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getGroupByInviteCode } from '@/app/actions/groups';
-import { JoinByLinkButton } from '@/components/join-by-link-button';
+import { JoinByLinkButton } from '@/components/groups/join-by-link-button';
 import { requireUser } from '@/lib/auth-session';
 
 export const dynamic = 'force-dynamic';

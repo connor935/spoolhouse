@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { BorrowsPanel } from '@/components/borrows-panel';
+import { BorrowsPanel } from '@/components/dashboard/borrows-panel';
 import type { MyLend } from '@/app/actions/lends';
 
 // Wraps the cross-group BorrowsPanel in a modal, opened from the dashboard's

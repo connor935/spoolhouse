@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SlidersHorizontal, X } from 'lucide-react';
-import { SearchInput } from '@/components/search-input';
-import { SelectField } from '@/components/select-field';
-import { MaterialPropertyFilter } from '@/components/material-property-filter';
+import { SearchInput } from '@/components/common/search-input';
+import { SelectField } from '@/components/common/select-field';
+import { MaterialPropertyFilter } from '@/components/materials/material-property-filter';
 import { ALL_TYPES, TYPE_ITEMS } from '@/lib/catalog-filter-items';
 import {
   anyConstraintActive,

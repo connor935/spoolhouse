@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-import { SelectField } from '@/components/select-field';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { SelectField } from '@/components/common/select-field';
 import { Check, Pencil, Plus, ShieldCheck, Trash2, X } from 'lucide-react';
 import {
   deleteMaterialProperty,

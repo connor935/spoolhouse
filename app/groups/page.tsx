@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { getMyGroups } from '@/app/actions/groups';
-import { CreateGroupForm } from '@/components/create-group-form';
-import { JoinGroupForm } from '@/components/join-group-form';
-import { PageShell } from '@/components/page-shell';
+import { CreateGroupForm } from '@/components/groups/create-group-form';
+import { JoinGroupForm } from '@/components/groups/join-group-form';
+import { PageShell } from '@/components/layout/page-shell';
 import { requireUser } from '@/lib/auth-session';
 
 export const dynamic = 'force-dynamic';

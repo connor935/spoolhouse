@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
+import { ManufacturerNameFields } from '@/components/common/manufacturer-name-fields';
 import { updateSpoolType } from '@/app/actions/spool-types';
 import { describeReviewStatus } from '@/lib/describe-review-status';
 import type { SpoolType } from '@/lib/db/schema';

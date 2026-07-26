@@ -1,8 +1,8 @@
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { LiveRefresh } from '@/components/live-refresh';
-import { ThemeProvider } from '@/components/theme-provider';
+import { LiveRefresh } from '@/components/layout/live-refresh';
+import { ThemeProvider } from '@/components/layout/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 

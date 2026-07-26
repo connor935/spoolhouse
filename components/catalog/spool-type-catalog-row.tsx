@@ -1,7 +1,7 @@
 'use client';
 
-import { CatalogRow } from '@/components/catalog-row';
-import { EditSpoolTypeDialog } from '@/components/edit-spool-type-dialog';
+import { CatalogRow } from '@/components/catalog/catalog-row';
+import { EditSpoolTypeDialog } from '@/components/catalog/edit-spool-type-dialog';
 import {
   approveSpoolType,
   deleteSpoolType,

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ConfirmDialog } from '@/components/confirm-dialog';
+import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import {
   Check,
   ChevronDown,

@@ -1,8 +1,8 @@
 import { asc } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
-import { CreateUserForm } from '@/components/create-user-form';
-import { PageShell } from '@/components/page-shell';
-import { TrustedContributorToggle } from '@/components/trusted-contributor-toggle';
+import { CreateUserForm } from '@/components/admin/create-user-form';
+import { PageShell } from '@/components/layout/page-shell';
+import { TrustedContributorToggle } from '@/components/admin/trusted-contributor-toggle';
 import { passwordMinLength } from '@/lib/auth';
 import { requireAdmin } from '@/lib/auth-session';
 import { db } from '@/lib/db';

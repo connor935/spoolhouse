@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { MaterialCatalog } from '@/components/material-catalog';
-import { PageShell } from '@/components/page-shell';
+import { MaterialCatalog } from '@/components/catalog/material-catalog';
+import { PageShell } from '@/components/layout/page-shell';
 import { getAllMaterialsForAdmin } from '@/app/actions/materials';
 import { getPropertyDefinitions } from '@/app/actions/properties';
 import { requireAdmin } from '@/lib/auth-session';

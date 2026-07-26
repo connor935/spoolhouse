@@ -5,16 +5,16 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Package, UsersRound, ArrowLeftRight } from 'lucide-react';
-import { BorrowsDialog } from '@/components/warehouseDashboard/borrows-dialog';
-import { GroupStock } from '@/components/group-stock';
+import { BorrowsDialog } from '@/components/dashboard/borrows-dialog';
+import { GroupStock } from '@/components/groups/group-stock';
 import {
   InventoryFilter,
   InventoryFilterPanel,
   filtersActive,
   type InventoryFilters,
-} from '@/components/inventory-filter';
-import { MaterialCard } from '@/components/warehouseDashboard/material-card';
-import { SpoolFormDialog } from '@/components/warehouseDashboard/spoolForm/spool-form-dialog';
+} from '@/components/dashboard/inventory-filter';
+import { MaterialCard } from '@/components/dashboard/material-card';
+import { SpoolFormDialog } from '@/components/dashboard/spool-form/spool-form-dialog';
 import { useUrlSyncedFilters } from '@/hooks/use-url-synced-filters';
 import { filterGroupStock, visibleMaterialEntries } from '@/lib/inventory-filter';
 import type { MaterialInventory, SpoolView } from '@/lib/filament';
@@ -23,7 +23,7 @@ import type { Material, Property, SpoolType } from '@/lib/db/schema';
 import type { MaterialPropertyView } from '@/lib/material-properties';
 import type { SharedSpool } from '@/lib/sharing';
 import Link from 'next/link';
-import { AppHeader } from '../app-header';
+import { AppHeader } from '@/components/layout/app-header';
 import { MaterialDialog } from './material-dialog';
 
 // Top-level tabs: your own stock, or one per group. Status (in-stock/empty/all)

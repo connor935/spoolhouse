@@ -1,9 +1,9 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { CatalogRow } from '@/components/catalog-row';
-import { EditMaterialDialog } from '@/components/edit-material-dialog';
-import { MaterialPropertiesSection } from '@/components/warehouseDashboard/material-properties-section';
+import { CatalogRow } from '@/components/catalog/catalog-row';
+import { EditMaterialDialog } from '@/components/catalog/edit-material-dialog';
+import { MaterialPropertiesSection } from '@/components/materials/material-properties-section';
 import {
   approveMaterial,
   deleteMaterial,

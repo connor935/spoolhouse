@@ -1,5 +1,5 @@
-import { PageShell } from '@/components/page-shell';
-import { PropertyAdminList } from '@/components/property-admin-list';
+import { PageShell } from '@/components/layout/page-shell';
+import { PropertyAdminList } from '@/components/admin/property-admin-list';
 import { getPropertyDefinitionsForAdmin } from '@/app/actions/properties';
 import { requireAdmin } from '@/lib/auth-session';
 

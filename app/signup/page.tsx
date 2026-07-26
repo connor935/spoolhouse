@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { SignupForm } from '@/components/signup-form';
+import { SignupForm } from '@/components/auth/signup-form';
 import { passwordMinLength, signupAllowed } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';

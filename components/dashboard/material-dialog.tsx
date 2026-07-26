@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
-import { MaterialPropertiesSection } from '@/components/warehouseDashboard/material-properties-section';
+import { MaterialPropertiesSection } from '@/components/materials/material-properties-section';
 import {
   DEFAULT_MATERIAL_COLOR,
   formatWeight,

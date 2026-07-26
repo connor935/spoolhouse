@@ -1,7 +1,7 @@
 'use client';
 
-import { Catalog } from '@/components/catalog';
-import { SpoolTypeCatalogRow } from '@/components/spool-type-catalog-row';
+import { Catalog } from '@/components/catalog/catalog';
+import { SpoolTypeCatalogRow } from '@/components/catalog/spool-type-catalog-row';
 import type { SpoolTypeWithUsage } from '@/app/actions/spool-types';
 import type { SpoolType } from '@/lib/db/schema';
 

@@ -12,8 +12,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { SelectField } from '@/components/select-field';
-import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
+import { SelectField } from '@/components/common/select-field';
+import { ManufacturerNameFields } from '@/components/common/manufacturer-name-fields';
 import { updateMaterial } from '@/app/actions/materials';
 import { DEFAULT_MATERIAL_COLOR } from '@/lib/filament';
 import { FILAMENT_TYPE_ITEMS } from '@/lib/catalog-filter-items';

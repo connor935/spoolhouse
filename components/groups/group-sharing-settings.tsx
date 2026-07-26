@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { SelectField } from '@/components/select-field';
+import { SelectField } from '@/components/common/select-field';
 import { updateShareSettings } from '@/app/actions/groups';
 import type { Material } from '@/lib/db/schema';
 import { useAsyncAction } from '@/hooks/use-async-action';

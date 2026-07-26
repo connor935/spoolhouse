@@ -3,12 +3,12 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ManufacturerNameFields } from '@/components/manufacturer-name-fields';
-import { RequestSubmitButton } from '@/components/request-submit-button';
+import { ManufacturerNameFields } from '@/components/common/manufacturer-name-fields';
+import { RequestSubmitButton } from '@/components/common/request-submit-button';
 import { Plus, X } from 'lucide-react';
 import { requestSpoolType } from '@/app/actions/spool-types';
 import { requestEntityToast } from '@/lib/request-entity-toast';
-import { SpoolTypePicker } from '@/components/warehouseDashboard/spoolForm/spool-type-picker';
+import { SpoolTypePicker } from '@/components/dashboard/spool-form/spool-type-picker';
 import type { SpoolType } from '@/lib/db/schema';
 import { toast } from 'sonner';
 

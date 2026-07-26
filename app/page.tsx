@@ -5,7 +5,7 @@ import { getUsableMaterials } from '@/app/actions/materials';
 import { getUnreadCount } from '@/app/actions/notifications';
 import { getPropertyDefinitions } from '@/app/actions/properties';
 import { getUsableSpoolTypes } from '@/app/actions/spool-types';
-import { WarehouseDashboard } from '@/components/warehouseDashboard/warehouse-dashboard';
+import { WarehouseDashboard } from '@/components/dashboard/warehouse-dashboard';
 import { requireUser } from '@/lib/auth-session';
 import { groupInventory } from '@/lib/filament';
 import { getPropertiesForMaterials } from '@/lib/material-properties';
