@@ -11,6 +11,7 @@ Interactive **Swagger UI**: `/api-docs` (sign in first). Machine-readable OpenAP
 A physical **spool** references a global **material** (manufacturer, name, filament type,
 colour) and a **spool type** (the empty-spool weight). Remaining filament =
 `measuredTotalWeightGrams − spoolType.emptyWeightGrams`. All weights are gram integers.
+All resource ids (`materialId`, `spoolTypeId`, spool `:id`, …) are **UUID strings**, not numbers.
 
 ## Authentication
 
@@ -30,7 +31,7 @@ Missing/invalid tokens get `401 {"error":{"code":"unauthorized",…}}`. Revoking
 | Method & path | Purpose |
 |---|---|
 | `GET /api/v1/me` | Token check; returns id, name, email, role |
-| `GET /api/v1/materials` | Materials usable by the owner (approved + own pending) |
+| `GET /api/v1/materials` | Materials usable by the owner (approved + own pending), each with read-only datasheet `properties` |
 | `GET /api/v1/spool-types` | Spool types usable by the owner |
 | `GET /api/v1/spools` | All own spools (computed amounts + material + tagUid) |
 | `POST /api/v1/spools` | Create a spool from `materialId` + `spoolTypeId` + weights |
@@ -39,6 +40,31 @@ Missing/invalid tokens get `401 {"error":{"code":"unauthorized",…}}`. Revoking
 | `DELETE /api/v1/spools/:id` | Delete (204) |
 | `PUT /api/v1/spools/:id/weight` | Re-weigh by id: `{"measuredTotalWeightGrams": n}` |
 | `POST /api/v1/spools/weigh` | **Register-or-refresh by NFC tag** — the scale/reader call |
+
+### `GET /api/v1/materials` (datasheet properties)
+
+Each material carries a `properties` array of datasheet values (density, diameters,
+temps, and anything an admin has defined — tensile strength, hardness, …). Values are
+community-editable in the app; `verified` is `false` until an admin reviews one.
+
+```json
+{
+  "materials": [
+    {
+      "id": "…",
+      "manufacturer": "Prusament",
+      "name": "PLA Galaxy Black",
+      "filamentType": "PLA",
+      "color": "#1c1c2e",
+      "status": "approved",
+      "properties": [
+        { "key": "density", "name": "Density", "unit": "g/cm³", "value": "1.24", "verified": true },
+        { "key": "extruder_temp", "name": "Extruder temp", "unit": "°C", "value": "215", "verified": true }
+      ]
+    }
+  ]
+}
+```
 
 ### `POST /api/v1/spools/weigh` (the scale endpoint)
 

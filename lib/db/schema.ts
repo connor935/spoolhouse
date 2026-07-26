@@ -1,38 +1,57 @@
-import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import { randomUUID } from 'node:crypto';
+import {
+  boolean,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+} from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
+
+// All app-table primary keys are random UUIDs (not sequential integers): they
+// surface in the REST API (/api/v1/spools/:id etc.) and URLs, so unguessable
+// ids avoid enumeration/leaking counts. `user`/auth tables keep better-auth's
+// own (already random) ids. Generated in JS via $defaultFn on insert.
 
 export * from './auth-schema';
 
 // Global spool-type catalog: admin-curated, users can submit requests.
 // A pending type is immediately usable by its submitter, visible to others
 // only once approved.
-export const spoolTypes = sqliteTable('spool_types', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const spoolTypes = pgTable('spool_types', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   manufacturer: text('manufacturer').notNull(),
   name: text('name').notNull(),
   // Weight of the bare, empty spool (g)
   emptyWeightGrams: integer('empty_weight_grams').notNull(),
   status: text('status').notNull().default('pending'), // approved | pending | rejected
+  // Stable identity for entries seeded from SpoolmanDB (import idempotence).
+  // NULL for user/admin-created entries. See scripts/import-spoolmandb.ts.
+  externalKey: text('external_key').unique(),
   submittedById: text('submitted_by_id').references(() => user.id, {
     onDelete: 'set null',
   }),
   reviewedById: text('reviewed_by_id').references(() => user.id, {
     onDelete: 'set null',
   }),
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
 // Global material catalog: curated exactly like spool types — users request,
 // admin approves; a pending material is immediately usable by its submitter.
 // Many users' spools can reference the same material.
-export const materials = sqliteTable('materials', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const materials = pgTable('materials', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   manufacturer: text('manufacturer').notNull(),
   name: text('name').notNull(),
   filamentType: text('filament_type').notNull(),
@@ -44,26 +63,86 @@ export const materials = sqliteTable('materials', {
   reviewedById: text('reviewed_by_id').references(() => user.id, {
     onDelete: 'set null',
   }),
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  // Stable identity for entries seeded from SpoolmanDB (import idempotence).
+  // NULL for user/admin-created entries. See scripts/import-spoolmandb.ts.
+  externalKey: text('external_key').unique(),
+  // Datasheet reference data (density, diameters, temps, and anything added
+  // later) lives in the generic material_properties table below, not here.
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
-// A physical spool of a material. DB table name stays "filaments" (SQLite
-// table renames fight drizzle-kit's interactive prompts); TS calls it spools.
-export const spools = sqliteTable('filaments', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+// Admin-curated property definitions (small stable vocabulary, no review
+// flow). `key` is a stable machine identifier ('density', 'extruder_temp', …)
+// used by migrations and the SpoolmanDB importer — set at creation, never
+// edited afterwards.
+export const properties = pgTable('properties', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  key: text('key').notNull().unique(),
+  name: text('name').notNull(), // display label, e.g. "Tensile strength"
+  unit: text('unit'), // e.g. "MPa", "°C"; NULL for unitless
+  description: text('description'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// Wiki-style datasheet values: material × property → free-text value (unit
+// lives on the definition). Any logged-in user may add/edit; a non-admin
+// edit resets `verified` until an admin verifies it. Import/migration-seeded
+// rows are verified with submittedById NULL.
+export const materialProperties = pgTable(
+  'material_properties',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    materialId: text('material_id')
+      .notNull()
+      .references(() => materials.id, { onDelete: 'cascade' }),
+    propertyId: text('property_id')
+      .notNull()
+      .references(() => properties.id, { onDelete: 'cascade' }),
+    value: text('value').notNull(),
+    verified: boolean('verified').notNull().default(false),
+    // Who last set the value; NULL for seeded rows or deleted users.
+    submittedById: text('submitted_by_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [unique().on(t.materialId, t.propertyId)]
+);
+
+// A physical spool of a material. DB table name stays "filaments" (renaming it
+// would churn migrations and the REST API's history for no gain); TS calls it
+// spools.
+export const spools = pgTable('filaments', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  materialId: integer('material_id')
+  materialId: text('material_id')
     .notNull()
     .references(() => materials.id),
   // Empty-spool weight comes from the referenced spool type
-  spoolTypeId: integer('spool_type_id')
+  spoolTypeId: text('spool_type_id')
     .notNull()
     .references(() => spoolTypes.id),
   // Nominal amount of filament on a full spool (g) - used for % remaining
@@ -73,18 +152,20 @@ export const spools = sqliteTable('filaments', {
   // Optional NFC tag id (e.g. Bambu tray UID, hex) so an external client / scale
   // can register-or-refresh this spool by its tag. Unique per user (enforced in SQL).
   tagUid: text('tag_uid'),
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
 // Long-lived bearer tokens for the external REST API (/api/v1). Only the
 // SHA-256 hash is stored; the plaintext is shown once at creation on /account.
-export const apiTokens = sqliteTable('api_tokens', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const apiTokens = pgTable('api_tokens', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
@@ -92,10 +173,10 @@ export const apiTokens = sqliteTable('api_tokens', {
   tokenHash: text('token_hash').notNull().unique(),
   // First characters of the plaintext token, for display only (e.g. "sph_a1b2c3d4")
   tokenPrefix: text('token_prefix').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+    .defaultNow(),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
 });
 
 export type ApiToken = typeof apiTokens.$inferSelect;
@@ -105,30 +186,38 @@ export type Material = typeof materials.$inferSelect;
 export type NewMaterial = typeof materials.$inferInsert;
 export type SpoolType = typeof spoolTypes.$inferSelect;
 export type NewSpoolType = typeof spoolTypes.$inferInsert;
+export type Property = typeof properties.$inferSelect;
+export type NewProperty = typeof properties.$inferInsert;
+export type MaterialProperty = typeof materialProperties.$inferSelect;
+export type NewMaterialProperty = typeof materialProperties.$inferInsert;
 
 // Invite-only groups of nearby users that pool their (selectively) shared
 // spools into a browsable group stock — see .claude/epic-4.md.
-export const groups = sqliteTable('groups', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const groups = pgTable('groups', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   name: text('name').notNull(),
   ownerId: text('owner_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   // Single reusable, rotatable invite code (Discord-style)
   inviteCode: text('invite_code').notNull().unique(),
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
-export const groupMembers = sqliteTable(
+export const groupMembers = pgTable(
   'group_members',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    groupId: integer('group_id')
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    groupId: text('group_id')
       .notNull()
       .references(() => groups.id, { onDelete: 'cascade' }),
     userId: text('user_id')
@@ -137,9 +226,9 @@ export const groupMembers = sqliteTable(
     role: text('role').notNull().default('member'), // owner | member
     // Default 'all' on join (Q: decided) — all/whitelist/blacklist, see filamentShareOverrides
     shareMode: text('share_mode').notNull().default('all'), // all | whitelist | blacklist
-    joinedAt: integer('joined_at', { mode: 'timestamp' })
+    joinedAt: timestamp('joined_at', { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .defaultNow(),
   },
   (table) => [unique().on(table.groupId, table.userId)]
 );
@@ -147,50 +236,56 @@ export const groupMembers = sqliteTable(
 // Per-member override list at MATERIAL granularity ("my spools of this
 // material"). Meaning depends on the member's shareMode:
 // whitelist -> these ARE shared; blacklist -> these are EXCLUDED.
-export const filamentShareOverrides = sqliteTable(
+export const filamentShareOverrides = pgTable(
   'filament_share_overrides',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    groupMemberId: integer('group_member_id')
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    groupMemberId: text('group_member_id')
       .notNull()
       .references(() => groupMembers.id, { onDelete: 'cascade' }),
-    materialId: integer('material_id')
+    materialId: text('material_id')
       .notNull()
       .references(() => materials.id, { onDelete: 'cascade' }),
   },
   (table) => [unique().on(table.groupMemberId, table.materialId)]
 );
 
-export const lends = sqliteTable('lends', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const lends = pgTable('lends', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   // References a physical spool (row in the "filaments" table)
-  filamentId: integer('filament_id')
+  filamentId: text('filament_id')
     .notNull()
     .references(() => spools.id, { onDelete: 'cascade' }),
   borrowerId: text('borrower_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  groupId: integer('group_id')
+  groupId: text('group_id')
     .notNull()
     .references(() => groups.id, { onDelete: 'cascade' }),
   status: text('status').notNull().default('requested'), // requested | active | declined | returned
-  requestedAt: integer('requested_at', { mode: 'timestamp' })
+  requestedAt: timestamp('requested_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  respondedAt: integer('responded_at', { mode: 'timestamp' }),
-  returnedAt: integer('returned_at', { mode: 'timestamp' }),
-  createdAt: integer('created_at', { mode: 'timestamp' })
+    .defaultNow(),
+  respondedAt: timestamp('responded_at', { withTimezone: true }),
+  returnedAt: timestamp('returned_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
 // In-app notifications (bell + /notifications). Actor/filament/group names are
 // denormalized snapshots so notifications survive deletions of their sources.
-export const notifications = sqliteTable('notifications', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const notifications = pgTable('notifications', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
   // Recipient
   userId: text('user_id')
     .notNull()
@@ -200,11 +295,11 @@ export const notifications = sqliteTable('notifications', {
   actorName: text('actor_name').notNull(),
   filamentName: text('filament_name').notNull(),
   groupName: text('group_name').notNull(),
-  lendId: integer('lend_id'),
-  readAt: integer('read_at', { mode: 'timestamp' }),
-  createdAt: integer('created_at', { mode: 'timestamp' })
+  lendId: text('lend_id'),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 });
 
 export type Group = typeof groups.$inferSelect;

@@ -1,6 +1,6 @@
-import { AccountForms } from '@/components/account-forms';
-import { ApiTokensSection } from '@/components/api-tokens-section';
-import { PageShell } from '@/components/page-shell';
+import { AccountForms } from '@/components/account/account-forms';
+import { ApiTokensSection } from '@/components/account/api-tokens-section';
+import { PageShell } from '@/components/layout/page-shell';
 import { getApiTokens } from '@/app/actions/api-tokens';
 import { passwordMinLength } from '@/lib/auth';
 import { requireUser } from '@/lib/auth-session';

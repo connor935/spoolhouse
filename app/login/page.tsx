@@ -1,4 +1,4 @@
-import { LoginForm } from '@/components/login-form';
+import { LoginForm } from '@/components/auth/login-form';
 import { signupAllowed } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';

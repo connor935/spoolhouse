@@ -1,41 +1,40 @@
-import Database from 'better-sqlite3';
-import {
-  drizzle,
-  type BetterSQLite3Database,
-} from 'drizzle-orm/better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { databaseUrl } from './local.mjs';
 import * as schema from './schema';
 
-export const DB_PATH = process.env.DATABASE_PATH ?? 'data/spoolhouse.db';
+// Postgres everywhere, one driver: DATABASE_URL points at a real server in
+// production, and at the local PGlite host process in development (see
+// lib/db/local.mjs and scripts/pglite-server.mjs). Dev and prod therefore run
+// identical SQL through identical client code.
+//
+// A Pool opens no connection until it is queried, so importing this module is
+// cheap and side-effect-free — which is what lets `next build` collect page data
+// from ~15 worker processes without any of them touching a database.
+const pool = new Pool({ connectionString: databaseUrl() });
 
-// `next build` collects page data from ~15 worker processes that each import
-// this module. During the build they must not touch the real DB file (they'd
-// race on creating/locking it, and there's nothing to query), so use a private
-// in-memory DB per worker and skip migrations. Migrations run at server start.
-const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
+// Singleton across Next.js dev hot reloads.
+const globalForDb = globalThis as unknown as {
+  db?: NodePgDatabase<typeof schema>;
+  migrated?: Promise<void>;
+};
 
-function createDb(): BetterSQLite3Database<typeof schema> {
-  if (isBuild) {
-    return drizzle(new Database(':memory:'), { schema });
-  }
+export const db = (globalForDb.db ??= drizzle(pool, { schema }));
 
-  mkdirSync(path.dirname(path.resolve(DB_PATH)), { recursive: true });
-  const sqlite = new Database(DB_PATH);
-  sqlite.pragma('journal_mode = WAL');
-  sqlite.pragma('busy_timeout = 5000');
-  const db = drizzle(sqlite, { schema });
-  // Skip migrations for CLI scripts that only touch data on an already-migrated
-  // DB (SPOOLHOUSE_SKIP_MIGRATE=1). Otherwise apply them on startup.
-  if (process.env.SPOOLHOUSE_SKIP_MIGRATE !== '1') {
-    migrate(db, { migrationsFolder: path.join(process.cwd(), 'drizzle') });
-  }
-  return db;
+// Applies pending migrations, once per process. Called from instrumentation.ts
+// before the server serves requests, and by the CLI scripts, so a fresh checkout
+// works without a separate migrate step.
+export function runMigrations(): Promise<void> {
+  return (globalForDb.migrated ??= migrate(db, {
+    migrationsFolder: path.join(process.cwd(), 'drizzle'),
+  }));
 }
 
-// Singleton across Next.js dev hot reloads
-const globalForDb = globalThis as unknown as {
-  db?: BetterSQLite3Database<typeof schema>;
-};
-export const db = (globalForDb.db ??= createDb());
+// The pool holds the event loop open. The server never needs this; the CLI
+// scripts call it so they exit.
+export function closeDb(): Promise<void> {
+  return pool.end();
+}

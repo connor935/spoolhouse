@@ -5,14 +5,16 @@ import { lends, notifications } from '@/lib/db/schema';
 import { requireUser } from '@/lib/auth-session';
 import { and, count, desc, eq, isNull } from 'drizzle-orm';
 
+function unreadWhere(userId: string) {
+  return and(eq(notifications.userId, userId), isNull(notifications.readAt));
+}
+
 export async function getUnreadCount(): Promise<number> {
   const user = await requireUser();
   const [row] = await db
     .select({ value: count() })
     .from(notifications)
-    .where(
-      and(eq(notifications.userId, user.id), isNull(notifications.readAt))
-    );
+    .where(unreadWhere(user.id));
   return row?.value ?? 0;
 }
 
@@ -38,7 +40,5 @@ export async function markAllRead() {
   await db
     .update(notifications)
     .set({ readAt: new Date() })
-    .where(
-      and(eq(notifications.userId, user.id), isNull(notifications.readAt))
-    );
+    .where(unreadWhere(user.id));
 }

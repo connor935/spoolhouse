@@ -1,29 +1,31 @@
 import Link from 'next/link';
-import { MaterialReview } from '@/components/material-review';
-import { PageShell } from '@/components/page-shell';
-import {
-  getAllMaterialsForAdmin,
-  getPendingMaterials,
-} from '@/app/actions/materials';
+import { MaterialCatalog } from '@/components/catalog/material-catalog';
+import { PageShell } from '@/components/layout/page-shell';
+import { getAllMaterialsForAdmin } from '@/app/actions/materials';
+import { getPropertyDefinitions } from '@/app/actions/properties';
 import { requireAdmin } from '@/lib/auth-session';
+import { getPropertiesForMaterials } from '@/lib/material-properties';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminMaterialsPage() {
-  await requireAdmin();
-  const [pending, all] = await Promise.all([
-    getPendingMaterials(),
+  const admin = await requireAdmin();
+  const [materials, propertyDefinitions] = await Promise.all([
     getAllMaterialsForAdmin(),
+    getPropertyDefinitions(),
   ]);
+  const propertiesByMaterialId = await getPropertiesForMaterials(
+    materials.map((m) => m.id)
+  );
 
   return (
     <PageShell
-      title="Review materials"
+      title="Manage materials"
       description={
         <>
-          Pending submissions. Adjust fields before approving if needed;
-          approved materials become visible to all users. See the read-only view
-          on{' '}
+          Search the full catalog, approve/reject submissions, edit or delete any
+          entry. Use the status filter (or “Review pending”) to see the queue. The
+          read-only view is on{' '}
           <Link href="/materials" className="hover:text-foreground underline">
             the materials page
           </Link>
@@ -31,27 +33,13 @@ export default async function AdminMaterialsPage() {
         </>
       }
     >
-      {pending.length === 0 ? (
-        <div className="border-border bg-card/50 text-muted-foreground mt-6 rounded-lg border border-dashed px-6 py-12 text-center text-sm">
-          Nothing to review — all materials are handled.
-        </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-4">
-          {pending.map((m) => (
-            <MaterialReview key={m.id} material={m} mode="review" />
-          ))}
-        </div>
-      )}
-
-      <h2 className="mt-10 font-semibold">Full catalog</h2>
-      <p className="text-muted-foreground mt-1 text-sm">
-        Edit any material or delete ones no spool references.
-      </p>
-      <div className="mt-4 flex flex-col gap-4">
-        {all.map((m) => (
-          <MaterialReview key={m.id} material={m} mode="manage" />
-        ))}
-      </div>
+      <MaterialCatalog
+        materials={materials}
+        currentUserId={admin.id}
+        isAdmin
+        propertiesByMaterialId={propertiesByMaterialId}
+        propertyDefinitions={propertyDefinitions}
+      />
     </PageShell>
   );
 }

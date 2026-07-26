@@ -1,6 +1,6 @@
 import { Bell } from 'lucide-react';
-import { NotificationsList } from '@/components/notifications-list';
-import { PageShell } from '@/components/page-shell';
+import { NotificationsList } from '@/components/notifications/notifications-list';
+import { PageShell } from '@/components/layout/page-shell';
 import { getNotifications, markAllRead } from '@/app/actions/notifications';
 import { requireUser } from '@/lib/auth-session';
 

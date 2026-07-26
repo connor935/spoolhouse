@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
-import { AuthCard } from '@/components/auth-card';
-import { ResetPasswordForm } from '@/components/reset-password-form';
+import { AuthCard } from '@/components/auth/auth-card';
+import { ResetPasswordForm } from '@/components/auth/reset-password-form';
 import { passwordMinLength } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';

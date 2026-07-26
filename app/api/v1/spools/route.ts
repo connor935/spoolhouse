@@ -6,13 +6,8 @@ import { apiError, authenticateApiRequest, unauthorized } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
 import { isSpoolTypeUsable } from '@/lib/spool-type-usable';
 import { isMaterialUsable } from '@/lib/material-usable';
-import {
-  getOwnedSpool,
-  listOwnedSpools,
-  parseSpoolBody,
-  serializeSpool,
-  type SpoolBody,
-} from './shared';
+import { firstIssueMessage, spoolBodySchema } from '@/lib/schemas';
+import { getOwnedSpool, listOwnedSpools, serializeSpool } from './shared';
 
 // GET /api/v1/spools — the token owner's spools, newest first.
 export async function GET(request: Request) {
@@ -36,9 +31,11 @@ export async function POST(request: Request) {
   } catch {
     return apiError(400, 'invalid_json', 'Request body must be valid JSON');
   }
-  const parsed = parseSpoolBody(body, { partial: false });
-  if (!parsed.ok) return apiError(400, 'invalid_input', parsed.message);
-  const input = parsed.value as SpoolBody;
+  const parsed = spoolBodySchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError(400, 'invalid_input', firstIssueMessage(parsed.error));
+  }
+  const input = parsed.data;
 
   if (!(await isMaterialUsable(input.materialId, owner.id))) {
     return apiError(400, 'invalid_input', 'Unknown or unavailable material');

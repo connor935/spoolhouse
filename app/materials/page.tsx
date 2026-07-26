@@ -1,22 +1,23 @@
-import { MaterialCatalogRow } from '@/components/material-catalog-row';
-import { PageShell } from '@/components/page-shell';
-import { RequestMaterialForm } from '@/components/request-material-form';
+import { MaterialCatalog } from '@/components/catalog/material-catalog';
+import { PageShell } from '@/components/layout/page-shell';
+import { RequestMaterialForm } from '@/components/catalog/request-material-form';
 import { getMaterialCatalog } from '@/app/actions/materials';
+import { getPropertyDefinitions } from '@/app/actions/properties';
 import { requireUser } from '@/lib/auth-session';
+import { getPropertiesForMaterials } from '@/lib/material-properties';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MaterialsPage() {
   const user = await requireUser();
   const isAdmin = user.role === 'admin';
-  const catalog = await getMaterialCatalog();
-
-  const byManufacturer = new Map<string, typeof catalog>();
-  for (const m of catalog) {
-    const list = byManufacturer.get(m.manufacturer) ?? [];
-    list.push(m);
-    byManufacturer.set(m.manufacturer, list);
-  }
+  const [catalog, propertyDefinitions] = await Promise.all([
+    getMaterialCatalog(),
+    getPropertyDefinitions(),
+  ]);
+  const propertiesByMaterialId = await getPropertiesForMaterials(
+    catalog.map((m) => m.id)
+  );
 
   return (
     <PageShell
@@ -27,25 +28,12 @@ export default async function MaterialsPage() {
           : 'Global material catalog. Missing one? Request it below — you can use it immediately while an admin reviews it.'
       }
     >
-      {[...byManufacturer.entries()].map(([manufacturer, list]) => (
-        <section
-          key={manufacturer}
-          className="border-border bg-card mt-6 rounded-lg border"
-        >
-          <h2 className="border-border border-b px-6 py-3 font-semibold">
-            {manufacturer}
-          </h2>
-          <ul className="divide-border divide-y">
-            {list.map((m) => (
-              <MaterialCatalogRow
-                key={m.id}
-                material={m}
-                currentUserId={user.id}
-              />
-            ))}
-          </ul>
-        </section>
-      ))}
+      <MaterialCatalog
+        materials={catalog}
+        currentUserId={user.id}
+        propertiesByMaterialId={propertiesByMaterialId}
+        propertyDefinitions={propertyDefinitions}
+      />
 
       <section className="border-border bg-card mt-6 rounded-lg border p-6">
         <h2 className="font-semibold">

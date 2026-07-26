@@ -6,12 +6,8 @@ import { apiError, authenticateApiRequest, unauthorized } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
 import { isSpoolTypeUsable } from '@/lib/spool-type-usable';
 import { isMaterialUsable } from '@/lib/material-usable';
-import {
-  getOwnedSpool,
-  parseId,
-  parseSpoolBody,
-  serializeSpool,
-} from '../shared';
+import { firstIssueMessage, spoolBodySchema } from '@/lib/schemas';
+import { getOwnedSpool, parseId, serializeSpool } from '../shared';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -41,9 +37,11 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   } catch {
     return apiError(400, 'invalid_json', 'Request body must be valid JSON');
   }
-  const parsed = parseSpoolBody(body, { partial: true });
-  if (!parsed.ok) return apiError(400, 'invalid_input', parsed.message);
-  if (Object.keys(parsed.value).length === 0) {
+  const parsed = spoolBodySchema.partial().safeParse(body);
+  if (!parsed.success) {
+    return apiError(400, 'invalid_input', firstIssueMessage(parsed.error));
+  }
+  if (Object.keys(parsed.data).length === 0) {
     return apiError(
       400,
       'invalid_input',
@@ -51,21 +49,21 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     );
   }
   if (
-    parsed.value.materialId !== undefined &&
-    !(await isMaterialUsable(parsed.value.materialId, owner.id))
+    parsed.data.materialId !== undefined &&
+    !(await isMaterialUsable(parsed.data.materialId, owner.id))
   ) {
     return apiError(400, 'invalid_input', 'Unknown or unavailable material');
   }
   if (
-    parsed.value.spoolTypeId !== undefined &&
-    !(await isSpoolTypeUsable(parsed.value.spoolTypeId, owner.id))
+    parsed.data.spoolTypeId !== undefined &&
+    !(await isSpoolTypeUsable(parsed.data.spoolTypeId, owner.id))
   ) {
     return apiError(400, 'invalid_input', 'Unknown or unavailable spool type');
   }
 
   const result = await db
     .update(spools)
-    .set({ ...parsed.value, updatedAt: new Date() })
+    .set({ ...parsed.data, updatedAt: new Date() })
     .where(and(eq(spools.id, id), eq(spools.userId, owner.id)))
     .returning({ id: spools.id });
   if (result.length === 0) return notFound();

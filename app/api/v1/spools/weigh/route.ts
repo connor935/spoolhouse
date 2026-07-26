@@ -9,6 +9,7 @@ import {
   type ApiUser,
 } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
+import { firstIssueMessage, measuredWeightSchema } from '@/lib/schemas';
 import { getOwnedSpool, getOwnedSpoolByTag, serializeSpool } from '../shared';
 
 // Register-or-refresh a spool by its NFC tag id — the endpoint a scale/reader
@@ -29,18 +30,17 @@ export async function POST(request: Request) {
 
   const tagUid = typeof b.tagUid === 'string' ? b.tagUid.trim() : '';
   if (!tagUid) return apiError(400, 'invalid_input', 'tagUid is required');
-  if (
-    typeof b.measuredTotalWeightGrams !== 'number' ||
-    !Number.isFinite(b.measuredTotalWeightGrams) ||
-    Math.round(b.measuredTotalWeightGrams) < 0
-  ) {
+  const parsedWeight = measuredWeightSchema.safeParse(
+    b.measuredTotalWeightGrams
+  );
+  if (!parsedWeight.success) {
     return apiError(
       400,
       'invalid_input',
-      'measuredTotalWeightGrams must be a number ≥ 0 (grams)'
+      firstIssueMessage(parsedWeight.error)
     );
   }
-  const measured = Math.round(b.measuredTotalWeightGrams);
+  const measured = parsedWeight.data;
 
   // Refresh path: tag already registered for this user
   const existing = await getOwnedSpoolByTag(tagUid, owner.id);
@@ -119,7 +119,7 @@ async function findOrCreateMaterial(
     filamentType: string;
     color: string | null;
   }
-): Promise<number> {
+): Promise<string> {
   // A material's identity includes its colour (e.g. "Galaxy Black"), so a
   // different colour of the same product is a different material — match on
   // colour too (NULL-safe) rather than lumping all colours together.
@@ -150,7 +150,7 @@ async function findOrCreateMaterial(
 async function findOrCreateSpoolType(
   owner: ApiUser,
   st: { manufacturer: string; name: string; emptyWeightGrams: number }
-): Promise<number> {
+): Promise<string> {
   const [found] = await db
     .select({ id: spoolTypes.id })
     .from(spoolTypes)

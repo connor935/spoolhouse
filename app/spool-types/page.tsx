@@ -1,6 +1,6 @@
-import { PageShell } from '@/components/page-shell';
-import { RequestSpoolTypeForm } from '@/components/request-spool-type-form';
-import { SpoolTypeCatalogRow } from '@/components/spool-type-catalog-row';
+import { PageShell } from '@/components/layout/page-shell';
+import { RequestSpoolTypeForm } from '@/components/catalog/request-spool-type-form';
+import { SpoolTypeCatalog } from '@/components/catalog/spool-type-catalog';
 import { getSpoolTypeCatalog } from '@/app/actions/spool-types';
 import { requireUser } from '@/lib/auth-session';
 
@@ -11,13 +11,6 @@ export default async function SpoolTypesPage() {
   const isAdmin = user.role === 'admin';
   const types = await getSpoolTypeCatalog();
 
-  const byManufacturer = new Map<string, typeof types>();
-  for (const t of types) {
-    const list = byManufacturer.get(t.manufacturer) ?? [];
-    list.push(t);
-    byManufacturer.set(t.manufacturer, list);
-  }
-
   return (
     <PageShell
       title="Spool catalog"
@@ -27,25 +20,7 @@ export default async function SpoolTypesPage() {
           : 'Global spool types and their empty weights. Missing one? Request it below — you can use it immediately while an admin reviews it.'
       }
     >
-      {[...byManufacturer.entries()].map(([manufacturer, list]) => (
-        <section
-          key={manufacturer}
-          className="border-border bg-card mt-6 rounded-lg border"
-        >
-          <h2 className="border-border border-b px-6 py-3 font-semibold">
-            {manufacturer}
-          </h2>
-          <ul className="divide-border divide-y">
-            {list.map((t) => (
-              <SpoolTypeCatalogRow
-                key={t.id}
-                spoolType={t}
-                currentUserId={user.id}
-              />
-            ))}
-          </ul>
-        </section>
-      ))}
+      <SpoolTypeCatalog spoolTypes={types} currentUserId={user.id} />
 
       <section className="border-border bg-card mt-6 rounded-lg border p-6">
         <h2 className="font-semibold">

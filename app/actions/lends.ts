@@ -11,13 +11,13 @@ import {
 } from '@/lib/db/schema';
 import { requireUser } from '@/lib/auth-session';
 import { emitSpoolChange } from '@/lib/events';
-import { createNotification } from '@/lib/notifications';
+import { createNotification, type NotificationType } from '@/lib/notifications';
 import { getMembership, getSharedFilaments } from '@/lib/sharing';
 import { and, desc, eq, inArray, or } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/sqlite-core';
+import { alias } from 'drizzle-orm/pg-core';
 import { revalidatePath } from 'next/cache';
 
-export async function requestLend(spoolId: number, groupId: number) {
+export async function requestLend(spoolId: string, groupId: string) {
   const authUser = await requireUser();
   const membership = await getMembership(groupId, authUser.id);
   if (!membership) throw new Error('Not a member of this group');
@@ -75,8 +75,9 @@ export async function requestLend(spoolId: number, groupId: number) {
   await emitSpoolChange(row.spool.userId);
 }
 
-// Returns the lend joined with the data needed for authz + notifications.
-async function requireSpoolOwner(lendId: number, userId: string) {
+// The lend joined with the data every action below needs: authz (ownerId /
+// lend.borrowerId) + notification copy (materialName, groupName).
+async function loadLendContext(lendId: string) {
   const [row] = await db
     .select({
       lend: lends,
@@ -89,99 +90,100 @@ async function requireSpoolOwner(lendId: number, userId: string) {
     .innerJoin(materials, eq(spools.materialId, materials.id))
     .innerJoin(groups, eq(lends.groupId, groups.id))
     .where(eq(lends.id, lendId));
+  return row;
+}
+
+async function requireSpoolOwner(lendId: string, userId: string) {
+  const row = await loadLendContext(lendId);
   if (!row || row.ownerId !== userId) throw new Error('Not authorized');
   return row;
 }
 
-export async function approveLend(lendId: number) {
-  const authUser = await requireUser();
-  const { lend, materialName, groupName } = await requireSpoolOwner(
-    lendId,
-    authUser.id
-  );
-  if (lend.status !== 'requested')
-    throw new Error('Lend request already handled');
-  await db
-    .update(lends)
-    .set({ status: 'active', respondedAt: new Date(), updatedAt: new Date() })
-    .where(eq(lends.id, lendId));
-  await createNotification({
-    userId: lend.borrowerId,
-    type: 'lend_approved',
-    actorName: authUser.name,
-    filamentName: materialName,
-    groupName,
-    lendId,
-  });
-  revalidatePath(`/groups/${lend.groupId}`);
-  revalidatePath('/');
-  await emitSpoolChange(authUser.id);
+// Folds the revalidate + live-update triad every mutation below ends with.
+async function revalidateLend(
+  groupId: string,
+  userId: string,
+  includeRoot = true
+) {
+  revalidatePath(`/groups/${groupId}`);
+  if (includeRoot) revalidatePath('/');
+  await emitSpoolChange(userId);
 }
 
-export async function declineLend(lendId: number) {
+// Shared tail for the three owner-driven status transitions: authz →
+// status guard → update → notify borrower → revalidate.
+async function transitionLend(
+  lendId: string,
+  config: {
+    from: string;
+    to: string;
+    stampField: 'respondedAt' | 'returnedAt';
+    notifyType: NotificationType;
+    invalidStatusMessage: string;
+    includeRoot?: boolean;
+  }
+) {
   const authUser = await requireUser();
   const { lend, materialName, groupName } = await requireSpoolOwner(
     lendId,
     authUser.id
   );
-  if (lend.status !== 'requested')
-    throw new Error('Lend request already handled');
+  if (lend.status !== config.from) throw new Error(config.invalidStatusMessage);
   await db
     .update(lends)
-    .set({ status: 'declined', respondedAt: new Date(), updatedAt: new Date() })
+    .set({
+      status: config.to,
+      [config.stampField]: new Date(),
+      updatedAt: new Date(),
+    })
     .where(eq(lends.id, lendId));
   await createNotification({
     userId: lend.borrowerId,
-    type: 'lend_declined',
+    type: config.notifyType,
     actorName: authUser.name,
     filamentName: materialName,
     groupName,
     lendId,
   });
-  revalidatePath(`/groups/${lend.groupId}`);
-  await emitSpoolChange(authUser.id);
+  await revalidateLend(lend.groupId, authUser.id, config.includeRoot);
 }
 
-export async function markReturned(lendId: number) {
-  const authUser = await requireUser();
-  const { lend, materialName, groupName } = await requireSpoolOwner(
-    lendId,
-    authUser.id
-  );
-  if (lend.status !== 'active') throw new Error('Lend is not active');
-  await db
-    .update(lends)
-    .set({ status: 'returned', returnedAt: new Date(), updatedAt: new Date() })
-    .where(eq(lends.id, lendId));
-  await createNotification({
-    userId: lend.borrowerId,
-    type: 'lend_returned',
-    actorName: authUser.name,
-    filamentName: materialName,
-    groupName,
-    lendId,
+export async function approveLend(lendId: string) {
+  await transitionLend(lendId, {
+    from: 'requested',
+    to: 'active',
+    stampField: 'respondedAt',
+    notifyType: 'lend_approved',
+    invalidStatusMessage: 'Lend request already handled',
   });
-  revalidatePath(`/groups/${lend.groupId}`);
-  revalidatePath('/');
-  await emitSpoolChange(authUser.id);
+}
+
+export async function declineLend(lendId: string) {
+  await transitionLend(lendId, {
+    from: 'requested',
+    to: 'declined',
+    stampField: 'respondedAt',
+    notifyType: 'lend_declined',
+    invalidStatusMessage: 'Lend request already handled',
+    includeRoot: false,
+  });
+}
+
+export async function markReturned(lendId: string) {
+  await transitionLend(lendId, {
+    from: 'active',
+    to: 'returned',
+    stampField: 'returnedAt',
+    notifyType: 'lend_returned',
+    invalidStatusMessage: 'Lend is not active',
+  });
 }
 
 // Borrower withdraws their own pending request. The row is deleted —
 // cancelled requests carry no history value (unlike declined ones).
-export async function cancelLendRequest(lendId: number) {
+export async function cancelLendRequest(lendId: string) {
   const authUser = await requireUser();
-  const [row] = await db
-    .select({
-      lend: lends,
-      ownerId: spools.userId,
-      materialName: materials.name,
-      groupName: groups.name,
-    })
-    .from(lends)
-    .innerJoin(spools, eq(lends.filamentId, spools.id))
-    .innerJoin(materials, eq(spools.materialId, materials.id))
-    .innerJoin(groups, eq(lends.groupId, groups.id))
-    .where(eq(lends.id, lendId));
+  const row = await loadLendContext(lendId);
   if (!row || row.lend.borrowerId !== authUser.id)
     throw new Error('Not authorized');
   if (row.lend.status !== 'requested')
@@ -195,9 +197,7 @@ export async function cancelLendRequest(lendId: number) {
     filamentName: row.materialName,
     groupName: row.groupName,
   });
-  revalidatePath(`/groups/${row.lend.groupId}`);
-  revalidatePath('/');
-  await emitSpoolChange(row.ownerId);
+  await revalidateLend(row.lend.groupId, row.ownerId);
 }
 
 const borrowerUser = alias(user, 'borrower_user');

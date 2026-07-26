@@ -10,7 +10,9 @@ import {
 } from '@/lib/db/schema';
 import { requireUser } from '@/lib/auth-session';
 import { emitSpoolChange } from '@/lib/events';
-import { and, desc, eq, or } from 'drizzle-orm';
+import { assertMaterialUsable } from '@/lib/material-usable';
+import { assertSpoolTypeUsable } from '@/lib/spool-type-usable';
+import { and, desc, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 // The user's inventory: spool + material + spool type rows (grouped into
@@ -27,44 +29,11 @@ export async function getInventory() {
 }
 
 type SpoolInput = {
-  materialId: number;
-  spoolTypeId: number;
+  materialId: string;
+  spoolTypeId: string;
   fullFilamentWeightGrams: number;
   measuredTotalWeightGrams: number;
 };
-
-// A material/spool type is usable if approved, or if the user submitted it.
-async function assertMaterialUsable(materialId: number, userId: string) {
-  const [m] = await db
-    .select({ id: materials.id })
-    .from(materials)
-    .where(
-      and(
-        eq(materials.id, materialId),
-        or(
-          eq(materials.status, 'approved'),
-          eq(materials.submittedById, userId)
-        )
-      )
-    );
-  if (!m) throw new Error('Unknown or unavailable material');
-}
-
-async function assertSpoolTypeUsable(spoolTypeId: number, userId: string) {
-  const [st] = await db
-    .select({ id: spoolTypes.id })
-    .from(spoolTypes)
-    .where(
-      and(
-        eq(spoolTypes.id, spoolTypeId),
-        or(
-          eq(spoolTypes.status, 'approved'),
-          eq(spoolTypes.submittedById, userId)
-        )
-      )
-    );
-  if (!st) throw new Error('Unknown or unavailable spool type');
-}
 
 export async function createSpool(input: SpoolInput) {
   const user = await requireUser();
@@ -82,7 +51,7 @@ export async function createSpool(input: SpoolInput) {
   await emitSpoolChange(user.id);
 }
 
-export async function updateSpool(id: number, input: SpoolInput) {
+export async function updateSpool(id: string, input: SpoolInput) {
   const user = await requireUser();
   await assertMaterialUsable(input.materialId, user.id);
   await assertSpoolTypeUsable(input.spoolTypeId, user.id);
@@ -104,7 +73,7 @@ export async function updateSpool(id: number, input: SpoolInput) {
 // Allowed for the owner AND for whoever currently borrows the spool
 // (active lend) — the borrower is the one printing with it.
 export async function setMeasuredWeight(
-  id: number,
+  id: string,
   measuredTotalWeightGrams: number
 ) {
   const user = await requireUser();
@@ -141,7 +110,7 @@ export async function setMeasuredWeight(
   await emitSpoolChange(spool.userId);
 }
 
-export async function deleteSpool(id: number) {
+export async function deleteSpool(id: string) {
   const user = await requireUser();
   await db
     .delete(spools)

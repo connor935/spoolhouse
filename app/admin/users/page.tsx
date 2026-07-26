@@ -1,7 +1,8 @@
 import { asc } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
-import { CreateUserForm } from '@/components/create-user-form';
-import { PageShell } from '@/components/page-shell';
+import { CreateUserForm } from '@/components/admin/create-user-form';
+import { PageShell } from '@/components/layout/page-shell';
+import { TrustedContributorToggle } from '@/components/admin/trusted-contributor-toggle';
 import { passwordMinLength } from '@/lib/auth';
 import { requireAdmin } from '@/lib/auth-session';
 import { db } from '@/lib/db';
@@ -29,7 +30,14 @@ export default async function AdminUsersPage() {
                 <p className="font-medium">{u.name}</p>
                 <p className="text-muted-foreground text-sm">{u.email}</p>
               </div>
-              {u.role === 'admin' && <Badge>Admin</Badge>}
+              {u.role === 'admin' ? (
+                <Badge>Admin</Badge>
+              ) : (
+                <TrustedContributorToggle
+                  userId={u.id}
+                  trusted={u.trustedContributor === true}
+                />
+              )}
             </li>
           ))}
         </ul>
