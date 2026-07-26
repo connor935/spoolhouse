@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import {
   boolean,
   integer,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -113,6 +114,14 @@ export const materialProperties = pgTable(
       .notNull()
       .references(() => properties.id, { onDelete: 'cascade' }),
     value: text('value').notNull(),
+    // Numeric span of `value`, derived on every write with parseBounds()
+    // (lib/property-filter.ts) — values are free text in three shapes
+    // ("1.24", "210–230", "1.75, 2.85"), and the catalog's range filter matches
+    // by overlap. Persisting the bounds is what lets that filter run in SQL over
+    // the whole catalog instead of over rows already shipped to the browser.
+    // NULL when the value contains no number.
+    valueMin: numeric('value_min', { mode: 'number' }),
+    valueMax: numeric('value_max', { mode: 'number' }),
     verified: boolean('verified').notNull().default(false),
     // Who last set the value; NULL for seeded rows or deleted users.
     submittedById: text('submitted_by_id').references(() => user.id, {
@@ -127,6 +136,36 @@ export const materialProperties = pgTable(
   },
   (t) => [unique().on(t.materialId, t.propertyId)]
 );
+
+// One row per SpoolmanDB manufacturer that has been imported, written by the
+// import action (app/actions/spoolmandb.ts) and shown on /admin/import. Keeps
+// the admin page honest about what is already in the catalog, and is the list a
+// scheduled refresh would iterate.
+export const catalogImports = pgTable('catalog_imports', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  // Upstream file name without .json, e.g. "polymaker".
+  slug: text('slug').notNull().unique(),
+  // Display name from the source file ("Bambu Lab"), which is what
+  // materials.manufacturer holds. Not always the slug — externalKey slugifies
+  // the display name, so counting a manufacturer's rows needs this.
+  manufacturerName: text('manufacturer_name'),
+  // Counts from the most recent run (insert-only, so these are rows *added*).
+  materialsImported: integer('materials_imported').notNull().default(0),
+  spoolTypesImported: integer('spool_types_imported').notNull().default(0),
+  // Message of the last failed run; NULL once a run succeeds.
+  lastError: text('last_error'),
+  lastImportedAt: timestamp('last_imported_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type CatalogImport = typeof catalogImports.$inferSelect;
 
 // A physical spool of a material. DB table name stays "filaments" (renaming it
 // would churn migrations and the REST API's history for no gain); TS calls it

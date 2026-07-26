@@ -1,90 +1,108 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { SelectField } from '@/components/common/select-field';
 import { useCombobox } from '@/hooks/use-combobox';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import {
+  getMaterialManufacturers,
+  searchMaterials,
+} from '@/app/actions/materials';
 import { DEFAULT_MATERIAL_COLOR, materialLabel } from '@/lib/filament';
 import {
   ALL_MANUFACTURERS,
   ALL_TYPES,
   TYPE_ITEMS,
-  manufacturerItems,
 } from '@/lib/catalog-filter-items';
-import { matchRank, matchesTokens, searchTokens } from '@/lib/search';
 import type { Material } from '@/lib/db/schema';
 import { cn } from '@/lib/utils';
 
-// Searchable combobox for the material catalog. The SpoolmanDB import grows the
-// catalog to hundreds/thousands of rows, where a plain Select is unusable — this
-// filters client-side (see lib/search.ts) and caps the visible list. The
-// manufacturer/type dropdowns narrow the pool before the search runs, for
-// browsing a brand rather than typing a name.
+const PAGE_SIZE = 50;
+
+// Searchable combobox for the material catalog. A SpoolmanDB import grows the
+// catalog to tens of thousands of rows, so the search runs in SQL
+// (searchMaterials) and only a page of results is ever sent here — the previous
+// version received every material as a prop, which put >400 bytes per material
+// into the dashboard payload. The manufacturer/type dropdowns narrow the same
+// query, for browsing a brand rather than typing a name.
 export function MaterialPicker({
-  materials,
   value,
   onChange,
   id,
 }: {
-  materials: Material[];
   value: Material | null;
   onChange: (material: Material) => void;
   id?: string;
 }) {
   const [manufacturer, setManufacturer] = useState<string>(ALL_MANUFACTURERS);
   const [filamentType, setFilamentType] = useState<string>(ALL_TYPES);
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [matches, setMatches] = useState<Material[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const manufacturers = useMemo(
-    () => manufacturerItems(materials),
-    [materials]
-  );
-
-  const pool = useMemo(
-    () =>
-      materials.filter(
-        (m) =>
-          (manufacturer === ALL_MANUFACTURERS ||
-            m.manufacturer === manufacturer) &&
-          (filamentType === ALL_TYPES || m.filamentType === filamentType)
-      ),
-    [materials, manufacturer, filamentType]
-  );
-
-  const narrowed =
-    manufacturer !== ALL_MANUFACTURERS || filamentType !== ALL_TYPES;
-
+  const combobox = useCombobox({
+    items: matches,
+    // Filtering happens in SQL; the hook keeps query/keyboard/open state.
+    filter: (items) => items,
+    maxResults: PAGE_SIZE,
+    selectedLabel: value ? materialLabel(value) : '',
+    onSelect: onChange,
+  });
   const {
     open,
+    query,
     activeIndex,
     results,
-    filtered,
-    maxResults,
     setActiveIndex,
     select,
     inputProps,
     listboxProps,
-  } = useCombobox({
-    items: pool,
-    filter: (items, query) => {
-      const tokens = searchTokens(query.trim());
-      if (tokens.length === 0) return items;
-      // Match on manufacturer + product line + filament type, so "polymaker
-      // petg red" finds the row (colour names are part of `name`; the `color`
-      // column holds a hex value). Prefix matches sort first — the list is
-      // capped, and a broad query should not hide the obvious candidate.
-      return items
-        .filter((m) =>
-          matchesTokens(tokens, m.manufacturer, m.name, m.filamentType)
-        )
-        .sort(
-          (a, b) =>
-            matchRank(tokens, a.manufacturer, a.name) -
-            matchRank(tokens, b.manufacturer, b.name)
-        );
-    },
-    selectedLabel: value ? materialLabel(value) : '',
-    onSelect: onChange,
-  });
+  } = combobox;
+
+  const debouncedQuery = useDebouncedValue(query);
+
+  useEffect(() => {
+    getMaterialManufacturers()
+      .then(setManufacturers)
+      .catch(() => setManufacturers([]));
+  }, []);
+
+  // Sequence guard: responses can arrive out of order, and a stale one would
+  // overwrite the results for what the user has since typed.
+  const requestId = useRef(0);
+
+  useEffect(() => {
+    const current = ++requestId.current;
+    setLoading(true);
+    searchMaterials({
+      q: debouncedQuery.trim(),
+      manufacturer: manufacturer === ALL_MANUFACTURERS ? null : manufacturer,
+      filamentType: filamentType === ALL_TYPES ? null : filamentType,
+      limit: PAGE_SIZE,
+    })
+      .then((res) => {
+        if (current !== requestId.current) return;
+        setMatches(res.materials);
+        setTotal(res.total);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (current !== requestId.current) return;
+        setMatches([]);
+        setTotal(0);
+        setLoading(false);
+      });
+  }, [debouncedQuery, manufacturer, filamentType]);
+
+  const narrowed =
+    manufacturer !== ALL_MANUFACTURERS || filamentType !== ALL_TYPES;
+
+  const manufacturerItems = [
+    { value: ALL_MANUFACTURERS, label: 'All manufacturers' },
+    ...manufacturers.map((m) => ({ value: m, label: m })),
+  ];
 
   return (
     <div className="flex flex-col gap-2">
@@ -103,9 +121,11 @@ export function MaterialPicker({
           >
             {results.length === 0 ? (
               <p className="text-muted-foreground px-3 py-4 text-sm">
-                {narrowed
-                  ? 'No materials match — try widening the filters below.'
-                  : 'No materials match.'}
+                {loading
+                  ? 'Searching…'
+                  : narrowed
+                    ? 'No materials match — try widening the filters below.'
+                    : 'No materials match.'}
               </p>
             ) : (
               <>
@@ -146,10 +166,10 @@ export function MaterialPicker({
                     </span>
                   </button>
                 ))}
-                {filtered.length > maxResults && (
+                {total > results.length && (
                   <p className="text-muted-foreground px-3 py-2 text-xs">
-                    Showing first {maxResults} of {filtered.length} — refine
-                    your search.
+                    Showing first {results.length} of {total} — refine your
+                    search.
                   </p>
                 )}
               </>
@@ -160,7 +180,7 @@ export function MaterialPicker({
 
       <div className="flex items-center gap-2">
         <SelectField
-          items={manufacturers}
+          items={manufacturerItems}
           value={manufacturer}
           onValueChange={setManufacturer}
           ariaLabel="Filter materials by manufacturer"

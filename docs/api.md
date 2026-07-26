@@ -31,7 +31,7 @@ Missing/invalid tokens get `401 {"error":{"code":"unauthorized",…}}`. Revoking
 | Method & path | Purpose |
 |---|---|
 | `GET /api/v1/me` | Token check; returns id, name, email, role |
-| `GET /api/v1/materials` | Materials usable by the owner (approved + own pending), each with read-only datasheet `properties` |
+| `GET /api/v1/materials` | Materials usable by the owner (approved + own pending), each with read-only datasheet `properties` — paginated, supports `?q` |
 | `GET /api/v1/spool-types` | Spool types usable by the owner |
 | `GET /api/v1/spools` | All own spools (computed amounts + material + tagUid) |
 | `POST /api/v1/spools` | Create a spool from `materialId` + `spoolTypeId` + weights |
@@ -41,11 +41,25 @@ Missing/invalid tokens get `401 {"error":{"code":"unauthorized",…}}`. Revoking
 | `PUT /api/v1/spools/:id/weight` | Re-weigh by id: `{"measuredTotalWeightGrams": n}` |
 | `POST /api/v1/spools/weigh` | **Register-or-refresh by NFC tag** — the scale/reader call |
 
-### `GET /api/v1/materials` (datasheet properties)
+### `GET /api/v1/materials` (search, pagination, datasheet properties)
 
 Each material carries a `properties` array of datasheet values (density, diameters,
 temps, and anything an admin has defined — tensile strength, hardness, …). Values are
 community-editable in the app; `verified` is `false` until an admin reviews one.
+
+The catalog can hold tens of thousands of materials (see the SpoolmanDB import), so the
+response is one page and carries the match count:
+
+| Param | Default | Meaning |
+|---|---|---|
+| `q` | — | Free-text search. Every whitespace-separated token must appear in the manufacturer, name or filament type, so `?q=polymaker+petg+red` narrows across all three. |
+| `limit` | 100 | Rows to return, capped at 500. |
+| `offset` | 0 | Rows to skip. |
+
+```sh
+curl -H "Authorization: Bearer $TOKEN" \
+  "$BASE/api/v1/materials?q=polymaker%20petg%20red&limit=5"
+```
 
 ```json
 {
@@ -62,7 +76,10 @@ community-editable in the app; `verified` is `false` until an admin reviews one.
         { "key": "extruder_temp", "name": "Extruder temp", "unit": "°C", "value": "215", "verified": true }
       ]
     }
-  ]
+  ],
+  "total": 3,
+  "limit": 5,
+  "offset": 0
 }
 ```
 

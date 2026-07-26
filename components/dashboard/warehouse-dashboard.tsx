@@ -34,7 +34,6 @@ type DashboardGroup = { id: string; name: string; stock: SharedSpool[] };
 
 export function WarehouseDashboard({
   inventory,
-  usableMaterials,
   spoolTypes,
   groups,
   myLends,
@@ -46,7 +45,6 @@ export function WarehouseDashboard({
   propertyDefinitions,
 }: {
   inventory: MaterialInventory[];
-  usableMaterials: Material[];
   spoolTypes: SpoolType[];
   groups: DashboardGroup[];
   myLends: MyLend[];
@@ -110,6 +108,15 @@ export function WarehouseDashboard({
     if (!activeGroup) return [];
     return filterGroupStock(activeGroup.stock, filters, propertiesByMaterialId);
   }, [activeGroup, filters, propertiesByMaterialId]);
+
+  // The dialog needs the Material object, not an id — the picker searches the
+  // catalog server-side and no longer has a full list to resolve one from.
+  // Every material the user can edit or add to is already in `inventory`.
+  const initialMaterial = useMemo(() => {
+    const id = editingSpool?.materialId ?? presetMaterialId;
+    if (!id) return null;
+    return inventory.find((m) => m.material.id === id)?.material ?? null;
+  }, [editingSpool, presetMaterialId, inventory]);
 
   function openCreate(materialId: string | null = null) {
     setEditingSpool(null);
@@ -309,8 +316,7 @@ export function WarehouseDashboard({
         open={formOpen}
         onOpenChange={setFormOpen}
         spool={editingSpool}
-        presetMaterialId={presetMaterialId}
-        materials={usableMaterials}
+        initialMaterial={initialMaterial}
         spoolTypes={spoolTypes}
         isAdmin={user.isAdmin}
       />

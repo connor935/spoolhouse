@@ -16,6 +16,7 @@ import {
 import {
   CircleUser,
   Disc3,
+  Download,
   Layers,
   ListChecks,
   LogOut,
@@ -92,6 +93,10 @@ export function UserMenu({
               <DropdownMenuItem render={<Link href="/admin/properties" />}>
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
                 Properties
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/admin/import" />}>
+                <Download className="mr-2 h-4 w-4" />
+                Import catalog
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </>

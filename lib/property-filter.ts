@@ -13,6 +13,17 @@ export function parseBounds(value: string): [number, number] | null {
   return [Math.min(...nums), Math.max(...nums)];
 }
 
+// The persisted form of parseBounds(), for the material_properties columns the
+// catalog's SQL range filter reads. Every writer of `value` must set these in
+// the same statement, or the row silently stops matching range filters.
+export function valueBoundColumns(value: string): {
+  valueMin: number | null;
+  valueMax: number | null;
+} {
+  const bounds = parseBounds(value);
+  return { valueMin: bounds?.[0] ?? null, valueMax: bounds?.[1] ?? null };
+}
+
 export function overlaps(
   [lo, hi]: [number, number],
   min: number | null,

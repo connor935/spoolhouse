@@ -10,6 +10,7 @@ import {
 } from '@/lib/db/schema';
 import { requireAdmin, requireUser } from '@/lib/auth-session';
 import { assertMaterialUsable } from '@/lib/material-usable';
+import { valueBoundColumns } from '@/lib/property-filter';
 import {
   materialPropertyValueSchema,
   parseOrThrow,
@@ -126,12 +127,28 @@ export async function setMaterialProperty(input: MaterialPropertyValueInput) {
   if (!property) throw new Error('Unknown property');
 
   const verified = user.role === 'admin';
+  // Bounds ride along with every write — the catalog's range filter reads them
+  // in SQL and would silently skip a row whose value changed without them.
+  const bounds = valueBoundColumns(value);
   await db
     .insert(materialProperties)
-    .values({ materialId, propertyId, value, verified, submittedById: user.id })
+    .values({
+      materialId,
+      propertyId,
+      value,
+      ...bounds,
+      verified,
+      submittedById: user.id,
+    })
     .onConflictDoUpdate({
       target: [materialProperties.materialId, materialProperties.propertyId],
-      set: { value, verified, submittedById: user.id, updatedAt: new Date() },
+      set: {
+        value,
+        ...bounds,
+        verified,
+        submittedById: user.id,
+        updatedAt: new Date(),
+      },
     });
   revalidateValues();
 }

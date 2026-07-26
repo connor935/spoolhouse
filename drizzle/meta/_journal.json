@@ -15,6 +15,27 @@
       "when": 1785058780785,
       "tag": "0001_seed_property_definitions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785081439624,
+      "tag": "0002_sloppy_james_howlett",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785081450662,
+      "tag": "0003_backfill_property_value_bounds",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785082315934,
+      "tag": "0004_giant_logan",
+      "breakpoints": true
     }
   ]
 }

@@ -74,10 +74,36 @@ export const openApiSpec = {
       get: {
         tags: ['catalog'],
         summary: 'List usable materials',
+        description:
+          'Approved materials plus your own pending ones. Paginated — the catalog can hold tens of thousands of rows.',
         operationId: 'listMaterials',
+        parameters: [
+          {
+            name: 'q',
+            in: 'query',
+            required: false,
+            description:
+              'Free-text search; every whitespace-separated token must appear in the manufacturer, name or filament type (e.g. "polymaker petg red").',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            description: 'Rows to return (1–500).',
+            schema: { type: 'integer', default: 100, minimum: 1, maximum: 500 },
+          },
+          {
+            name: 'offset',
+            in: 'query',
+            required: false,
+            description: 'Rows to skip.',
+            schema: { type: 'integer', default: 0, minimum: 0 },
+          },
+        ],
         responses: {
           '200': {
-            description: 'Approved materials + your own pending ones',
+            description: 'One page of matching materials',
             content: {
               'application/json': {
                 schema: {
@@ -87,8 +113,14 @@ export const openApiSpec = {
                       type: 'array',
                       items: { $ref: '#/components/schemas/Material' },
                     },
+                    total: {
+                      type: 'integer',
+                      description: 'Matches before limit/offset.',
+                    },
+                    limit: { type: 'integer' },
+                    offset: { type: 'integer' },
                   },
-                  required: ['materials'],
+                  required: ['materials', 'total', 'limit', 'offset'],
                 },
               },
             },

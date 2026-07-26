@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { SelectField } from '@/components/common/select-field';
 import { ManufacturerNameFields } from '@/components/common/manufacturer-name-fields';
@@ -14,34 +14,23 @@ import type { Material } from '@/lib/db/schema';
 import { toast } from 'sonner';
 
 type Props = {
-  materials: Material[];
   value: Material | null;
   onChange: (material: Material | null) => void;
   // Admins skip the review queue — flips the request copy to "add".
   isAdmin?: boolean;
 };
 
-// Material picker with an inline "request new material" mini-form. Owns the
-// materials it requested this session (immediately usable by the requester)
-// and merges them into the select.
-export function MaterialField({
-  materials,
-  value,
-  onChange,
-  isAdmin = false,
-}: Props) {
-  const [extras, setExtras] = useState<Material[]>([]);
+// Material picker with an inline "request new material" mini-form. The picker
+// searches the catalog server-side, so a just-requested material needs no local
+// bookkeeping — it is selected straight away, and subsequent searches find it
+// (a pending material is visible to its submitter).
+export function MaterialField({ value, onChange, isAdmin = false }: Props) {
   const [requesting, setRequesting] = useState(false);
   const [manufacturer, setManufacturer] = useState('');
   const [name, setName] = useState('');
   const [filamentType, setFilamentType] = useState('PLA');
   const [color, setColor] = useState('#1c7ed6');
   const [pending, setPending] = useState(false);
-
-  const all = useMemo(() => {
-    const seen = new Set(materials.map((m) => m.id));
-    return [...materials, ...extras.filter((m) => !seen.has(m.id))];
-  }, [materials, extras]);
 
   async function handleRequest() {
     if (!manufacturer.trim() || !name.trim()) {
@@ -56,7 +45,6 @@ export function MaterialField({
         filamentType,
         color,
       });
-      setExtras((prev) => [...prev, created]);
       onChange(created);
       setRequesting(false);
       setManufacturer('');
@@ -84,12 +72,7 @@ export function MaterialField({
           </button>
         )}
       </div>
-      <MaterialPicker
-        id="material"
-        materials={all}
-        value={value}
-        onChange={onChange}
-      />
+      <MaterialPicker id="material" value={value} onChange={onChange} />
 
       {requesting && (
         <div className="border-border bg-secondary/50 flex flex-col gap-3 rounded-md border p-3">

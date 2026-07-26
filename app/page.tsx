@@ -1,7 +1,6 @@
 import { getInventory } from '@/app/actions/filaments';
 import { getMyGroups } from '@/app/actions/groups';
 import { getActiveLendsForOwner, getMyLends } from '@/app/actions/lends';
-import { getUsableMaterials } from '@/app/actions/materials';
 import { getUnreadCount } from '@/app/actions/notifications';
 import { getPropertyDefinitions } from '@/app/actions/properties';
 import { getUsableSpoolTypes } from '@/app/actions/spool-types';
@@ -39,7 +38,6 @@ export default async function Page({
   };
   const [
     rows,
-    usableMaterials,
     spoolTypes,
     activeLends,
     myGroups,
@@ -48,7 +46,6 @@ export default async function Page({
     propertyDefinitions,
   ] = await Promise.all([
     getInventory(),
-    getUsableMaterials(),
     getUsableSpoolTypes(),
     getActiveLendsForOwner(),
     getMyGroups(),
@@ -73,7 +70,6 @@ export default async function Page({
   return (
     <WarehouseDashboard
       inventory={inventory}
-      usableMaterials={usableMaterials}
       spoolTypes={spoolTypes}
       groups={groups}
       myLends={myLends}

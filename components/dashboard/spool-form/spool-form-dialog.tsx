@@ -32,8 +32,10 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   spool?: SpoolView | null;
-  presetMaterialId?: string | null;
-  materials: Material[];
+  // The material to start from — the spool's own when editing, or the one whose
+  // card was clicked. Passed as an object rather than an id because the picker
+  // no longer holds the whole catalog to look one up in.
+  initialMaterial?: Material | null;
   spoolTypes: SpoolType[];
   isAdmin?: boolean;
 };
@@ -42,8 +44,7 @@ export function SpoolFormDialog({
   open,
   onOpenChange,
   spool,
-  presetMaterialId,
-  materials,
+  initialMaterial,
   spoolTypes,
   isAdmin = false,
 }: Props) {
@@ -53,12 +54,7 @@ export function SpoolFormDialog({
   const { confirm, dialogProps } = useConfirm();
 
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
-    () =>
-      spool
-        ? (materials.find((m) => m.id === spool.materialId) ?? null)
-        : presetMaterialId
-          ? (materials.find((m) => m.id === presetMaterialId) ?? null)
-          : null
+    initialMaterial ?? null
   );
   const [selectedType, setSelectedType] = useState<SpoolType | null>(() =>
     spool ? (spoolTypes.find((t) => t.id === spool.spoolTypeId) ?? null) : null
@@ -173,7 +169,6 @@ export function SpoolFormDialog({
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <MaterialField
-              materials={materials}
               value={selectedMaterial}
               onChange={setSelectedMaterial}
               isAdmin={isAdmin}

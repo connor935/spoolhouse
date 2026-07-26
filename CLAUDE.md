@@ -29,7 +29,7 @@ Package manager is **npm** (`package-lock.json`).
 - Client-side calls go through `authClient` (`lib/auth-client.ts`): sign-in/out, `changePassword`, `requestPasswordReset`/`resetPassword`, `admin.createUser`.
 - Password-reset mails: `lib/mail.ts` — SMTP when `SMTP_HOST` is set, otherwise logged to the server console (dev fallback).
 - Required env: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (see `.env.example`).
-- Pages: `/login`, `/signup` (only when `ALLOW_SIGNUP=true`), `/forgot-password`, `/reset-password`, `/account`, `/materials` + `/spool-types` (catalogs + request), `/admin/users` + `/admin/materials` + `/admin/spool-types` (admin only).
+- Pages: `/login`, `/signup` (only when `ALLOW_SIGNUP=true`), `/forgot-password`, `/reset-password`, `/account`, `/materials` + `/spool-types` (catalogs + request), `/admin/users` + `/admin/materials` + `/admin/spool-types` + `/admin/properties` + `/admin/import` (admin only).
 - Password min length: `MINIMUM_PASSWORD_LENGTH` env (default 12) — exported as `passwordMinLength` from `lib/auth.ts` and passed to client forms **as a prop from server components** (plain `process.env` reads are undefined in the browser).
 
 ## Database setup
@@ -149,7 +149,7 @@ promote to `common/` once a second feature imports it.**
 | `notifications/` | `notification-bell` (rendered by layout chrome) and `notifications-list` |
 | `auth/` | `auth-card` shell + login/signup/reset-password forms |
 | `account/` | `/account` sections: `account-forms`, `api-tokens-section` |
-| `admin/` | Admin-only surfaces with no catalog equivalent: `create-user-form`, `trusted-contributor-toggle`, `property-admin-list` |
+| `admin/` | Admin-only surfaces with no catalog equivalent: `create-user-form`, `trusted-contributor-toggle`, `property-admin-list`, `import-manufacturers` |
 | `api-docs/` | `swagger-docs` (the `/api-docs` Swagger UI client wrapper) |
 
 ### Key files
@@ -182,6 +182,10 @@ promote to `common/` once a second feature imports it.**
 | `lib/spool-type-usable.ts` | `isSpoolTypeUsable`/`assertSpoolTypeUsable` — shared by server actions and REST API |
 | `app/actions/api-tokens.ts` | API-token management actions (create/list/revoke) backing the `/account` section |
 | `app/api/v1/` | REST route handlers (see "REST API" below); `filaments/shared.ts` holds serialization + body validation |
+| `lib/material-search.ts` | SQL `WHERE` builder for the catalog: token search, manufacturer/type, property ranges |
+| `lib/search.ts` | Token matching for client-side searches (`searchTokens`/`matchesTokens`/`matchRank`) |
+| `lib/spoolmandb.ts` | SpoolmanDB import core (fetch, dedupe, upsert) — used by the CLI **and** `/admin/import` |
+| `app/actions/spoolmandb.ts` | Admin import actions (`getUpstreamManufacturers`, `importManufacturerFromUpstream`) |
 | `lib/utils.ts` | `cn()` (clsx + tailwind-merge) |
 
 ## Domain rules
@@ -193,6 +197,21 @@ promote to `common/` once a second feature imports it.**
 - **Empty** when `filamentLeftGrams ≤ 5`; **Low** when `percentLeft ≤ 15%`
 - **Materials & spool types** are both global catalogs with `status` `approved | pending | rejected` and identical request→review workflows (`requestMaterial`/`requestSpoolType`): a pending entry is **immediately usable by its submitter**, visible to others only after approval; rejection never breaks existing references. Usable-rules: `assertMaterialUsable`/`assertSpoolTypeUsable` + `getUsableMaterials`/`getUsableSpoolTypes`. **Auto-approve** applies to admins AND **trusted contributors** (a `user.trustedContributor` flag toggled by admins on `/admin/users`, declared as a better-auth `additionalFields` in `lib/auth.ts` so it rides the session user; the auto-approve check lives once in `lib/catalog.ts` `request()`).
 - **Material properties** (`properties` = admin-curated definitions with an immutable machine `key` + name/unit/description; `materialProperties` = value rows, unique per material×property): datasheet data (density, diameters, temps — migrated out of the old `materials` extra columns — plus tensile strength, hardness, etc.). **Definitions are admin-only** (managed on `/admin/properties`, `components/admin/property-admin-list.tsx`, no review flow). **Values are wiki-style**: any logged-in user sets/edits a value via `setMaterialProperty` (effective immediately), which records `submittedById` and sets `verified` = the editor is admin; non-admin edits show an "unverified" badge until an admin `verifyMaterialProperty`s them; delete is admin-only. Actions in `app/actions/properties.ts`; read helper `getPropertiesForMaterials` (`lib/material-properties.ts`) feeds both the dashboard material dialog and the catalog rows (`components/materials/material-properties-section.tsx`) and the REST API. The delete-a-material path clears value rows via the catalog factory's `onRemove` hook (FK cascade is inert at runtime — see below).
+- **The material catalog is searched in SQL, not in the browser.** A SpoolmanDB import pushes it to
+  tens of thousands of rows (460 manufacturers upstream, ~24k materials if you took them all), so
+  nothing ships the whole catalog to the client: the spool-form picker queries `searchMaterials`
+  as you type (debounced, 50 rows), `/materials` + `/admin/materials` read their filters from the
+  URL and render one 150-row page, and `GET /api/v1/materials` is paginated (`q`/`limit`/`offset`).
+  All of them build their `WHERE` with `materialWhere()` (`lib/material-search.ts`). Search is
+  **token-wise**: every whitespace-separated token must appear in manufacturer + name + filament
+  type, so "polymaker petg red" matches across three columns (matching `matchesTokens` in
+  `lib/search.ts`, which still filters the dashboard's already-loaded inventory client-side).
+  Paged queries order by `(manufacturer, name, id)` — the id breaks ties, without which
+  LIMIT/OFFSET can skip or repeat a row.
+- **Property range filters run in SQL too**, against `material_properties.value_min`/`value_max`.
+  Values are free text ("1.24", "210–230", "1.75, 2.85"); `parseBounds()` (`lib/property-filter.ts`)
+  defines the numeric span and **every writer must persist it** via `valueBoundColumns()` — a row
+  written without the bounds silently stops matching range filters.
 - **Catalog UI is one generalized component** per catalog (`components/catalog/material-catalog.tsx` / `spool-type-catalog.tsx`): a searchable, manufacturer-grouped, capped (150 rows) list. `/materials` + `/spool-types` render it read-only (own pending/rejected editable); `/admin/materials` + `/admin/spool-types` render the **same** component with `isAdmin` — adds a status filter + "Review pending" shortcut and inline Approve/Reject/Delete + edit-any on each row (`material-catalog-row.tsx` / `spool-type-catalog-row.tsx`). All admin actions are server-enforced (`requireAdmin`), so the inline controls are pure UX. Admin pages fetch `getAllMaterialsForAdmin`/`getAllSpoolTypesForAdmin` (all rows + `spoolCount` for the delete guard).
 - **Spools** (DB table still named `filaments`, TS export `spools` — deliberate, renaming it would churn migrations and the REST API for no gain): a physical spool references `materialId` + `spoolTypeId` + weights. The dashboard groups spools by material (`groupInventory`); adding another spool of the same material is one click on the material card.
 - **Sharing is material-level**: a member's whitelist/blacklist overrides reference material ids (all their spools of it, incl. future ones). Lending stays per physical spool. Group stock is grouped by material across owners.
@@ -269,10 +288,20 @@ Runs against whatever database `DATABASE_URL` names, and starts the local PGlite
 host itself if nothing is serving it yet — so it works with or without a running
 dev server.
 
-Because the catalog then holds hundreds/thousands of materials, the add-spool
-dialog uses a **searchable combobox** (`components/dashboard/spool-form/
-material-picker.tsx`), not a Select — client-side filter on name + manufacturer,
-capped at 50 visible.
+**Admins can also import from the UI**: `/admin/import`
+(`components/admin/import-manufacturers.tsx`) lists every upstream manufacturer with
+what is already in the catalog, and imports a multi-selection **one manufacturer per
+server action, sequentially** — short units of work, so progress is visible and the
+queue resumable with no background-job machinery; a failure stops the run and names
+the slug. Runs are recorded in `catalog_imports` (slug, display name, counts, last
+error/time), which is also what a future scheduled refresh would iterate. The upstream
+list comes from the GitHub contents API, rate-limited to 60 requests/hour, so it is
+cached per server process.
+
+Because the catalog then holds thousands of materials, the add-spool dialog's
+**searchable combobox** (`components/dashboard/spool-form/material-picker.tsx`)
+queries the server as you type rather than filtering a prop — see the catalog-search
+rule under "Domain rules".
 
 ## Known gaps / quirks (V0 export leftovers)
 
