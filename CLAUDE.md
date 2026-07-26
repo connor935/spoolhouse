@@ -69,10 +69,17 @@ Schema changes: edit `lib/db/schema.ts`, run `npm run db:generate`, commit the n
 `drizzle/0001_seed_property_definitions.sql`, which seeds the four datasheet property
 definitions the SpoolmanDB importer requires).
 
-Backups: `pg_dump` in production; copy `data/pglite` locally. Target deployment is a single
-self-hosted Linux box (Hetzner) — the compose file there needs a `postgres` service and
-`DATABASE_URL` on both the `app` and `admin` services; the deploy workflow's pre-start
-`scripts/migrate.mjs` step reads the same variable.
+Backups: `pg_dump` in production; copy `data/pglite` locally.
+
+**Deployment** (single self-hosted Hetzner box, compose stacks in a separate `server` repo):
+Spoolhouse talks to the shared `postgres` stack over the external `dbnet` network. Its
+password is a **Docker secret** — a file, not an env var — so instead of `DATABASE_URL` the
+compose file sets `DATABASE_PASSWORD_FILE` and `databaseUrl()` (`lib/db/local.mjs`) builds the
+connection string from it (host/port/user/db default to `postgres:5432` / `spoolhouse` /
+`spoolhouse`, overridable via `DATABASE_HOST`/`DATABASE_PORT`/`DATABASE_USER`/`DATABASE_NAME`).
+One password file is shared with the postgres container's initdb script, so it is never
+duplicated. The deploy workflow's pre-start `scripts/migrate.mjs` step uses the same
+resolution.
 
 ## Tech stack
 

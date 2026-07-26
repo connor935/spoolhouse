@@ -85,7 +85,7 @@ jobs:
             docker compose pull admin
 
             # Apply DB migrations BEFORE starting the new app, via the one-off
-            # tools image (same DB volume + DATABASE_PATH as the app). Running it
+            # tools image (same Postgres + credentials as the app). Running it
             # as a gated step means a bad migration fails the deploy here instead
             # of crash-looping the app container. The app also auto-migrates on
             # startup, so this is idempotent — a re-run just records nothing new.
