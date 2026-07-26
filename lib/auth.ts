@@ -28,7 +28,7 @@ const trustedOrigins = [
 ].filter((o, i, a) => a.indexOf(o) === i);
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, { provider: 'sqlite' }),
+  database: drizzleAdapter(db, { provider: 'pg' }),
   trustedOrigins,
   user: {
     additionalFields: {

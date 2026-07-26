@@ -7,12 +7,13 @@ Inventory manager for 3D-printer filament spools, exported from a Vercel V0 prot
 ## Commands
 
 ```sh
-npm run dev          # start dev server (next dev)
+npm run dev          # start dev server (+ the local database, see below)
 npm run build        # production build
-npm run start        # serve production build
+npm run start        # serve production build (+ the local database)
+npm run db:serve     # local database only — for drizzle-kit studio / psql
 npm run db:generate  # drizzle-kit: generate migration from schema changes
 npm run db:migrate   # drizzle-kit: apply migrations manually (usually unnecessary, see below)
-npm run db:studio    # drizzle-kit: local DB browser
+npm run db:studio    # drizzle-kit: local DB browser (needs the DB up: dev or db:serve)
 npm run admin:create -- <email> <name>   # bootstrap/promote an admin account
 ```
 
@@ -20,7 +21,7 @@ Package manager is **npm** (`package-lock.json`).
 
 ## Auth
 
-**better-auth** (email + password, Drizzle/SQLite adapter, admin plugin). Key points:
+**better-auth** (email + password, Drizzle/Postgres adapter, admin plugin). Key points:
 
 - **Registration is closed by default**, toggleable via `ALLOW_SIGNUP=true` (gates the better-auth API via `disableSignUp`, the `/signup` page, and the sign-up link on `/login` — see `signupAllowed` in `lib/auth.ts`; env changes need a server restart). Regardless of the flag, admins create accounts on `/admin/users`, and the first admin is bootstrapped with `npm run admin:create -- <email> <name>` (`scripts/create-admin.ts`; also promotes an existing user to admin).
 - **Session checks:** `proxy.ts` does only an optimistic cookie-presence redirect to `/login`. The authoritative check is `requireUser()` / `requireAdmin()` from `lib/auth-session.ts` — **call one of these at the top of every protected page and every server action.** Ownership is enforced in SQL (`where userId = user.id`), never by trusting client-provided ids.
@@ -33,11 +34,45 @@ Package manager is **npm** (`package-lock.json`).
 
 ## Database setup
 
-None required. The app uses a **SQLite file** (`data/spoolhouse.db` by default, override with the optional `DATABASE_PATH` env var — see `.env.example`). On startup, `lib/db/index.ts` creates the `data/` directory, opens the DB in WAL mode, and **auto-applies migrations from `drizzle/`** — so a fresh checkout works with just `npm install && npm run dev`.
+**PostgreSQL everywhere, one driver** (`pg` / node-postgres). `DATABASE_URL` decides which
+server:
 
-Schema changes: edit `lib/db/schema.ts`, run `npm run db:generate`, commit the new file in `drizzle/`; the app applies it on next start.
+- **Production**: a real PostgreSQL server — set `DATABASE_URL` (see `.env.example`).
+- **Local dev**: leave `DATABASE_URL` unset and `npm run dev` starts **PGlite** for you —
+  Postgres compiled to WASM, no server to install, cluster in `data/pglite` (override with
+  `DATABASE_PATH`). Still just `npm install && npm run dev` on a fresh checkout.
 
-Backups: copy `data/spoolhouse.db`. Target deployment is a single self-hosted Linux box (Hetzner); if the app ever needs a client-server DB, Drizzle's query API is dialect-agnostic — swap the schema back to `pgTable` + the `pg` driver and move the data.
+Dev and prod therefore run identical SQL through identical client code; there is no SQLite
+and no second dialect anywhere.
+
+**The local database is a host process, not an in-process library** — `scripts/pglite-server.mjs`
+owns the data directory and speaks the Postgres wire protocol on `127.0.0.1:5433`
+(`DEV_DB_PORT`). This is not optional: PGlite is a single Postgres over a data directory, and
+`next dev` alone runs app code in **two** processes (the server plus a route worker for
+`/api/*`). Opening the directory from several processes gives each an isolated, mutually
+corrupting view — writes from a CLI script were silently invisible to the running dev server
+before this was fixed. So everything connects as a client instead:
+
+- `npm run dev` / `npm run start` wrap the Next command in `scripts/with-local-db.mjs`, which
+  starts the host first (skipped when `DATABASE_URL` is set, or when the port is already
+  served).
+- The `tsx` CLI scripts call `withLocalDb()` (`scripts/local-db.mjs`): they reuse a running
+  host, or start a private one and stop it again — so they work standalone **and** alongside
+  `npm run dev`.
+- `npm run db:serve` runs the host alone, e.g. for `npm run db:studio` or psql.
+
+Migrations from `drizzle/` are applied by `runMigrations()` (`lib/db/index.ts`) — from
+`instrumentation.ts` before the server serves requests, and at the start of every CLI script.
+Schema changes: edit `lib/db/schema.ts`, run `npm run db:generate`, commit the new file in
+`drizzle/`; it is applied on next start. Hand-written data migrations go through
+`drizzle-kit generate --custom` so the journal and snapshots stay consistent (see
+`drizzle/0001_seed_property_definitions.sql`, which seeds the four datasheet property
+definitions the SpoolmanDB importer requires).
+
+Backups: `pg_dump` in production; copy `data/pglite` locally. Target deployment is a single
+self-hosted Linux box (Hetzner) — the compose file there needs a `postgres` service and
+`DATABASE_URL` on both the `app` and `admin` services; the deploy workflow's pre-start
+`scripts/migrate.mjs` step reads the same variable.
 
 ## Tech stack
 
@@ -45,7 +80,7 @@ Backups: copy `data/spoolhouse.db`. Target deployment is a single self-hosted Li
 - **TypeScript** (strict, path alias `@/*` → repo root) — but `next.config.mjs` sets `typescript.ignoreBuildErrors: true`
 - **Tailwind CSS v4** — CSS-first config in `app/globals.css` (`@theme inline`, oklch tokens); there is no `tailwind.config.*`
 - **shadcn/ui** (style `base-nova`) built on **Base UI** (`@base-ui/react`), not Radix — primitives live in `components/ui/`
-- **Drizzle ORM + better-sqlite3** for data access (SQLite file, migrations via drizzle-kit)
+- **Drizzle ORM + node-postgres** for data access (PostgreSQL; PGlite locally, migrations via drizzle-kit)
 - **better-auth** for authentication (see Auth section)
 - `lucide-react` icons, `sonner` toasts
 - **Theming:** `next-themes` (`components/layout/theme-provider.tsx`, wrapped in `app/layout.tsx`, default = system, class strategy). Light/dark/system switch lives in the user menu. All colors come from the oklch tokens in `app/globals.css` (`:root` + `.dark`) — petrol/blue accent (hue ~205–210), cool neutrals; never hardcode colors in components
@@ -122,7 +157,10 @@ promote to `common/` once a second feature imports it.**
 | `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
 | `lib/auth-session.ts` | `requireUser()` / `requireAdmin()` — mandatory in protected pages & actions |
 | `proxy.ts` | Optimistic login redirect (cookie presence only) |
-| `lib/db/index.ts` | better-sqlite3 + drizzle client singleton, auto-runs migrations on startup |
+| `lib/db/index.ts` | node-postgres pool + drizzle client singleton; `runMigrations()` / `closeDb()` |
+| `lib/db/local.mjs` / `scripts/pglite-server.mjs` | Local-dev DB connection details / the PGlite host process |
+| `scripts/with-local-db.mjs` / `scripts/local-db.mjs` | Wrapper that boots the local DB for `dev`/`start` / `withLocalDb()` for the CLI scripts |
+| `instrumentation.ts` | Applies pending migrations once, before the server serves requests |
 | `drizzle.config.ts` / `drizzle/` | drizzle-kit config and committed SQL migrations |
 | `app/actions/filaments.ts` | Spool server actions: `getInventory`, `createSpool`/`updateSpool` (usable-material/type checks), `setMeasuredWeight` (owner or active borrower), `deleteSpool` |
 | `lib/sharing.ts` | `getSharedFilaments(groupId)` — single source of truth resolving each member's share mode into the group's pooled stock; `getMembership(groupId, userId)` |
@@ -141,7 +179,7 @@ promote to `common/` once a second feature imports it.**
 
 ## Domain rules
 
-- **All app-table primary keys are random UUIDs** (`text`, `$defaultFn(() => randomUUID())` in `lib/db/schema.ts`), not sequential integers — they're exposed in the REST API (`/api/v1/spools/:id`) and URLs, so unguessable ids avoid enumeration/leaking counts. Only the `user`/auth tables keep better-auth's own ids. All id params in actions/API are `string`. **Migrations run with `PRAGMA foreign_keys=OFF`** on the connection (`lib/db/index.ts`, `scripts/migrate.mjs`) — a `PRAGMA foreign_keys=OFF` *inside* a migration is a no-op because Drizzle wraps each in a transaction; table-recreation migrations (id/type changes) need FK enforcement off to drop/rebuild referenced tables.
+- **All app-table primary keys are random UUIDs** (`text`, `$defaultFn(() => randomUUID())` in `lib/db/schema.ts`), not sequential integers — they're exposed in the REST API (`/api/v1/spools/:id`) and URLs, so unguessable ids avoid enumeration/leaking counts. Only the `user`/auth tables keep better-auth's own ids. All id params in actions/API are `string`. **Foreign keys are enforced** (Postgres always is; the old SQLite setup ran with `PRAGMA foreign_keys=OFF`) — declared `onDelete` cascades really fire, and the delete guards that used to be the only protection against dangling references are now belt *and* braces.
 - **All weights are gram integers** (`emptyWeightGrams`, `fullFilamentWeightGrams`, `measuredTotalWeightGrams`); display via `formatWeight()` (g below 1 kg, kg above); timestamps are `integer` unix-epoch columns surfaced as `Date` objects (Drizzle `mode: "timestamp"`)
 - Remaining filament: `filamentLeftGrams = measuredTotalWeightGrams − spoolType.emptyWeightGrams` (clamped ≥ 0)
 - Re-weigh (`setMeasuredWeight`) is allowed for the **owner and the current borrower** (active lend) — the borrower re-weighs from the Borrows tab ("Borrowed by you" section)
@@ -149,7 +187,7 @@ promote to `common/` once a second feature imports it.**
 - **Materials & spool types** are both global catalogs with `status` `approved | pending | rejected` and identical request→review workflows (`requestMaterial`/`requestSpoolType`): a pending entry is **immediately usable by its submitter**, visible to others only after approval; rejection never breaks existing references. Usable-rules: `assertMaterialUsable`/`assertSpoolTypeUsable` + `getUsableMaterials`/`getUsableSpoolTypes`. **Auto-approve** applies to admins AND **trusted contributors** (a `user.trustedContributor` flag toggled by admins on `/admin/users`, declared as a better-auth `additionalFields` in `lib/auth.ts` so it rides the session user; the auto-approve check lives once in `lib/catalog.ts` `request()`).
 - **Material properties** (`properties` = admin-curated definitions with an immutable machine `key` + name/unit/description; `materialProperties` = value rows, unique per material×property): datasheet data (density, diameters, temps — migrated out of the old `materials` extra columns — plus tensile strength, hardness, etc.). **Definitions are admin-only** (managed on `/admin/properties`, `components/admin/property-admin-list.tsx`, no review flow). **Values are wiki-style**: any logged-in user sets/edits a value via `setMaterialProperty` (effective immediately), which records `submittedById` and sets `verified` = the editor is admin; non-admin edits show an "unverified" badge until an admin `verifyMaterialProperty`s them; delete is admin-only. Actions in `app/actions/properties.ts`; read helper `getPropertiesForMaterials` (`lib/material-properties.ts`) feeds both the dashboard material dialog and the catalog rows (`components/materials/material-properties-section.tsx`) and the REST API. The delete-a-material path clears value rows via the catalog factory's `onRemove` hook (FK cascade is inert at runtime — see below).
 - **Catalog UI is one generalized component** per catalog (`components/catalog/material-catalog.tsx` / `spool-type-catalog.tsx`): a searchable, manufacturer-grouped, capped (150 rows) list. `/materials` + `/spool-types` render it read-only (own pending/rejected editable); `/admin/materials` + `/admin/spool-types` render the **same** component with `isAdmin` — adds a status filter + "Review pending" shortcut and inline Approve/Reject/Delete + edit-any on each row (`material-catalog-row.tsx` / `spool-type-catalog-row.tsx`). All admin actions are server-enforced (`requireAdmin`), so the inline controls are pure UX. Admin pages fetch `getAllMaterialsForAdmin`/`getAllSpoolTypesForAdmin` (all rows + `spoolCount` for the delete guard).
-- **Spools** (DB table still named `filaments`, TS export `spools` — deliberate, avoids SQLite rename migrations): a physical spool references `materialId` + `spoolTypeId` + weights. The dashboard groups spools by material (`groupInventory`); adding another spool of the same material is one click on the material card.
+- **Spools** (DB table still named `filaments`, TS export `spools` — deliberate, renaming it would churn migrations and the REST API for no gain): a physical spool references `materialId` + `spoolTypeId` + weights. The dashboard groups spools by material (`groupInventory`); adding another spool of the same material is one click on the material card.
 - **Sharing is material-level**: a member's whitelist/blacklist overrides reference material ids (all their spools of it, incl. future ones). Lending stays per physical spool. Group stock is grouped by material across owners.
 - Filament types: PLA, PETG, ABS, ASA, TPU, Nylon, PC, PVA, HIPS, Other (`FILAMENT_TYPES` in `lib/filament.ts`)
 
@@ -211,7 +249,7 @@ per manufacturer), NOT the compiled 50k-row output, and dedupes hard:
   generic `material_properties` table as **verified** values (`submittedById` NULL),
   formatted the way the UI displays them (en-dash ranges, comma-space diameter lists).
   The four property definitions (`density`/`diameter`/`extruder_temp`/`bed_temp`) must
-  already exist (migration `0011`); the importer aborts if they're missing. Seeding is
+  already exist (migration `0001`); the importer aborts if they're missing. Seeding is
   **insert-only per material×property pair** — re-crawls never clobber a user/admin edit.
 
 **Insert-only / idempotent** via a unique `externalKey` on both tables
@@ -220,8 +258,9 @@ known keys, **claims** a matching manual row (sets only `externalKey` +
 NULL-backfills the extra columns; never renames/recolors), or inserts a new
 `approved` row. So admin edits and re-crawls never clobber each other. Upstream
 *renames* change the key → old row lingers; delete it via `/admin/materials`.
-Run under Node 24 (`fnm exec --using=v24.18.0 npm run db:import -- …`) for the
-better-sqlite3 native module.
+Runs against whatever database `DATABASE_URL` names, and starts the local PGlite
+host itself if nothing is serving it yet — so it works with or without a running
+dev server.
 
 Because the catalog then holds hundreds/thousands of materials, the add-spool
 dialog uses a **searchable combobox** (`components/dashboard/spool-form/

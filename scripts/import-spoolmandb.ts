@@ -17,21 +17,21 @@
 // seeded into the generic `material_properties` table as verified values —
 // insert-only (a missing material×property pair), so re-crawls never clobber
 // a user's or admin's edits. Its four property definitions must already exist
-// (seeded by migration 0011); the script aborts if they're missing.
+// (seeded by drizzle/0001); the script aborts if they're missing.
 //
 // Known limitation: if upstream RENAMES a product/color its externalKey
 // changes, so the old row lingers and a new row inserts. Delete the stale one
 // via /admin/materials.
 //
-// Run under Node 24 (better-sqlite3 native module): the npm script uses tsx;
-// invoke via `fnm exec --using=v24.18.0 npm run db:import -- ...` if your shell
-// defaults to another Node.
+// Runs against whatever DATABASE_URL names; with none set it uses (and starts,
+// if needed) the local PGlite database — see CLAUDE.md "Database setup".
 import { eq } from 'drizzle-orm';
-import { db } from '../lib/db';
+import { closeDb, db, runMigrations } from '../lib/db';
+import { withLocalDb } from './local-db.mjs';
 import { materialProperties, materials, properties, spoolTypes } from '../lib/db/schema';
 import { FILAMENT_TYPES } from '../lib/filament';
 
-// Property definition keys the importer seeds (must match migration 0011).
+// Property definition keys the importer seeds (must match drizzle/0001).
 const PROPERTY_KEYS = ['density', 'diameter', 'extruder_temp', 'bed_temp'] as const;
 type PropertyKey = (typeof PROPERTY_KEYS)[number];
 // Formatted, unit-less values keyed by property (unit lives on the definition).
@@ -502,7 +502,7 @@ async function main() {
       `  type filter:   ${typeFilter ? [...typeFilter].join(', ') : '(all)'}\n`
   );
 
-  // Property-seeding context: definitions must exist (migration 0011) and we
+  // Property-seeding context: definitions must exist (drizzle/0001) and we
   // prefetch existing material×property pairs once for the insert-only guard.
   const defs = await db
     .select({ id: properties.id, key: properties.key })
@@ -579,7 +579,13 @@ async function main() {
   );
 }
 
-main()
+// The local dev database is started on demand (and stopped again) when nothing
+// is serving it yet; closeDb() releases the pool so the script exits.
+withLocalDb(async () => {
+  await runMigrations();
+  await main();
+  await closeDb();
+})
   .then(() => process.exit(0))
   .catch((err) => {
     console.error(err);

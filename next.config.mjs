@@ -3,9 +3,9 @@ const nextConfig = {
   // Emit a self-contained .next/standalone/server.js with only the traced
   // node_modules, so the Docker runtime image can drop dev deps and source.
   output: "standalone",
-  // Keep the native better-sqlite3 module external so its .node binary is
-  // traced/copied into the standalone output rather than bundled.
-  serverExternalPackages: ["better-sqlite3"],
+  // pg resolves its bindings at runtime, so keep it out of the bundle and let
+  // Next's file tracing copy it into the standalone output.
+  serverExternalPackages: ["pg"],
   typescript: {
     ignoreBuildErrors: true,
   },

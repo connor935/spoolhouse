@@ -4,7 +4,8 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { hashPassword } from 'better-auth/crypto';
-import { db } from '../lib/db';
+import { closeDb, db, runMigrations } from '../lib/db';
+import { withLocalDb } from './local-db.mjs';
 import {
   account,
   groupMembers,
@@ -263,7 +264,13 @@ async function main() {
   console.log('\nSeed complete.');
 }
 
-main().catch((err) => {
+// The local dev database is started on demand (and stopped again) when nothing
+// is serving it yet; closeDb() releases the pool so the script exits.
+withLocalDb(async () => {
+  await runMigrations();
+  await main();
+  await closeDb();
+}).catch((err) => {
   console.error(err);
   process.exit(1);
 });

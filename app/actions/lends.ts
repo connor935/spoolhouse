@@ -14,7 +14,7 @@ import { emitSpoolChange } from '@/lib/events';
 import { createNotification, type NotificationType } from '@/lib/notifications';
 import { getMembership, getSharedFilaments } from '@/lib/sharing';
 import { and, desc, eq, inArray, or } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/sqlite-core';
+import { alias } from 'drizzle-orm/pg-core';
 import { revalidatePath } from 'next/cache';
 
 export async function requestLend(spoolId: string, groupId: string) {

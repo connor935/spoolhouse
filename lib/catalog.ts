@@ -5,7 +5,7 @@ import { spools } from '@/lib/db/schema';
 import { requireAdmin, requireUser } from '@/lib/auth-session';
 import { and, asc, count, eq, ne, or } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
+import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 
 // `materials` and `spoolTypes` are both global, admin-curated catalogs with
 // an identical request→review→edit/delete shape (see CLAUDE.md "Materials &
@@ -20,17 +20,17 @@ type CatalogRow = {
 };
 
 type CatalogConfig<TInput> = {
-  table: SQLiteTable & {
-    id: SQLiteColumn;
-    manufacturer: SQLiteColumn;
-    name: SQLiteColumn;
-    status: SQLiteColumn;
-    submittedById: SQLiteColumn;
-    reviewedById: SQLiteColumn;
-    createdAt: SQLiteColumn;
-    updatedAt: SQLiteColumn;
+  table: PgTable & {
+    id: PgColumn;
+    manufacturer: PgColumn;
+    name: PgColumn;
+    status: PgColumn;
+    submittedById: PgColumn;
+    reviewedById: PgColumn;
+    createdAt: PgColumn;
+    updatedAt: PgColumn;
   };
-  spoolFkColumn: SQLiteColumn;
+  spoolFkColumn: PgColumn;
   revalidatePaths: readonly [string, string];
   validate: (input: TInput) => Record<string, unknown>;
   notFoundMessage: string;
