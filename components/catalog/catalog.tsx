@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { SearchInput } from '@/components/common/search-input';
 import { SelectField } from '@/components/common/select-field';
 import { ALL_STATUS, STATUS_ITEMS } from '@/lib/catalog-filter-items';
+import { matchesTokens, searchTokens } from '@/lib/search';
 
 const MAX_ROWS = 150;
 
@@ -61,17 +62,13 @@ export function Catalog<T extends CatalogEntity>({
   const [status, setStatus] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const tokens = searchTokens(query.trim());
     return items.filter((item) => {
       if (extraFilter?.value && !extraFilter.matches(item, extraFilter.value))
         return false;
       if (extraPredicate && !extraPredicate(item)) return false;
       if (status && item.status !== status) return false;
-      if (q === '') return true;
-      return (
-        item.name.toLowerCase().includes(q) ||
-        item.manufacturer.toLowerCase().includes(q)
-      );
+      return matchesTokens(tokens, item.manufacturer, item.name);
     });
   }, [items, query, status, extraFilter, extraPredicate]);
 

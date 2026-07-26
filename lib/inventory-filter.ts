@@ -1,6 +1,7 @@
 import type { MaterialInventory, SpoolView } from '@/lib/filament';
 import type { MaterialPropertyView } from '@/lib/material-properties';
 import { materialMatchesConstraints } from '@/lib/property-filter';
+import { matchesTokens, searchTokens } from '@/lib/search';
 import type { SharedSpool } from '@/lib/sharing';
 import type { InventoryFilters } from '@/components/dashboard/inventory-filter';
 
@@ -23,10 +24,11 @@ export function materialMatches(
     )
   )
     return false;
-  const q = f.q.trim().toLowerCase();
-  if (q === '') return true;
-  return (
-    m.name.toLowerCase().includes(q) || m.manufacturer.toLowerCase().includes(q)
+  return matchesTokens(
+    searchTokens(f.q.trim()),
+    m.manufacturer,
+    m.name,
+    m.filamentType
   );
 }
 

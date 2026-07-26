@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { useCombobox } from '@/hooks/use-combobox';
 import { spoolTypeLabel } from '@/lib/filament';
+import { matchRank, matchesTokens, searchTokens } from '@/lib/search';
 import type { SpoolType } from '@/lib/db/schema';
 import { cn } from '@/lib/utils';
 
@@ -49,11 +50,14 @@ export function SpoolTypePicker({
         }
         return items;
       }
-      return items.filter(
-        (t) =>
-          t.name.toLowerCase().includes(q) ||
-          t.manufacturer.toLowerCase().includes(q)
-      );
+      const tokens = searchTokens(q);
+      return items
+        .filter((t) => matchesTokens(tokens, t.manufacturer, t.name))
+        .sort(
+          (a, b) =>
+            matchRank(tokens, a.manufacturer, a.name) -
+            matchRank(tokens, b.manufacturer, b.name)
+        );
     },
     selectedLabel: value ? spoolTypeLabel(value) : '',
     onSelect: onChange,
