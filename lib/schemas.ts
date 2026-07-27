@@ -1,15 +1,12 @@
 import { z } from 'zod';
+import { PROPERTY_VALUE_TYPES } from '@/lib/property-value';
 
 // Shared validation for the two catalog tables (server actions, via
 // app/actions/materials.ts / spool-types.ts) and the /api/v1/spools request
 // body (REST routes). Centralizing these avoids the input checks drifting
 // between the server-action and REST paths for the same fields.
 
-const trimmedNonEmpty = (message: string) =>
-  z
-    .string()
-    .trim()
-    .min(1, message);
+const trimmedNonEmpty = (message: string) => z.string().trim().min(1, message);
 
 export const materialSchema = z.object({
   manufacturer: trimmedNonEmpty(
@@ -77,6 +74,8 @@ export const propertyDefinitionSchema = z.object({
   name: trimmedNonEmpty('Name is required'),
   unit: optionalTrimmed,
   description: optionalTrimmed,
+  // Decides how values are validated and normalised — see lib/property-value.ts.
+  valueType: z.enum(PROPERTY_VALUE_TYPES),
 });
 
 // The editable fields of a definition (everything but the immutable key).

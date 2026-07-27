@@ -31,7 +31,11 @@ import {
   spoolTypes,
 } from './db/schema';
 import { FILAMENT_TYPES } from './filament';
-import { valueBoundColumns } from './property-filter';
+import {
+  isPropertyValueType,
+  normalizePropertyValue,
+  type PropertyValueType,
+} from './property-value';
 
 // Property definition keys the importer seeds (must match drizzle/0001).
 const PROPERTY_KEYS = [
@@ -315,6 +319,9 @@ export function buildCandidates(
 export type PropContext = {
   // property key -> property definition id
   idByKey: Map<string, string>;
+  // property key -> declared value type, so seeded values are normalised and
+  // validated exactly like a user's edit (see lib/property-value.ts)
+  typeByKey: Map<string, PropertyValueType>;
   // "materialId:propertyId" pairs that already exist (insert-only guard)
   existingPairs: Set<string>;
 };
@@ -336,6 +343,17 @@ async function seedProps(
     if (value === undefined) continue;
     const propertyId = ctx.idByKey.get(key);
     if (!propertyId) continue;
+
+    // Seeded values go through the same normalisation as a user's edit, so the
+    // importer can never write something the property's declared type rejects
+    // (which would leave bounds that filter wrongly). Checked before the
+    // dry-run branch so a dry run reports the count a real run would write.
+    const normalized = normalizePropertyValue(
+      ctx.typeByKey.get(key) ?? 'text',
+      value
+    );
+    if (!normalized.ok) continue;
+
     if (materialId === null) {
       seeded++; // dry-run insert: no id yet, just count
       continue;
@@ -348,8 +366,9 @@ async function seedProps(
       await db.insert(materialProperties).values({
         materialId,
         propertyId,
-        value,
-        ...valueBoundColumns(value),
+        value: normalized.value,
+        valueMin: normalized.min,
+        valueMax: normalized.max,
         verified: true,
       });
   }
@@ -534,9 +553,19 @@ export function addStats(a: ImportStats, b: ImportStats): ImportStats {
 // Build it once per run and pass it to every importManufacturer() call.
 export async function loadPropertyContext(): Promise<PropContext> {
   const defs = await db
-    .select({ id: properties.id, key: properties.key })
+    .select({
+      id: properties.id,
+      key: properties.key,
+      valueType: properties.valueType,
+    })
     .from(properties);
   const idByKey = new Map(defs.map((d) => [d.key, d.id]));
+  const typeByKey = new Map(
+    defs.map((d) => [
+      d.key,
+      isPropertyValueType(d.valueType) ? d.valueType : ('text' as const),
+    ])
+  );
   const missing = PROPERTY_KEYS.filter((k) => !idByKey.has(k));
   if (missing.length) {
     throw new Error(
@@ -552,7 +581,7 @@ export async function loadPropertyContext(): Promise<PropContext> {
     .from(materialProperties)) {
     existingPairs.add(`${mp.materialId}:${mp.propertyId}`);
   }
-  return { idByKey, existingPairs };
+  return { idByKey, typeByKey, existingPairs };
 }
 
 export class ManufacturerNotFound extends Error {

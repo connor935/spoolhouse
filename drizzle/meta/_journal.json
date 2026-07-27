@@ -36,6 +36,20 @@
       "when": 1785082315934,
       "tag": "0004_giant_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785163251544,
+      "tag": "0005_common_blue_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785163251890,
+      "tag": "0006_set_seeded_property_types",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { SelectField } from '@/components/common/select-field';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import {
   createPropertyDefinition,
@@ -23,6 +24,17 @@ import {
 } from '@/app/actions/properties';
 import { useAsyncAction } from '@/hooks/use-async-action';
 import { useConfirm } from '@/hooks/use-confirm';
+import {
+  PROPERTY_VALUE_TYPES,
+  PROPERTY_VALUE_TYPE_HINTS,
+  PROPERTY_VALUE_TYPE_LABELS,
+  type PropertyValueType,
+} from '@/lib/property-value';
+
+const VALUE_TYPE_ITEMS = PROPERTY_VALUE_TYPES.map((t) => ({
+  value: t,
+  label: PROPERTY_VALUE_TYPE_LABELS[t],
+}));
 
 export function PropertyAdminList({
   properties,
@@ -38,6 +50,7 @@ export function PropertyAdminList({
   const [name, setName] = useState('');
   const [unit, setUnit] = useState('');
   const [description, setDescription] = useState('');
+  const [valueType, setValueType] = useState<PropertyValueType>('number');
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +61,7 @@ export function PropertyAdminList({
           name: name.trim(),
           unit: unit.trim() || null,
           description: description.trim() || null,
+          valueType,
         }),
       {
         success: 'Property created',
@@ -56,6 +70,7 @@ export function PropertyAdminList({
           setName('');
           setUnit('');
           setDescription('');
+          setValueType('number');
         },
       }
     );
@@ -101,6 +116,9 @@ export function PropertyAdminList({
                       className="font-mono text-[10px]"
                     >
                       {p.key}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px]">
+                      {p.valueType}
                     </Badge>
                   </div>
                   {p.description && (
@@ -193,6 +211,21 @@ export function PropertyAdminList({
                 placeholder="Short explanation"
               />
             </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="prop-type">Value type</Label>
+              <SelectField
+                id="prop-type"
+                items={VALUE_TYPE_ITEMS}
+                value={valueType}
+                onValueChange={setValueType}
+                ariaLabel="Value type"
+              />
+              <p className="text-muted-foreground text-xs">
+                {PROPERTY_VALUE_TYPE_HINTS[valueType]} — values are checked and
+                normalised on save, so a decimal comma can’t be stored as a
+                range.
+              </p>
+            </div>
           </div>
           <Button type="submit" disabled={pending} className="self-start">
             {pending ? 'Saving…' : 'Add property'}
@@ -224,6 +257,9 @@ function EditPropertyDialog({
   const [name, setName] = useState(property.name);
   const [unit, setUnit] = useState(property.unit ?? '');
   const [description, setDescription] = useState(property.description ?? '');
+  const [valueType, setValueType] = useState<PropertyValueType>(
+    (property.valueType as PropertyValueType) ?? 'text'
+  );
   const { pending, run } = useAsyncAction();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -234,6 +270,7 @@ function EditPropertyDialog({
           name: name.trim(),
           unit: unit.trim() || null,
           description: description.trim() || null,
+          valueType,
         }),
       { success: 'Property updated', onSuccess: () => onOpenChange(false) }
     );
@@ -278,6 +315,21 @@ function EditPropertyDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional"
             />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="edit-prop-type">Value type</Label>
+            <SelectField
+              id="edit-prop-type"
+              items={VALUE_TYPE_ITEMS}
+              value={valueType}
+              onValueChange={setValueType}
+              ariaLabel="Value type"
+            />
+            <p className="text-muted-foreground text-xs">
+              {valueType === property.valueType
+                ? PROPERTY_VALUE_TYPE_HINTS[valueType]
+                : `Changing the type re-checks all ${property.valueCount} existing value${property.valueCount === 1 ? '' : 's'}; the change is refused if any no longer fit.`}
+            </p>
           </div>
           <DialogFooter className="mt-2">
             <Button

@@ -7,21 +7,15 @@
 // Lowest and highest numbers found in a value string, or null if none. The
 // en-dash separator (U+2013) is not a minus sign, so range bounds parse as
 // two positive numbers rather than one negative.
+//
+// Only for values already known to be well-formed — it reads every run of
+// digits, so "1,24" would come back as 1–24. Writers go through
+// normalizePropertyValue() (lib/property-value.ts) instead, which knows the
+// property's declared type and rejects or converts a decimal comma.
 export function parseBounds(value: string): [number, number] | null {
   const nums = value.match(/\d+(\.\d+)?/g)?.map(Number);
   if (!nums || nums.length === 0) return null;
   return [Math.min(...nums), Math.max(...nums)];
-}
-
-// The persisted form of parseBounds(), for the material_properties columns the
-// catalog's SQL range filter reads. Every writer of `value` must set these in
-// the same statement, or the row silently stops matching range filters.
-export function valueBoundColumns(value: string): {
-  valueMin: number | null;
-  valueMax: number | null;
-} {
-  const bounds = parseBounds(value);
-  return { valueMin: bounds?.[0] ?? null, valueMax: bounds?.[1] ?? null };
 }
 
 export function overlaps(
@@ -56,7 +50,9 @@ export function constraintActive(c: PropertyConstraint): boolean {
   return c.propertyId !== '' && (c.min !== null || c.max !== null);
 }
 
-export function anyConstraintActive(constraints: PropertyConstraint[]): boolean {
+export function anyConstraintActive(
+  constraints: PropertyConstraint[]
+): boolean {
   return constraints.some(constraintActive);
 }
 
@@ -78,7 +74,9 @@ export function materialMatchesConstraints(
 // URL serialization for the dashboard's shareable-link filters. Only active
 // constraints are emitted, as `propertyId:min:max` (bounds blank when null;
 // property ids are UUIDs, so ':' and ',' are safe separators).
-export function serializeConstraints(constraints: PropertyConstraint[]): string {
+export function serializeConstraints(
+  constraints: PropertyConstraint[]
+): string {
   return constraints
     .filter(constraintActive)
     .map((c) => `${c.propertyId}:${c.min ?? ''}:${c.max ?? ''}`)

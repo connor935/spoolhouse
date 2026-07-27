@@ -1,16 +1,16 @@
 'use server';
 
-import { asc, count, eq } from 'drizzle-orm';
+import { and, asc, count, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
-import {
-  materialProperties,
-  properties,
-  type Property,
-} from '@/lib/db/schema';
+import { materialProperties, properties, type Property } from '@/lib/db/schema';
 import { requireAdmin, requireUser } from '@/lib/auth-session';
 import { assertMaterialUsable } from '@/lib/material-usable';
-import { valueBoundColumns } from '@/lib/property-filter';
+import {
+  isPropertyValueType,
+  normalizePropertyValue,
+  type PropertyValueType,
+} from '@/lib/property-value';
 import {
   materialPropertyValueSchema,
   parseOrThrow,
@@ -23,6 +23,8 @@ type PropertyDefinitionInput = {
   name: string;
   unit?: string | null;
   description?: string | null;
+  // What shape values take, and therefore how they are validated/normalised.
+  valueType: PropertyValueType;
 };
 
 function revalidateDefinitions() {
@@ -36,6 +38,12 @@ function revalidateValues() {
   revalidatePath('/');
   revalidatePath('/materials');
   revalidatePath('/admin/materials');
+}
+
+// Stored as plain text; anything unrecognised behaves as free text, which is
+// the harmless default (text values are never range-filtered).
+function asValueType(stored: string): PropertyValueType {
+  return isPropertyValueType(stored) ? stored : 'text';
 }
 
 // --- Definitions (admin-curated vocabulary) ---
@@ -80,6 +88,54 @@ export async function updatePropertyDefinition(
 ) {
   await requireAdmin();
   const values = parseOrThrow(propertyDefinitionEditSchema, input);
+
+  // Changing the type must not strand values that no longer fit it — they would
+  // keep their old bounds and filter wrongly, invisibly. Re-validate first and
+  // refuse with a count so an admin can fix those values (or pick another type).
+  const [existing] = await db
+    .select({ valueType: properties.valueType })
+    .from(properties)
+    .where(eq(properties.id, id));
+  if (existing && values.valueType !== existing.valueType) {
+    const rows = await db
+      .select({ value: materialProperties.value })
+      .from(materialProperties)
+      .where(eq(materialProperties.propertyId, id));
+    const type = asValueType(values.valueType);
+    const bad = rows.filter((r) => !normalizePropertyValue(type, r.value).ok);
+    if (bad.length > 0) {
+      const sample = bad
+        .slice(0, 3)
+        .map((r) => `"${r.value}"`)
+        .join(', ');
+      throw new Error(
+        `${bad.length} existing value${bad.length === 1 ? '' : 's'} do not fit "${values.valueType}" (e.g. ${sample}). Fix them first, or choose another type.`
+      );
+    }
+    // Re-normalise so stored values and bounds match the new type — a range
+    // becoming text must drop its bounds, and text becoming a number must gain
+    // them. One statement per *distinct* value: a property with thousands of
+    // rows usually has a few dozen different values.
+    for (const value of new Set(rows.map((r) => r.value))) {
+      const normalized = normalizePropertyValue(type, value);
+      if (!normalized.ok) continue;
+      await db
+        .update(materialProperties)
+        .set({
+          value: normalized.value,
+          valueMin: normalized.min,
+          valueMax: normalized.max,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(materialProperties.propertyId, id),
+            eq(materialProperties.value, value)
+          )
+        );
+    }
+  }
+
   await db
     .update(properties)
     .set({ ...values, updatedAt: new Date() })
@@ -121,30 +177,41 @@ export async function setMaterialProperty(input: MaterialPropertyValueInput) {
   await assertMaterialUsable(materialId, user.id);
 
   const [property] = await db
-    .select({ id: properties.id })
+    .select({ id: properties.id, valueType: properties.valueType })
     .from(properties)
     .where(eq(properties.id, propertyId));
   if (!property) throw new Error('Unknown property');
 
+  // The definition's type decides what the value may look like and what it is
+  // stored as: "1,24" on a number becomes "1.24" rather than the range 1–24,
+  // which is what a decimal comma used to turn into. The numeric span comes
+  // from the same call — the catalog's range filter reads it in SQL, so a value
+  // written without it would silently stop matching.
+  const normalized = normalizePropertyValue(
+    asValueType(property.valueType),
+    value
+  );
+  if (!normalized.ok) throw new Error(normalized.message);
+
   const verified = user.role === 'admin';
-  // Bounds ride along with every write — the catalog's range filter reads them
-  // in SQL and would silently skip a row whose value changed without them.
-  const bounds = valueBoundColumns(value);
+  const columns = {
+    value: normalized.value,
+    valueMin: normalized.min,
+    valueMax: normalized.max,
+  };
   await db
     .insert(materialProperties)
     .values({
       materialId,
       propertyId,
-      value,
-      ...bounds,
+      ...columns,
       verified,
       submittedById: user.id,
     })
     .onConflictDoUpdate({
       target: [materialProperties.materialId, materialProperties.propertyId],
       set: {
-        value,
-        ...bounds,
+        ...columns,
         verified,
         submittedById: user.id,
         updatedAt: new Date(),

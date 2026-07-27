@@ -89,6 +89,10 @@ export const properties = pgTable('properties', {
   name: text('name').notNull(), // display label, e.g. "Tensile strength"
   unit: text('unit'), // e.g. "MPa", "°C"; NULL for unitless
   description: text('description'),
+  // What shape the values take — number | integer | range | list | text (see
+  // lib/property-value.ts). Enforced on every write: it is what lets "1,24" be
+  // normalised to "1.24" instead of being read as the range 1–24.
+  valueType: text('value_type').notNull().default('text'),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

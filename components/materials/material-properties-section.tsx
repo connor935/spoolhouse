@@ -14,7 +14,15 @@ import {
 } from '@/app/actions/properties';
 import { useAsyncAction } from '@/hooks/use-async-action';
 import { useConfirm } from '@/hooks/use-confirm';
+import { toast } from 'sonner';
 import type { MaterialPropertyView } from '@/lib/material-properties';
+import {
+  PROPERTY_VALUE_TYPE_EXAMPLES,
+  PROPERTY_VALUE_TYPE_HINTS,
+  isPropertyValueType,
+  normalizePropertyValue,
+  type PropertyValueType,
+} from '@/lib/property-value';
 import type { Property } from '@/lib/db/schema';
 
 // Wiki-style datasheet values on a material: any logged-in user can add/edit,
@@ -35,9 +43,10 @@ export function MaterialPropertiesSection({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   // The add-new form: null when closed, else the selected definition + value.
-  const [adding, setAdding] = useState<{ propertyId: string; value: string } | null>(
-    null
-  );
+  const [adding, setAdding] = useState<{
+    propertyId: string;
+    value: string;
+  } | null>(null);
   const { pending, run } = useAsyncAction();
   const { confirm, dialogProps } = useConfirm();
 
@@ -50,6 +59,20 @@ export function MaterialPropertiesSection({
     [definitions, usedPropertyIds]
   );
 
+  // The definition decides what a value may look like; validating here too just
+  // saves a round-trip — setMaterialProperty enforces the same rule server-side.
+  function typeOf(propertyId: string): PropertyValueType {
+    const stored = definitions.find((d) => d.id === propertyId)?.valueType;
+    return stored && isPropertyValueType(stored) ? stored : 'text';
+  }
+
+  function rejectInvalid(propertyId: string, value: string): boolean {
+    const result = normalizePropertyValue(typeOf(propertyId), value);
+    if (result.ok) return false;
+    toast.error(result.message);
+    return true;
+  }
+
   function startEdit(v: MaterialPropertyView) {
     setAdding(null);
     setEditingId(v.propertyId);
@@ -59,6 +82,7 @@ export function MaterialPropertiesSection({
   async function saveEdit(propertyId: string) {
     const value = draft.trim();
     if (!value) return;
+    if (rejectInvalid(propertyId, value)) return;
     await run(() => setMaterialProperty({ materialId, propertyId, value }), {
       success: 'Property saved',
       onSuccess: () => setEditingId(null),
@@ -74,6 +98,7 @@ export function MaterialPropertiesSection({
     if (!adding) return;
     const value = adding.value.trim();
     if (!adding.propertyId || !value) return;
+    if (rejectInvalid(adding.propertyId, value)) return;
     await run(
       () =>
         setMaterialProperty({
@@ -97,7 +122,9 @@ export function MaterialPropertiesSection({
       destructive: true,
     });
     if (!ok) return;
-    await run(() => deleteMaterialProperty(v.id), { success: 'Property deleted' });
+    await run(() => deleteMaterialProperty(v.id), {
+      success: 'Property deleted',
+    });
   }
 
   return (
@@ -136,6 +163,7 @@ export function MaterialPropertiesSection({
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     className="h-8 w-32 text-right font-mono"
+                    title={PROPERTY_VALUE_TYPE_HINTS[typeOf(v.propertyId)]}
                     autoFocus
                   />
                   {v.unit && (
@@ -232,24 +260,24 @@ export function MaterialPropertiesSection({
             />
           </div>
           <div className="flex flex-1 flex-col gap-1.5">
-            <span className="text-muted-foreground text-xs">Value</span>
+            <span className="text-muted-foreground text-xs">
+              {PROPERTY_VALUE_TYPE_HINTS[typeOf(adding.propertyId)]}
+            </span>
             <Input
               value={adding.value}
               onChange={(e) =>
                 setAdding((a) => (a ? { ...a, value: e.target.value } : a))
               }
-              placeholder="e.g. 45"
+              placeholder={
+                PROPERTY_VALUE_TYPE_EXAMPLES[typeOf(adding.propertyId)]
+              }
               className="h-8"
             />
           </div>
           <Button size="sm" onClick={saveAdd} disabled={pending}>
             Add
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setAdding(null)}
-          >
+          <Button size="sm" variant="ghost" onClick={() => setAdding(null)}>
             Cancel
           </Button>
         </div>

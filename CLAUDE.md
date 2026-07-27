@@ -183,6 +183,7 @@ promote to `common/` once a second feature imports it.**
 | `app/actions/api-tokens.ts` | API-token management actions (create/list/revoke) backing the `/account` section |
 | `app/api/v1/` | REST route handlers (see "REST API" below); `filaments/shared.ts` holds serialization + body validation |
 | `lib/material-search.ts` | SQL `WHERE` builder for the catalog: token search, manufacturer/type, property ranges |
+| `lib/property-value.ts` | Property value types + `normalizePropertyValue()` — the one place input is validated/canonicalised |
 | `lib/search.ts` | Token matching for client-side searches (`searchTokens`/`matchesTokens`/`matchRank`) |
 | `lib/spoolmandb.ts` | SpoolmanDB import core (fetch, dedupe, upsert) — used by the CLI **and** `/admin/import` |
 | `app/actions/spoolmandb.ts` | Admin import actions (`getUpstreamManufacturers`, `importManufacturerFromUpstream`) |
@@ -208,10 +209,21 @@ promote to `common/` once a second feature imports it.**
   `lib/search.ts`, which still filters the dashboard's already-loaded inventory client-side).
   Paged queries order by `(manufacturer, name, id)` — the id breaks ties, without which
   LIMIT/OFFSET can skip or repeat a row.
-- **Property range filters run in SQL too**, against `material_properties.value_min`/`value_max`.
-  Values are free text ("1.24", "210–230", "1.75, 2.85"); `parseBounds()` (`lib/property-filter.ts`)
-  defines the numeric span and **every writer must persist it** via `valueBoundColumns()` — a row
-  written without the bounds silently stops matching range filters.
+- **Every property definition declares a value type** (`properties.valueType`: `number | integer |
+  range | list | text`, see `lib/property-value.ts`), and `normalizePropertyValue()` validates +
+  canonicalises against it on **every** write — `setMaterialProperty` and the SpoolmanDB importer
+  both. This exists because values are free text and a decimal comma used to be read as a range:
+  "1,24" parsed as 1–24 and matched a "density 20–30" filter. Now it is stored as "1.24"; input
+  that cannot be resolved is rejected with a message rather than guessed at (notably `list`, where
+  a comma is already the separator, so "1,75, 2,85" is ambiguous and refused). Types are set on
+  `/admin/properties`; **changing one re-validates every existing value and is refused if any no
+  longer fit**, then re-normalises the rest so stored values and bounds match. `text` never gets
+  bounds and is never range-filtered. Case table: `npx tsx scripts/check-property-values.ts`.
+- **Property range filters run in SQL**, against `material_properties.value_min`/`value_max`, which
+  come from that same normalisation. A row written without bounds silently stops matching range
+  filters, so nothing may write `value` without them. `parseBounds()` (`lib/property-filter.ts`)
+  still backs the dashboard's client-side filter over already-loaded inventory, but it reads every
+  run of digits and must not be used on unvalidated input.
 - **Catalog UI is one generalized component** per catalog (`components/catalog/material-catalog.tsx` / `spool-type-catalog.tsx`): a searchable, manufacturer-grouped, capped (150 rows) list. `/materials` + `/spool-types` render it read-only (own pending/rejected editable); `/admin/materials` + `/admin/spool-types` render the **same** component with `isAdmin` — adds a status filter + "Review pending" shortcut and inline Approve/Reject/Delete + edit-any on each row (`material-catalog-row.tsx` / `spool-type-catalog-row.tsx`). All admin actions are server-enforced (`requireAdmin`), so the inline controls are pure UX. Admin pages fetch `getAllMaterialsForAdmin`/`getAllSpoolTypesForAdmin` (all rows + `spoolCount` for the delete guard).
 - **Spools** (DB table still named `filaments`, TS export `spools` — deliberate, renaming it would churn migrations and the REST API for no gain): a physical spool references `materialId` + `spoolTypeId` + weights. The dashboard groups spools by material (`groupInventory`); adding another spool of the same material is one click on the material card.
 - **Sharing is material-level**: a member's whitelist/blacklist overrides reference material ids (all their spools of it, incl. future ones). Lending stays per physical spool. Group stock is grouped by material across owners.

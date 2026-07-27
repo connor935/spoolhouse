@@ -1,0 +1,1 @@
+ALTER TABLE "properties" ADD COLUMN "value_type" text DEFAULT 'text' NOT NULL;
