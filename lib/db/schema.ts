@@ -1,12 +1,15 @@
 import { randomUUID } from 'node:crypto';
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  index,
   integer,
   numeric,
   pgTable,
   text,
   timestamp,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
 
@@ -138,7 +141,12 @@ export const materialProperties = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (t) => [unique().on(t.materialId, t.propertyId)]
+  (t) => [
+    unique().on(t.materialId, t.propertyId),
+    // The unique above covers material_id lookups; property_id needs its own
+    // (cascade on definition delete, re-validation on value-type change).
+    index('material_properties_property_id_idx').on(t.propertyId),
+  ]
 );
 
 // One row per SpoolmanDB manufacturer that has been imported, written by the
@@ -174,53 +182,67 @@ export type CatalogImport = typeof catalogImports.$inferSelect;
 // A physical spool of a material. DB table name stays "filaments" (renaming it
 // would churn migrations and the REST API's history for no gain); TS calls it
 // spools.
-export const spools = pgTable('filaments', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  materialId: text('material_id')
-    .notNull()
-    .references(() => materials.id),
-  // Empty-spool weight comes from the referenced spool type
-  spoolTypeId: text('spool_type_id')
-    .notNull()
-    .references(() => spoolTypes.id),
-  // Nominal amount of filament on a full spool (g) - used for % remaining
-  fullFilamentWeightGrams: integer('full_filament_weight_grams').notNull(),
-  // Last measured total weight of spool + filament (g) - what you put on the scale
-  measuredTotalWeightGrams: integer('measured_total_weight_grams').notNull(),
-  // Optional NFC tag id (e.g. Bambu tray UID, hex) so an external client / scale
-  // can register-or-refresh this spool by its tag. Unique per user (enforced in SQL).
-  tagUid: text('tag_uid'),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const spools = pgTable(
+  'filaments',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    materialId: text('material_id')
+      .notNull()
+      .references(() => materials.id),
+    // Empty-spool weight comes from the referenced spool type
+    spoolTypeId: text('spool_type_id')
+      .notNull()
+      .references(() => spoolTypes.id),
+    // Nominal amount of filament on a full spool (g) - used for % remaining
+    fullFilamentWeightGrams: integer('full_filament_weight_grams').notNull(),
+    // Last measured total weight of spool + filament (g) - what you put on the scale
+    measuredTotalWeightGrams: integer('measured_total_weight_grams').notNull(),
+    // Optional NFC tag id (e.g. Bambu tray UID, hex) so an external client / scale
+    // can register-or-refresh this spool by its tag. Unique per user (index below;
+    // NULLs never collide, so untagged spools are unaffected).
+    tagUid: text('tag_uid'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // Also serves every `where user_id = ?` inventory query (leading column).
+    uniqueIndex('filaments_user_id_tag_uid_unique').on(t.userId, t.tagUid),
+    index('filaments_material_id_idx').on(t.materialId),
+    index('filaments_spool_type_id_idx').on(t.spoolTypeId),
+  ]
+);
 
 // Long-lived bearer tokens for the external REST API (/api/v1). Only the
 // SHA-256 hash is stored; the plaintext is shown once at creation on /account.
-export const apiTokens = pgTable('api_tokens', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  tokenHash: text('token_hash').notNull().unique(),
-  // First characters of the plaintext token, for display only (e.g. "sph_a1b2c3d4")
-  tokenPrefix: text('token_prefix').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
-});
+export const apiTokens = pgTable(
+  'api_tokens',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    tokenHash: text('token_hash').notNull().unique(),
+    // First characters of the plaintext token, for display only (e.g. "sph_a1b2c3d4")
+    tokenPrefix: text('token_prefix').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  },
+  (t) => [index('api_tokens_user_id_idx').on(t.userId)]
+);
 
 export type ApiToken = typeof apiTokens.$inferSelect;
 export type Spool = typeof spools.$inferSelect;
@@ -273,7 +295,11 @@ export const groupMembers = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [unique().on(table.groupId, table.userId)]
+  (table) => [
+    unique().on(table.groupId, table.userId),
+    // The unique above covers group_id lookups; "my groups" filters by user.
+    index('group_members_user_id_idx').on(table.userId),
+  ]
 );
 
 // Per-member override list at MATERIAL granularity ("my spools of this
@@ -292,58 +318,82 @@ export const filamentShareOverrides = pgTable(
       .notNull()
       .references(() => materials.id, { onDelete: 'cascade' }),
   },
-  (table) => [unique().on(table.groupMemberId, table.materialId)]
+  (table) => [
+    unique().on(table.groupMemberId, table.materialId),
+    index('filament_share_overrides_material_id_idx').on(table.materialId),
+  ]
 );
 
-export const lends = pgTable('lends', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  // References a physical spool (row in the "filaments" table)
-  filamentId: text('filament_id')
-    .notNull()
-    .references(() => spools.id, { onDelete: 'cascade' }),
-  borrowerId: text('borrower_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  groupId: text('group_id')
-    .notNull()
-    .references(() => groups.id, { onDelete: 'cascade' }),
-  status: text('status').notNull().default('requested'), // requested | active | declined | returned
-  requestedAt: timestamp('requested_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  respondedAt: timestamp('responded_at', { withTimezone: true }),
-  returnedAt: timestamp('returned_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const lends = pgTable(
+  'lends',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    // References a physical spool (row in the "filaments" table)
+    filamentId: text('filament_id')
+      .notNull()
+      .references(() => spools.id, { onDelete: 'cascade' }),
+    borrowerId: text('borrower_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    groupId: text('group_id')
+      .notNull()
+      .references(() => groups.id, { onDelete: 'cascade' }),
+    status: text('status').notNull().default('requested'), // requested | active | declined | returned
+    requestedAt: timestamp('requested_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+    returnedAt: timestamp('returned_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // At most one open (requested/active) lend per spool. requestLend checks
+    // this first for a friendly message; the index is what makes it hold
+    // under concurrent requests.
+    uniqueIndex('lends_one_open_per_filament')
+      .on(t.filamentId)
+      .where(sql`${t.status} in ('requested', 'active')`),
+    index('lends_filament_id_idx').on(t.filamentId),
+    index('lends_borrower_id_idx').on(t.borrowerId),
+    index('lends_group_id_idx').on(t.groupId),
+  ]
+);
 
 // In-app notifications (bell + /notifications). Actor/filament/group names are
 // denormalized snapshots so notifications survive deletions of their sources.
-export const notifications = pgTable('notifications', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  // Recipient
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  // lend_requested | lend_approved | lend_declined | lend_returned | lend_request_cancelled
-  type: text('type').notNull(),
-  actorName: text('actor_name').notNull(),
-  filamentName: text('filament_name').notNull(),
-  groupName: text('group_name').notNull(),
-  lendId: text('lend_id'),
-  readAt: timestamp('read_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    // Recipient
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // lend_requested | lend_approved | lend_declined | lend_returned | lend_request_cancelled
+    type: text('type').notNull(),
+    actorName: text('actor_name').notNull(),
+    filamentName: text('filament_name').notNull(),
+    groupName: text('group_name').notNull(),
+    lendId: text('lend_id'),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // Bell count + /notifications list: per user, newest first.
+    index('notifications_user_id_created_at_idx').on(t.userId, t.createdAt),
+  ]
+);
 
 export type Group = typeof groups.$inferSelect;
 export type NewGroup = typeof groups.$inferInsert;

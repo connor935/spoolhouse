@@ -200,6 +200,7 @@ export const openApiSpec = {
           '201': spoolResponse('Created spool'),
           '400': errorResponse('Invalid JSON or input'),
           '401': errorResponse('Missing or invalid API token'),
+          '409': errorResponse('tagUid already used by another own spool'),
         },
       },
     },
@@ -235,6 +236,7 @@ export const openApiSpec = {
           '400': errorResponse('Invalid JSON or input'),
           '401': errorResponse('Missing or invalid API token'),
           '404': errorResponse('Not found (or not yours)'),
+          '409': errorResponse('tagUid already used by another own spool'),
         },
       },
       delete: {
@@ -268,6 +270,7 @@ export const openApiSpec = {
           '400': errorResponse('Invalid JSON or input'),
           '401': errorResponse('Missing or invalid API token'),
           '404': errorResponse('Not found (or not yours)'),
+          '409': errorResponse('tagUid already used by another own spool'),
         },
       },
     },
@@ -323,6 +326,9 @@ export const openApiSpec = {
             'Invalid input, or tag unknown and no material fields to register'
           ),
           '401': errorResponse('Missing or invalid API token'),
+          '409': errorResponse(
+            'The tag was registered concurrently by another request — retry'
+          ),
         },
       },
     },

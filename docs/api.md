@@ -24,7 +24,10 @@ Authorization: Bearer sph_XXXXXXXX…
 ```
 
 Missing/invalid tokens get `401 {"error":{"code":"unauthorized",…}}`. Revoking a token on
-`/account` invalidates it immediately. Errors are `{"error":{"code","message"}}` (400/401/404).
+`/account` invalidates it immediately. Errors are `{"error":{"code","message"}}` (400/401/404/409).
+
+`tagUid` is unique per user: creating or patching a spool with a tag another of your
+spools already carries returns `409 {"error":{"code":"tag_conflict",…}}`.
 
 ## Endpoints
 

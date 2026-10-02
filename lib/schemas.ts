@@ -54,6 +54,12 @@ export const spoolBodySchema = z.object({
     .transform((v) => (v && v.trim() ? v.trim() : null)),
 });
 
+// Add/edit-spool server actions (app/actions/filaments.ts): the same field
+// rules as the REST body, minus tagUid (not editable in the UI). Server
+// actions are public POST endpoints, so this runs on every call, not only
+// behind the dialog's client-side checks.
+export const spoolInputSchema = spoolBodySchema.omit({ tagUid: true });
+
 // The re-weigh endpoints (PUT .../weight, POST .../weigh) only ever take this
 // one field.
 export const measuredWeightSchema = weightGrams('measuredTotalWeightGrams', 0);

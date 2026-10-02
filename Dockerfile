@@ -42,4 +42,9 @@ COPY --from=builder --chown=node:node /app/public ./public
 COPY --from=builder --chown=node:node /app/drizzle ./drizzle
 
 EXPOSE 3000
+# Liveness + DB reachability (app/api/health). The slim image has no curl, so
+# use node's fetch. start-period covers the migrations run before the server
+# starts listening. `docker compose up --wait` in the deploy waits on this.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
 CMD ["node", "server.js"]
