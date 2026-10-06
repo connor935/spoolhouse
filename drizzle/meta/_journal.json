@@ -64,6 +64,20 @@
       "when": 1791290069860,
       "tag": "0008_material_search_trgm",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791290965864,
+      "tag": "0009_weighings_costs_storage",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791290982055,
+      "tag": "0010_backfill_weighings",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { spools } from '@/lib/db/schema';
 import { apiError, authenticateApiRequest, unauthorized } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
+import { recordWeighing } from '@/lib/weighings';
 import { isSpoolTypeUsable } from '@/lib/spool-type-usable';
 import { isMaterialUsable } from '@/lib/material-usable';
 import { firstIssueMessage, spoolBodySchema } from '@/lib/schemas';
@@ -67,6 +68,12 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     return apiError(400, 'invalid_input', 'Unknown or unavailable spool type');
   }
 
+  const [before] = await db
+    .select({ grams: spools.measuredTotalWeightGrams })
+    .from(spools)
+    .where(and(eq(spools.id, id), eq(spools.userId, owner.id)));
+  if (!before) return notFound();
+
   let result: { id: string }[];
   try {
     result = await db
@@ -79,6 +86,9 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     throw error;
   }
   if (result.length === 0) return notFound();
+  const grams = parsed.data.measuredTotalWeightGrams;
+  if (grams !== undefined && grams !== before.grams)
+    await recordWeighing(id, grams, owner.id);
 
   revalidatePath('/');
   await emitSpoolChange(owner.id);

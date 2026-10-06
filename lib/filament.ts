@@ -18,6 +18,16 @@ export type SpoolView = {
   isLow: boolean;
   // Name of the current borrower, if this spool has an active lend
   lentToName: string | null;
+  pricePaidCents: number | null;
+  // Cents per gram of filament, from the price and the nominal full weight
+  pricePerGramCents: number | null;
+  // Value of the filament still on the spool (cents), null when unpriced
+  valueLeftCents: number | null;
+  purchasedAt: string | null;
+  location: string | null;
+  lastDriedAt: Date | null;
+  // Hygroscopic type and not dried within its interval (see DRYING_INTERVAL_DAYS)
+  needsDrying: boolean;
   createdAt: Date;
 };
 
@@ -51,7 +61,85 @@ export function materialLabel(
   return `${m.manufacturer} — ${m.name} (${m.filamentType})`;
 }
 
-export function toSpoolView(s: Spool, spoolType: SpoolType): SpoolView {
+// Hygroscopic filament types and how many days after opening/drying a spool
+// gets the "dry?" hint. Types not listed never get it.
+export const DRYING_INTERVAL_DAYS: Record<string, number> = {
+  Nylon: 14,
+  PVA: 14,
+  TPU: 30,
+  PC: 30,
+  PETG: 60,
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Measured from the last drying, or from when the spool was registered (taken
+// as "opened") if it was never dried.
+export function needsDrying(
+  filamentType: string,
+  lastDriedAt: Date | null,
+  createdAt: Date,
+  now: Date = new Date()
+): boolean {
+  const interval = DRYING_INTERVAL_DAYS[filamentType];
+  if (interval === undefined) return false;
+  const since = (lastDriedAt ?? createdAt).getTime();
+  return now.getTime() - since > interval * DAY_MS;
+}
+
+export function pricePerGramCents(
+  s: Pick<Spool, 'pricePaidCents' | 'fullFilamentWeightGrams'>
+): number | null {
+  if (s.pricePaidCents == null || s.fullFilamentWeightGrams <= 0) return null;
+  return s.pricePaidCents / s.fullFilamentWeightGrams;
+}
+
+// Prices are stored in cents of this one currency. Fixed locale so the server
+// render and the client agree on the formatting.
+export const CURRENCY = 'EUR';
+const moneyFormat = new Intl.NumberFormat('en-IE', {
+  style: 'currency',
+  currency: CURRENCY,
+});
+
+export function formatMoney(cents: number): string {
+  return moneyFormat.format(cents / 100);
+}
+
+// Price input as typed ("19.99", "19,99", "€ 20") -> cents. Empty -> null
+// (no price); anything else unreadable -> undefined (reject).
+export function parsePriceCents(input: string): number | null | undefined {
+  const t = input.replace(/[€\s]/g, '').replace(',', '.');
+  if (t === '') return null;
+  if (!/^\d+(\.\d{1,2})?$/.test(t)) return undefined;
+  return Math.round(Number(t) * 100);
+}
+
+// cents -> the form's input value ("19.99"), '' for no price
+export function priceInputValue(cents: number | null): string {
+  return cents === null ? '' : (cents / 100).toFixed(2);
+}
+
+// What a borrower used during a lend: the weight at approval minus the weight
+// at return (or now, while still active). Null for lends approved before
+// weights were snapshotted. Never negative (a re-weigh may correct upwards).
+export function lendUsageGrams(lend: {
+  startWeightGrams: number | null;
+  endWeightGrams: number | null;
+  currentWeightGrams: number;
+}): number | null {
+  if (lend.startWeightGrams === null) return null;
+  const end = lend.endWeightGrams ?? lend.currentWeightGrams;
+  return Math.max(0, lend.startWeightGrams - end);
+}
+
+// filamentType is the spool's material type — needed for the drying hint;
+// callers without the material (none currently) get needsDrying = false.
+export function toSpoolView(
+  s: Spool,
+  spoolType: SpoolType,
+  filamentType?: string
+): SpoolView {
   const emptyWeightGrams = spoolType.emptyWeightGrams;
   const filamentLeftGrams = computeFilamentLeft(
     s.measuredTotalWeightGrams,
@@ -65,6 +153,7 @@ export function toSpoolView(s: Spool, spoolType: SpoolType): SpoolView {
         )
       : 0;
   const isEmpty = filamentLeftGrams <= EMPTY_THRESHOLD_G;
+  const perGram = pricePerGramCents(s);
 
   return {
     id: s.id,
@@ -79,6 +168,16 @@ export function toSpoolView(s: Spool, spoolType: SpoolType): SpoolView {
     isEmpty,
     isLow: !isEmpty && percentLeft <= LOW_THRESHOLD_PCT,
     lentToName: null,
+    pricePaidCents: s.pricePaidCents,
+    pricePerGramCents: perGram,
+    valueLeftCents: perGram === null ? null : perGram * filamentLeftGrams,
+    purchasedAt: s.purchasedAt,
+    location: s.location,
+    lastDriedAt: s.lastDriedAt,
+    needsDrying:
+      !isEmpty &&
+      filamentType !== undefined &&
+      needsDrying(filamentType, s.lastDriedAt, s.createdAt),
     createdAt: s.createdAt,
   };
 }
@@ -91,7 +190,11 @@ export function groupInventory(
 ): MaterialInventory[] {
   const byMaterial = new Map<string, MaterialInventory>();
   for (const row of rows) {
-    const view = toSpoolView(row.spool, row.spoolType);
+    const view = toSpoolView(
+      row.spool,
+      row.spoolType,
+      row.material.filamentType
+    );
     view.lentToName = lentToBySpoolId?.get(row.spool.id) ?? null;
     const entry = byMaterial.get(row.material.id) ?? {
       material: row.material,

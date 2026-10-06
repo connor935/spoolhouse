@@ -16,12 +16,16 @@ import {
 import { MaterialCard } from '@/components/dashboard/material-card';
 import { SpoolFormDialog } from '@/components/dashboard/spool-form/spool-form-dialog';
 import { useUrlSyncedFilters } from '@/hooks/use-url-synced-filters';
-import { filterGroupStock, visibleMaterialEntries } from '@/lib/inventory-filter';
+import {
+  filterGroupStock,
+  visibleMaterialEntries,
+} from '@/lib/inventory-filter';
 import type { MaterialInventory, SpoolView } from '@/lib/filament';
 import type { MyLend } from '@/app/actions/lends';
 import type { Material, Property, SpoolType } from '@/lib/db/schema';
 import type { MaterialPropertyView } from '@/lib/material-properties';
 import type { SharedSpool } from '@/lib/sharing';
+import type { MaterialUsage } from '@/lib/usage-stats';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/app-header';
 import { MaterialDialog } from './material-dialog';
@@ -43,6 +47,7 @@ export function WarehouseDashboard({
   initialFilters,
   propertiesByMaterialId,
   propertyDefinitions,
+  materialUsage,
 }: {
   inventory: MaterialInventory[];
   spoolTypes: SpoolType[];
@@ -54,6 +59,7 @@ export function WarehouseDashboard({
   initialFilters: InventoryFilters;
   propertiesByMaterialId: Record<string, MaterialPropertyView[]>;
   propertyDefinitions: Property[];
+  materialUsage: Record<string, MaterialUsage>;
 }) {
   const validTabs = new Set<string>([
     'stock',
@@ -87,6 +93,13 @@ export function WarehouseDashboard({
     [allSpools]
   );
   const empty = useMemo(() => allSpools.filter((s) => s.isEmpty), [allSpools]);
+  const locations = useMemo(
+    () =>
+      [
+        ...new Set(allSpools.flatMap((s) => (s.location ? [s.location] : []))),
+      ].sort((a, b) => a.localeCompare(b)),
+    [allSpools]
+  );
 
   const activeGroup: DashboardGroup | null = tab.startsWith('group-')
     ? (groups.find((g) => `group-${g.id}` === tab) ?? null)
@@ -305,6 +318,11 @@ export function WarehouseDashboard({
                 visibleSpoolIds={visibleIds}
                 onEditSpool={openEdit}
                 onOpenMaterialDialog={openMaterialDetails}
+                dryingTemp={
+                  propertiesByMaterialId[m.material.id]?.find(
+                    (p) => p.key === 'drying_temp'
+                  )?.value
+                }
               />
             ))}
           </section>
@@ -318,6 +336,7 @@ export function WarehouseDashboard({
         spool={editingSpool}
         initialMaterial={initialMaterial}
         spoolTypes={spoolTypes}
+        locations={locations}
         isAdmin={user.isAdmin}
       />
 
@@ -326,9 +345,12 @@ export function WarehouseDashboard({
         onOpenChange={setOpenMaterialDialog}
         inventoryMaterial={dialogMaterial}
         propertyValues={
-          dialogMaterialId ? (propertiesByMaterialId[dialogMaterialId] ?? []) : []
+          dialogMaterialId
+            ? (propertiesByMaterialId[dialogMaterialId] ?? [])
+            : []
         }
         propertyDefinitions={propertyDefinitions}
+        usage={dialogMaterialId ? materialUsage[dialogMaterialId] : undefined}
         isAdmin={user.isAdmin}
         onAddSpool={openCreate}
         onEditSpool={openEdit}

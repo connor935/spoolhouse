@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  date,
   index,
   integer,
   numeric,
@@ -206,6 +207,15 @@ export const spools = pgTable(
     // can register-or-refresh this spool by its tag. Unique per user (index below;
     // NULLs never collide, so untagged spools are unaffected).
     tagUid: text('tag_uid'),
+    // What the spool cost, in cents of CURRENCY (lib/filament.ts) — optional.
+    // Price per gram = pricePaidCents / fullFilamentWeightGrams.
+    pricePaidCents: integer('price_paid_cents'),
+    purchasedAt: date('purchased_at'), // 'YYYY-MM-DD'
+    // Free-text storage place ("Dry box 2", "Shelf top").
+    location: text('location'),
+    // Last time the spool was dried; hygroscopic types get a "dry?" hint once
+    // this (or createdAt, if never dried) is older than their interval.
+    lastDriedAt: timestamp('last_dried_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -220,6 +230,38 @@ export const spools = pgTable(
     index('filaments_spool_type_id_idx').on(t.spoolTypeId),
   ]
 );
+
+// Every measured total weight a spool ever had, newest = the spool's current
+// measuredTotalWeightGrams. Written by lib/weighings.ts from every path that
+// sets the weight (dashboard, borrower re-weigh, REST API, NFC weigh); feeds
+// consumption stats, forecasts and the undo of a mistyped weight.
+export const spoolWeighings = pgTable(
+  'spool_weighings',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    spoolId: text('spool_id')
+      .notNull()
+      .references(() => spools.id, { onDelete: 'cascade' }),
+    // Who put it on the scale (owner or borrower); NULL once that user is gone
+    // or for the backfilled baseline rows.
+    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    grams: integer('grams').notNull(),
+    measuredAt: timestamp('measured_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('spool_weighings_spool_id_measured_at_idx').on(
+      t.spoolId,
+      t.measuredAt
+    ),
+    index('spool_weighings_user_id_idx').on(t.userId),
+  ]
+);
+
+export type SpoolWeighing = typeof spoolWeighings.$inferSelect;
 
 // Long-lived bearer tokens for the external REST API (/api/v1). Only the
 // SHA-256 hash is stored; the plaintext is shown once at creation on /account.
@@ -346,6 +388,10 @@ export const lends = pgTable(
       .defaultNow(),
     respondedAt: timestamp('responded_at', { withTimezone: true }),
     returnedAt: timestamp('returned_at', { withTimezone: true }),
+    // Spool's measured weight when the lend was approved / marked returned:
+    // their difference is what the borrower used.
+    startWeightGrams: integer('start_weight_grams'),
+    endWeightGrams: integer('end_weight_grams'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

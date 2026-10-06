@@ -20,6 +20,8 @@ import {
 } from '@/lib/filament';
 import type { MaterialPropertyView } from '@/lib/material-properties';
 import type { Property } from '@/lib/db/schema';
+import { forecastDays, formatDays } from '@/lib/consumption';
+import type { MaterialUsage } from '@/lib/usage-stats';
 
 type Props = {
   open: boolean;
@@ -27,6 +29,7 @@ type Props = {
   inventoryMaterial: MaterialInventory | null;
   propertyValues: MaterialPropertyView[];
   propertyDefinitions: Property[];
+  usage?: MaterialUsage;
   isAdmin: boolean;
   onAddSpool?: (materialId: string) => void;
   onEditSpool: (s: SpoolView) => void;
@@ -53,6 +56,7 @@ export function MaterialDialog({
   inventoryMaterial,
   propertyValues,
   propertyDefinitions,
+  usage,
   isAdmin,
   onAddSpool,
   onEditSpool,
@@ -61,6 +65,10 @@ export function MaterialDialog({
   if (!inventoryMaterial || !material) return null;
 
   const { spools, totalLeftGrams } = inventoryMaterial;
+  const runway =
+    usage && totalLeftGrams > 0
+      ? forecastDays(totalLeftGrams, usage.gramsPerDay)
+      : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -69,7 +77,9 @@ export function MaterialDialog({
           <div className="flex items-start gap-3">
             <span
               className="border-border mt-0.5 h-10 w-10 shrink-0 rounded-full border shadow-inner"
-              style={{ backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR }}
+              style={{
+                backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR,
+              }}
               aria-hidden
             />
             <div className="min-w-0 flex-1">
@@ -106,7 +116,9 @@ export function MaterialDialog({
               <span className="flex items-center justify-end gap-2">
                 <span
                   className="border-border h-4 w-4 rounded-full border"
-                  style={{ backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR }}
+                  style={{
+                    backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR,
+                  }}
                   aria-hidden
                 />
                 <span className="font-mono">{material.color ?? 'N/A'}</span>
@@ -130,6 +142,14 @@ export function MaterialDialog({
               ${formatWeight(totalLeftGrams)} left`}
             </span>
           </div>
+
+          {usage && usage.usedLast30Grams > 0 && (
+            <p className="text-muted-foreground py-2 text-sm">
+              {formatWeight(usage.usedLast30Grams)} used in the last 30 days
+              {runway !== null &&
+                ` · lasts about ${formatDays(runway)} at this pace`}
+            </p>
+          )}
 
           {spools.length > 0 && (
             <table className="mt-2 w-full border-separate border-spacing-y-2 text-left text-sm">

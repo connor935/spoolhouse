@@ -9,6 +9,7 @@ import {
   type ApiUser,
 } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
+import { recordWeighing } from '@/lib/weighings';
 import {
   firstIssueMessage,
   measuredWeightSchema,
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
       .where(
         and(eq(spools.id, existing.spool.id), eq(spools.userId, owner.id))
       );
+    await recordWeighing(existing.spool.id, measured, owner.id);
     revalidatePath('/');
     await emitSpoolChange(owner.id);
     const row = await getOwnedSpool(existing.spool.id, owner.id);
@@ -117,6 +119,7 @@ export async function POST(request: Request) {
     if (isTagConflict(error)) return tagConflict();
     throw error;
   }
+  await recordWeighing(created.id, measured, owner.id);
   revalidatePath('/');
   await emitSpoolChange(owner.id);
   const row = await getOwnedSpool(created.id, owner.id);

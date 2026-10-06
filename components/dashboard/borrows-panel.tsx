@@ -13,10 +13,29 @@ import {
   markReturned,
   type MyLend,
 } from '@/app/actions/lends';
-import { computeFilamentLeft, formatWeight } from '@/lib/filament';
+import {
+  computeFilamentLeft,
+  formatMoney,
+  formatWeight,
+  lendUsageGrams,
+  pricePerGramCents,
+} from '@/lib/filament';
 import { useAsyncAction, useKeyedAsyncAction } from '@/hooks/use-async-action';
 import { LEND_TOAST } from '@/lib/lend-toast';
 import { toast } from 'sonner';
+
+// "240 g used ≈ €4.80" for an active or returned lend; null when the lend
+// predates weight snapshots.
+function usageText(l: MyLend): string | null {
+  const grams = lendUsageGrams({
+    startWeightGrams: l.lend.startWeightGrams,
+    endWeightGrams: l.lend.endWeightGrams,
+    currentWeightGrams: l.measuredTotalWeightGrams,
+  });
+  if (grams === null) return null;
+  const perGram = pricePerGramCents(l);
+  return `${formatWeight(grams)} used${perGram === null ? '' : ` ≈ ${formatMoney(grams * perGram)}`}`;
+}
 
 // Cross-group borrow overview: incoming requests on my spools, my outgoing
 // requests, active lends in both directions, and history.
@@ -64,6 +83,7 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
                 )
               )}{' '}
               left
+              {usageText(l) && <> · {usageText(l)}</>}
             </p>
           </div>
           <Badge
@@ -161,6 +181,7 @@ export function BorrowsPanel({
         <p className="truncate leading-tight font-medium">{l.materialName}</p>
         <p className="text-muted-foreground truncate text-xs">
           {l.materialManufacturer} · {l.groupName}
+          {l.lend.status === 'active' && usageText(l) && <> · {usageText(l)}</>}
         </p>
       </div>
     );
@@ -321,6 +342,9 @@ export function BorrowsPanel({
                 <span className="truncate">
                   {l.materialName} — {l.ownerName} → {l.borrowerName} (
                   {l.groupName})
+                  {l.lend.status === 'returned' && usageText(l) && (
+                    <> · {usageText(l)}</>
+                  )}
                 </span>
                 <Badge
                   variant="outline"

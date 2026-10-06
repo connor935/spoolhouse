@@ -124,7 +124,11 @@ export async function getSharedFilaments(
     if (!isMaterialShared(member.shareMode, overrideSet, row.material.id))
       continue;
 
-    const view = toSpoolView(row.spool, row.spoolType);
+    const view = toSpoolView(
+      row.spool,
+      row.spoolType,
+      row.material.filamentType
+    );
     if (view.isEmpty) continue; // empty spools excluded from group stock
 
     const activeLend = activeLendBySpoolId.get(row.spool.id);

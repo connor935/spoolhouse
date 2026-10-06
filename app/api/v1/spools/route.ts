@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { spools } from '@/lib/db/schema';
 import { apiError, authenticateApiRequest, unauthorized } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
+import { recordWeighing } from '@/lib/weighings';
 import { isSpoolTypeUsable } from '@/lib/spool-type-usable';
 import { isMaterialUsable } from '@/lib/material-usable';
 import { firstIssueMessage, spoolBodySchema } from '@/lib/schemas';
@@ -61,12 +62,17 @@ export async function POST(request: Request) {
         fullFilamentWeightGrams: input.fullFilamentWeightGrams,
         measuredTotalWeightGrams: input.measuredTotalWeightGrams,
         tagUid: input.tagUid ?? null,
+        pricePaidCents: input.pricePaidCents,
+        purchasedAt: input.purchasedAt,
+        location: input.location,
+        lastDriedAt: input.lastDriedAt,
       })
       .returning();
   } catch (error) {
     if (isTagConflict(error)) return tagConflict();
     throw error;
   }
+  await recordWeighing(created.id, created.measuredTotalWeightGrams, owner.id);
   revalidatePath('/');
   await emitSpoolChange(owner.id);
   const row = await getOwnedSpool(created.id, owner.id);

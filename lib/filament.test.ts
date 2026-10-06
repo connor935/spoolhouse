@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { Material, Spool, SpoolType } from '@/lib/db/schema';
 import {
   computeFilamentLeft,
+  formatMoney,
   formatWeight,
   groupInventory,
+  lendUsageGrams,
+  needsDrying,
+  parsePriceCents,
   toSpoolView,
 } from '@/lib/filament';
 
@@ -29,6 +33,10 @@ function spool(over: Partial<Spool> = {}): Spool {
     fullFilamentWeightGrams: 1000,
     measuredTotalWeightGrams: 1200,
     tagUid: null,
+    pricePaidCents: null,
+    purchasedAt: null,
+    location: null,
+    lastDriedAt: null,
     createdAt: at('2026-01-01'),
     updatedAt: at('2026-01-01'),
     ...over,
@@ -144,5 +152,78 @@ describe('formatWeight', () => {
     expect(formatWeight(999.4)).toBe('999 g');
     expect(formatWeight(1000)).toBe('1.00 kg');
     expect(formatWeight(1234)).toBe('1.23 kg');
+  });
+});
+
+describe('prices', () => {
+  it('parses typed prices into cents', () => {
+    expect(parsePriceCents('19.99')).toBe(1999);
+    expect(parsePriceCents('19,99')).toBe(1999);
+    expect(parsePriceCents(' € 20 ')).toBe(2000);
+    expect(parsePriceCents('')).toBeNull();
+    expect(parsePriceCents('1.999')).toBeUndefined();
+    expect(parsePriceCents('abc')).toBeUndefined();
+  });
+
+  it('derives price per gram and the value left on the spool', () => {
+    const v = toSpoolView(
+      spool({ pricePaidCents: 2000, measuredTotalWeightGrams: 700 }),
+      spoolType(200)
+    );
+    expect(v.pricePerGramCents).toBe(2);
+    expect(v.valueLeftCents).toBe(1000);
+    expect(formatMoney(1000)).toBe('€10.00');
+  });
+});
+
+describe('needsDrying', () => {
+  const now = at('2026-06-01');
+  it('only flags hygroscopic types past their interval', () => {
+    expect(needsDrying('PLA', null, at('2020-01-01'), now)).toBe(false);
+    expect(needsDrying('Nylon', null, at('2026-05-25'), now)).toBe(false);
+    expect(needsDrying('Nylon', null, at('2026-05-01'), now)).toBe(true);
+    expect(needsDrying('Nylon', at('2026-05-30'), at('2026-01-01'), now)).toBe(
+      false
+    );
+  });
+
+  it('is set on the view, but never for empty spools', () => {
+    const old = { createdAt: at('2025-01-01') };
+    expect(toSpoolView(spool(old), spoolType(200), 'PETG').needsDrying).toBe(
+      true
+    );
+    expect(
+      toSpoolView(
+        spool({ ...old, measuredTotalWeightGrams: 200 }),
+        spoolType(200),
+        'PETG'
+      ).needsDrying
+    ).toBe(false);
+  });
+});
+
+describe('lendUsageGrams', () => {
+  it('uses the return weight, or the current one while active', () => {
+    expect(
+      lendUsageGrams({
+        startWeightGrams: 1000,
+        endWeightGrams: 760,
+        currentWeightGrams: 0,
+      })
+    ).toBe(240);
+    expect(
+      lendUsageGrams({
+        startWeightGrams: 1000,
+        endWeightGrams: null,
+        currentWeightGrams: 900,
+      })
+    ).toBe(100);
+    expect(
+      lendUsageGrams({
+        startWeightGrams: null,
+        endWeightGrams: null,
+        currentWeightGrams: 900,
+      })
+    ).toBeNull();
   });
 });

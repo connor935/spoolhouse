@@ -36,6 +36,9 @@ export const spoolTypeSchema = z.object({
 const idString = (field: string) =>
   z.string().trim().min(1, `${field} must be a non-empty id string`);
 
+// A bare id argument of a server action.
+export const idSchema = idString('id').max(64, 'id is too long');
+
 const weightGrams = (field: string, min: number) =>
   z
     .number({ error: `${field} must be a number (grams)` })
@@ -53,6 +56,43 @@ export const spoolBodySchema = z.object({
     .string()
     .nullish()
     .transform((v) => (v && v.trim() ? v.trim() : null)),
+  // Optional details (costs, storage, drying). Absent = unchanged on PATCH,
+  // null clears.
+  pricePaidCents: z
+    .number({ error: 'pricePaidCents must be a number (cents)' })
+    .int('pricePaidCents must be whole cents')
+    .min(0, 'pricePaidCents must not be negative')
+    .nullish(),
+  purchasedAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'purchasedAt must be a date (YYYY-MM-DD)')
+    .refine(
+      (v) => !Number.isNaN(Date.parse(v)),
+      'purchasedAt must be a valid date'
+    )
+    .nullish(),
+  location: z
+    .string()
+    .max(100, 'location must be at most 100 characters')
+    .nullish()
+    .transform((v) => (v == null ? v : v.trim() || null)),
+  lastDriedAt: z
+    .union([z.string(), z.date()], {
+      error: 'lastDriedAt must be an ISO date-time',
+    })
+    .nullish()
+    .transform((v, ctx) => {
+      if (v == null) return v;
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'lastDriedAt must be an ISO date-time',
+        });
+        return z.NEVER;
+      }
+      return d;
+    }),
 });
 
 // Add/edit-spool server actions (app/actions/filaments.ts): the same field
