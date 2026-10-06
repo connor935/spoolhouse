@@ -9,7 +9,12 @@ import {
   type ApiUser,
 } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
-import { firstIssueMessage, measuredWeightSchema } from '@/lib/schemas';
+import {
+  firstIssueMessage,
+  measuredWeightSchema,
+  NOT_REGISTERED,
+  weighRegistrationSchema,
+} from '@/lib/schemas';
 import {
   getOwnedSpool,
   getOwnedSpoolByTag,
@@ -63,20 +68,23 @@ export async function POST(request: Request) {
     return Response.json({ action: 'refreshed', spool: serializeSpool(row!) });
   }
 
-  // Register path: need enough to create/find a material
-  const manufacturer = str(b.manufacturer);
-  const name = str(b.name);
-  const filamentType = str(b.filamentType) || 'Other';
-  if (!manufacturer || !name) {
+  // Register path: need enough to find-or-create a material and spool type
+  const parsed = weighRegistrationSchema.safeParse(b);
+  if (!parsed.success) {
+    const missingIdentity = parsed.error.issues.some(
+      (i) => i.message === NOT_REGISTERED
+    );
     return apiError(
       400,
-      'not_registered',
-      'No spool for this tag. To register, include at least manufacturer and name.'
+      missingIdentity ? 'not_registered' : 'invalid_input',
+      firstIssueMessage(parsed.error)
     );
   }
-  const color = str(b.color) || null;
-  const emptyWeightGrams = intOr(b.emptyWeightGrams, 0);
-  const fullFilamentWeightGrams = intOr(b.fullFilamentWeightGrams, measured);
+  const { manufacturer, name, filamentType, color, emptyWeightGrams } =
+    parsed.data;
+  const fullFilamentWeightGrams =
+    parsed.data.fullFilamentWeightGrams ??
+    Math.max(1, measured - emptyWeightGrams);
 
   const materialId = await findOrCreateMaterial(owner, {
     manufacturer,
@@ -100,7 +108,7 @@ export async function POST(request: Request) {
         userId: owner.id,
         materialId,
         spoolTypeId,
-        fullFilamentWeightGrams: Math.max(1, fullFilamentWeightGrams),
+        fullFilamentWeightGrams,
         measuredTotalWeightGrams: measured,
         tagUid,
       })
@@ -116,13 +124,6 @@ export async function POST(request: Request) {
     { action: 'registered', spool: serializeSpool(row!) },
     { status: 201 }
   );
-}
-
-function str(v: unknown): string {
-  return typeof v === 'string' ? v.trim() : '';
-}
-function intOr(v: unknown, fallback: number): number {
-  return typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : fallback;
 }
 
 async function findOrCreateMaterial(

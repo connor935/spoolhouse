@@ -12,6 +12,7 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
+import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import {
   LOCAL_DATA_DIR,
@@ -21,7 +22,10 @@ import {
 
 mkdirSync(path.resolve(LOCAL_DATA_DIR), { recursive: true });
 
-const client = new PGlite(LOCAL_DATA_DIR);
+// Contrib extensions ship as separate WASM bundles and must be registered here
+// before a migration can CREATE EXTENSION them (pg_trgm: catalog search index,
+// drizzle/0008_material_search_trgm.sql).
+const client = new PGlite(LOCAL_DATA_DIR, { extensions: { pg_trgm } });
 await client.waitReady;
 
 const server = new PGLiteSocketServer({

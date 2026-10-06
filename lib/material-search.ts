@@ -40,6 +40,9 @@ export type MaterialQuery = {
 // "polymaker petg red" matches across three columns. Mirrors matchesTokens()
 // in lib/search.ts, which still does the same job client-side for the
 // dashboard's already-loaded inventory.
+// The concatenation is served by the trigram index materials_search_trgm_idx
+// (drizzle/0008) — keep it byte-for-byte in step with that index expression,
+// or the planner falls back to a sequential scan.
 function tokenCondition(q: string): SQL | undefined {
   const tokens = searchTokens(q.trim());
   if (tokens.length === 0) return undefined;

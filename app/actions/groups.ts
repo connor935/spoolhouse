@@ -6,12 +6,16 @@ import {
   filamentShareOverrides,
   groupMembers,
   groups,
+  lends,
+  materials,
   spools,
   user,
 } from '@/lib/db/schema';
 import { requireUser } from '@/lib/auth-session';
+import { emitSpoolChange } from '@/lib/events';
+import { createNotification } from '@/lib/notifications';
 import { getMembership } from '@/lib/sharing';
-import { and, eq, inArray, ne } from 'drizzle-orm';
+import { and, eq, inArray, ne, or, type SQL } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 function generateInviteCode() {
@@ -70,8 +74,103 @@ export async function joinGroup(code: string) {
   return group;
 }
 
+// Open lends must not dangle when a group or a membership goes away: the lend
+// rows cascade with the group, and a departed member's requests/loans would
+// otherwise stay open with nobody able to act on them in that group.
+// - Active lends block: the spool is physically elsewhere, so the owner has
+//   to mark it returned first (the history then survives a membership change).
+// - Pending requests are closed: withdrawn when a member leaves on their own
+//   (owner notified), declined otherwise (borrower notified).
+// `scope` narrows the group's lends to the ones that concern a departing
+// member; omitted, it means the whole group (deleteGroup).
+async function settleOpenLends(
+  groupId: string,
+  actor: { id: string; name: string },
+  departingUserId?: string
+) {
+  const scope: SQL | undefined = departingUserId
+    ? or(
+        eq(lends.borrowerId, departingUserId),
+        eq(spools.userId, departingUserId)
+      )
+    : undefined;
+  const open = await db
+    .select({
+      id: lends.id,
+      status: lends.status,
+      borrowerId: lends.borrowerId,
+      ownerId: spools.userId,
+      materialName: materials.name,
+      groupName: groups.name,
+    })
+    .from(lends)
+    .innerJoin(spools, eq(lends.filamentId, spools.id))
+    .innerJoin(materials, eq(spools.materialId, materials.id))
+    .innerJoin(groups, eq(lends.groupId, groups.id))
+    .where(
+      and(
+        eq(lends.groupId, groupId),
+        inArray(lends.status, ['requested', 'active']),
+        scope
+      )
+    );
+
+  const active = open.filter((l) => l.status === 'active').length;
+  if (active > 0)
+    throw new Error(
+      `${active} active lend${active === 1 ? '' : 's'} in this group — mark ${active === 1 ? 'it' : 'them'} returned first`
+    );
+
+  const touched = new Set<string>();
+  for (const l of open) {
+    // A member leaving withdraws their own requests (like cancelLendRequest);
+    // everything else — removal by the owner, group deletion, requests on the
+    // departing member's spools — is a decline the borrower hears about.
+    const withdrawn =
+      l.borrowerId === departingUserId && departingUserId === actor.id;
+    const recipient = withdrawn ? l.ownerId : l.borrowerId;
+    // Status in the WHERE, as in app/actions/lends.ts: an approval that raced
+    // us wins and turns into an active lend instead of being closed here.
+    const changed = withdrawn
+      ? await db
+          .delete(lends)
+          .where(and(eq(lends.id, l.id), eq(lends.status, 'requested')))
+          .returning({ id: lends.id })
+      : await db
+          .update(lends)
+          .set({
+            status: 'declined',
+            respondedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(and(eq(lends.id, l.id), eq(lends.status, 'requested')))
+          .returning({ id: lends.id });
+    if (changed.length === 0)
+      throw new Error('A lend in this group just changed — try again');
+    if (recipient !== actor.id)
+      await createNotification({
+        userId: recipient,
+        type: withdrawn ? 'lend_request_cancelled' : 'lend_declined',
+        actorName: actor.name,
+        filamentName: l.materialName,
+        groupName: l.groupName,
+        lendId: withdrawn ? undefined : l.id,
+      });
+    touched.add(l.ownerId).add(l.borrowerId);
+  }
+  for (const userId of touched) await emitSpoolChange(userId);
+  if (touched.size > 0) revalidatePath('/');
+}
+
 // Shared by leaveGroup/removeMember — never removes the owner's own row.
-async function removeMembership(groupId: string, userId: string) {
+async function removeMembership(
+  groupId: string,
+  userId: string,
+  actor: { id: string; name: string }
+) {
+  const membership = await getMembership(groupId, userId);
+  if (!membership || membership.role === 'owner') return;
+  await settleOpenLends(groupId, actor, userId);
   await db
     .delete(groupMembers)
     .where(
@@ -85,14 +184,14 @@ async function removeMembership(groupId: string, userId: string) {
 
 export async function leaveGroup(groupId: string) {
   const authUser = await requireUser();
-  await removeMembership(groupId, authUser.id);
+  await removeMembership(groupId, authUser.id, authUser);
   revalidatePath('/groups');
 }
 
 export async function removeMember(groupId: string, memberUserId: string) {
   const authUser = await requireUser();
   await requireOwner(groupId, authUser.id);
-  await removeMembership(groupId, memberUserId);
+  await removeMembership(groupId, memberUserId, authUser);
   revalidatePath(`/groups/${groupId}`);
 }
 
@@ -124,6 +223,7 @@ export async function renameGroup(groupId: string, name: string) {
 export async function deleteGroup(groupId: string) {
   const authUser = await requireUser();
   await requireOwner(groupId, authUser.id);
+  await settleOpenLends(groupId, authUser);
   await db.delete(groups).where(eq(groups.id, groupId));
   revalidatePath('/groups');
 }

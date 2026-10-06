@@ -24,6 +24,8 @@ export function generateApiToken() {
   };
 }
 
+const LAST_USED_RESOLUTION_MS = 5 * 60 * 1000;
+
 export type ApiUser = typeof user.$inferSelect;
 
 // Resolve `Authorization: Bearer sph_…` to the token owner, or null.
@@ -37,16 +39,28 @@ export async function authenticateApiRequest(
   if (!token.startsWith(API_TOKEN_PREFIX)) return null;
 
   const [row] = await db
-    .select({ tokenId: apiTokens.id, owner: user })
+    .select({
+      tokenId: apiTokens.id,
+      lastUsedAt: apiTokens.lastUsedAt,
+      owner: user,
+    })
     .from(apiTokens)
     .innerJoin(user, eq(apiTokens.userId, user.id))
     .where(eq(apiTokens.tokenHash, hashApiToken(token)));
   if (!row) return null;
 
-  await db
-    .update(apiTokens)
-    .set({ lastUsedAt: new Date() })
-    .where(eq(apiTokens.id, row.tokenId));
+  // lastUsedAt is informational (shown on /account), so a scale polling every
+  // few seconds shouldn't turn each read into a write: only touch it once the
+  // stored value is older than LAST_USED_RESOLUTION_MS.
+  if (
+    !row.lastUsedAt ||
+    Date.now() - row.lastUsedAt.getTime() > LAST_USED_RESOLUTION_MS
+  ) {
+    await db
+      .update(apiTokens)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(apiTokens.id, row.tokenId));
+  }
   return row.owner;
 }
 
