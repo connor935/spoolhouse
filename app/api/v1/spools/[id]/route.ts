@@ -7,7 +7,13 @@ import { emitSpoolChange } from '@/lib/events';
 import { isSpoolTypeUsable } from '@/lib/spool-type-usable';
 import { isMaterialUsable } from '@/lib/material-usable';
 import { firstIssueMessage, spoolBodySchema } from '@/lib/schemas';
-import { getOwnedSpool, parseId, serializeSpool } from '../shared';
+import {
+  getOwnedSpool,
+  isTagConflict,
+  parseId,
+  serializeSpool,
+  tagConflict,
+} from '../shared';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -61,11 +67,17 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     return apiError(400, 'invalid_input', 'Unknown or unavailable spool type');
   }
 
-  const result = await db
-    .update(spools)
-    .set({ ...parsed.data, updatedAt: new Date() })
-    .where(and(eq(spools.id, id), eq(spools.userId, owner.id)))
-    .returning({ id: spools.id });
+  let result: { id: string }[];
+  try {
+    result = await db
+      .update(spools)
+      .set({ ...parsed.data, updatedAt: new Date() })
+      .where(and(eq(spools.id, id), eq(spools.userId, owner.id)))
+      .returning({ id: spools.id });
+  } catch (error) {
+    if (isTagConflict(error)) return tagConflict();
+    throw error;
+  }
   if (result.length === 0) return notFound();
 
   revalidatePath('/');

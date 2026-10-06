@@ -10,6 +10,7 @@ import {
   user,
 } from '@/lib/db/schema';
 import { requireUser } from '@/lib/auth-session';
+import { isUniqueViolation } from '@/lib/db/errors';
 import { emitSpoolChange } from '@/lib/events';
 import { createNotification, type NotificationType } from '@/lib/notifications';
 import { getMembership, getSharedFilaments } from '@/lib/sharing';
@@ -44,18 +45,28 @@ export async function requestLend(spoolId: string, groupId: string) {
         inArray(lends.status, ['requested', 'active'])
       )
     );
-  if (existing)
-    throw new Error('This spool already has a pending or active lend');
+  const alreadyLent = 'This spool already has a pending or active lend';
+  if (existing) throw new Error(alreadyLent);
 
-  const [created] = await db
-    .insert(lends)
-    .values({
-      filamentId: spoolId,
-      groupId,
-      borrowerId: authUser.id,
-      status: 'requested',
-    })
-    .returning();
+  // The check above gives the friendly message in the common case; the
+  // partial unique index lends_one_open_per_filament settles concurrent
+  // requests that both passed it.
+  let created: typeof lends.$inferSelect;
+  try {
+    [created] = await db
+      .insert(lends)
+      .values({
+        filamentId: spoolId,
+        groupId,
+        borrowerId: authUser.id,
+        status: 'requested',
+      })
+      .returning();
+  } catch (error) {
+    if (isUniqueViolation(error, 'lends_one_open_per_filament'))
+      throw new Error(alreadyLent);
+    throw error;
+  }
 
   const [group] = await db
     .select({ name: groups.name })
@@ -129,14 +140,18 @@ async function transitionLend(
     authUser.id
   );
   if (lend.status !== config.from) throw new Error(config.invalidStatusMessage);
-  await db
+  // Re-check the status in the WHERE: a concurrent approve/decline that ran
+  // between the read above and this write must make this one a no-op.
+  const updated = await db
     .update(lends)
     .set({
       status: config.to,
       [config.stampField]: new Date(),
       updatedAt: new Date(),
     })
-    .where(eq(lends.id, lendId));
+    .where(and(eq(lends.id, lendId), eq(lends.status, config.from)))
+    .returning({ id: lends.id });
+  if (updated.length === 0) throw new Error(config.invalidStatusMessage);
   await createNotification({
     userId: lend.borrowerId,
     type: config.notifyType,
@@ -189,7 +204,14 @@ export async function cancelLendRequest(lendId: string) {
   if (row.lend.status !== 'requested')
     throw new Error('Only pending requests can be cancelled');
 
-  await db.delete(lends).where(eq(lends.id, lendId));
+  // Status in the WHERE: an approval racing this cancel must win cleanly
+  // instead of having its now-active lend deleted.
+  const deleted = await db
+    .delete(lends)
+    .where(and(eq(lends.id, lendId), eq(lends.status, 'requested')))
+    .returning({ id: lends.id });
+  if (deleted.length === 0)
+    throw new Error('Only pending requests can be cancelled');
   await createNotification({
     userId: row.ownerId,
     type: 'lend_request_cancelled',

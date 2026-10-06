@@ -7,7 +7,13 @@ import { emitSpoolChange } from '@/lib/events';
 import { isSpoolTypeUsable } from '@/lib/spool-type-usable';
 import { isMaterialUsable } from '@/lib/material-usable';
 import { firstIssueMessage, spoolBodySchema } from '@/lib/schemas';
-import { getOwnedSpool, listOwnedSpools, serializeSpool } from './shared';
+import {
+  getOwnedSpool,
+  isTagConflict,
+  listOwnedSpools,
+  serializeSpool,
+  tagConflict,
+} from './shared';
 
 // GET /api/v1/spools — the token owner's spools, newest first.
 export async function GET(request: Request) {
@@ -44,17 +50,23 @@ export async function POST(request: Request) {
     return apiError(400, 'invalid_input', 'Unknown or unavailable spool type');
   }
 
-  const [created] = await db
-    .insert(spools)
-    .values({
-      userId: owner.id,
-      materialId: input.materialId,
-      spoolTypeId: input.spoolTypeId,
-      fullFilamentWeightGrams: input.fullFilamentWeightGrams,
-      measuredTotalWeightGrams: input.measuredTotalWeightGrams,
-      tagUid: input.tagUid ?? null,
-    })
-    .returning();
+  let created: typeof spools.$inferSelect;
+  try {
+    [created] = await db
+      .insert(spools)
+      .values({
+        userId: owner.id,
+        materialId: input.materialId,
+        spoolTypeId: input.spoolTypeId,
+        fullFilamentWeightGrams: input.fullFilamentWeightGrams,
+        measuredTotalWeightGrams: input.measuredTotalWeightGrams,
+        tagUid: input.tagUid ?? null,
+      })
+      .returning();
+  } catch (error) {
+    if (isTagConflict(error)) return tagConflict();
+    throw error;
+  }
   revalidatePath('/');
   await emitSpoolChange(owner.id);
   const row = await getOwnedSpool(created.id, owner.id);

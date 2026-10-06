@@ -12,6 +12,11 @@ import { requireUser } from '@/lib/auth-session';
 import { emitSpoolChange } from '@/lib/events';
 import { assertMaterialUsable } from '@/lib/material-usable';
 import { assertSpoolTypeUsable } from '@/lib/spool-type-usable';
+import {
+  measuredWeightSchema,
+  parseOrThrow,
+  spoolInputSchema,
+} from '@/lib/schemas';
 import { and, desc, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
@@ -35,35 +40,25 @@ type SpoolInput = {
   measuredTotalWeightGrams: number;
 };
 
-export async function createSpool(input: SpoolInput) {
+export async function createSpool(rawInput: SpoolInput) {
   const user = await requireUser();
+  const input = parseOrThrow(spoolInputSchema, rawInput);
   await assertMaterialUsable(input.materialId, user.id);
   await assertSpoolTypeUsable(input.spoolTypeId, user.id);
-  const values: NewSpool = {
-    userId: user.id,
-    materialId: input.materialId,
-    spoolTypeId: input.spoolTypeId,
-    fullFilamentWeightGrams: Math.round(input.fullFilamentWeightGrams),
-    measuredTotalWeightGrams: Math.round(input.measuredTotalWeightGrams),
-  };
+  const values: NewSpool = { userId: user.id, ...input };
   await db.insert(spools).values(values);
   revalidatePath('/');
   await emitSpoolChange(user.id);
 }
 
-export async function updateSpool(id: string, input: SpoolInput) {
+export async function updateSpool(id: string, rawInput: SpoolInput) {
   const user = await requireUser();
+  const input = parseOrThrow(spoolInputSchema, rawInput);
   await assertMaterialUsable(input.materialId, user.id);
   await assertSpoolTypeUsable(input.spoolTypeId, user.id);
   await db
     .update(spools)
-    .set({
-      materialId: input.materialId,
-      spoolTypeId: input.spoolTypeId,
-      fullFilamentWeightGrams: Math.round(input.fullFilamentWeightGrams),
-      measuredTotalWeightGrams: Math.round(input.measuredTotalWeightGrams),
-      updatedAt: new Date(),
-    })
+    .set({ ...input, updatedAt: new Date() })
     .where(and(eq(spools.id, id), eq(spools.userId, user.id)));
   revalidatePath('/');
   await emitSpoolChange(user.id);
@@ -72,11 +67,12 @@ export async function updateSpool(id: string, input: SpoolInput) {
 // Quick re-weigh: store the new measured total weight from the scale (g).
 // Allowed for the owner AND for whoever currently borrows the spool
 // (active lend) — the borrower is the one printing with it.
-export async function setMeasuredWeight(
-  id: string,
-  measuredTotalWeightGrams: number
-) {
+export async function setMeasuredWeight(id: string, rawWeightGrams: number) {
   const user = await requireUser();
+  const measuredTotalWeightGrams = parseOrThrow(
+    measuredWeightSchema,
+    rawWeightGrams
+  );
   const [spool] = await db
     .select({ userId: spools.userId })
     .from(spools)
@@ -99,10 +95,7 @@ export async function setMeasuredWeight(
 
   await db
     .update(spools)
-    .set({
-      measuredTotalWeightGrams: Math.round(measuredTotalWeightGrams),
-      updatedAt: new Date(),
-    })
+    .set({ measuredTotalWeightGrams, updatedAt: new Date() })
     .where(eq(spools.id, id));
   revalidatePath('/');
   // Owner's id, not the actor's: the actor may be the borrower, and the

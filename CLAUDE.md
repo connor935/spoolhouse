@@ -81,10 +81,21 @@ One password file is shared with the postgres container's initdb script, so it i
 duplicated. The deploy workflow's pre-start `scripts/migrate.mjs` step uses the same
 resolution.
 
+**CI/CD** (`.github/workflows/deploy.yml`): a `check` job (typecheck, oxlint, and on PRs a
+full `next build`) gates everything; only pushes to `main` build and deploy. Images are
+tagged `:latest` **and** `:sha-<commit>` — roll back by pinning an older sha in the server's
+compose file. The runtime image has a Docker `HEALTHCHECK` against `GET /api/health`
+(public, `select 1`, 503 when the DB is unreachable), and the deploy runs
+`docker compose up --wait`, so an unhealthy container fails the deploy job.
+
+**Migrations must succeed on existing production data**: they run in one transaction and a
+failure aborts the deploy. Before adding a unique constraint, clean up rows that would
+violate it in the same migration (see `drizzle/0007_constraints_and_fk_indexes.sql`).
+
 ## Tech stack
 
 - **Next.js 16.2.6** (App Router) with **React 19**, server components + server actions
-- **TypeScript** (strict, path alias `@/*` → repo root) — but `next.config.mjs` sets `typescript.ignoreBuildErrors: true`
+- **TypeScript** (strict, path alias `@/*` → repo root) — `next build` type-checks, and CI (`check` job) runs `tsc --noEmit` + `oxlint` before anything is built or deployed
 - **Tailwind CSS v4** — CSS-first config in `app/globals.css` (`@theme inline`, oklch tokens); there is no `tailwind.config.*`
 - **shadcn/ui** (style `base-nova`) built on **Base UI** (`@base-ui/react`), not Radix — primitives live in `components/ui/`
 - **Drizzle ORM + node-postgres** for data access (PostgreSQL; PGlite locally, migrations via drizzle-kit)
@@ -192,6 +203,9 @@ promote to `common/` once a second feature imports it.**
 ## Domain rules
 
 - **All app-table primary keys are random UUIDs** (`text`, `$defaultFn(() => randomUUID())` in `lib/db/schema.ts`), not sequential integers — they're exposed in the REST API (`/api/v1/spools/:id`) and URLs, so unguessable ids avoid enumeration/leaking counts. Only the `user`/auth tables keep better-auth's own ids. All id params in actions/API are `string`. **Foreign keys are enforced** (Postgres always is; the old SQLite setup ran with `PRAGMA foreign_keys=OFF`) — declared `onDelete` cascades really fire, and the delete guards that used to be the only protection against dangling references are now belt *and* braces.
+- **Every server action validates its input with Zod** (`lib/schemas.ts`, `parseOrThrow`) — server actions are public POST endpoints, client-side checks are UX only. Spool actions use `spoolInputSchema` / `measuredWeightSchema`, the REST routes `spoolBodySchema`.
+- **Index every foreign-key column you filter or cascade on** — Postgres does not do it automatically (a composite unique/index whose *leading* column is the FK counts). Unique violations a caller must handle are detected by constraint name via `isUniqueViolation()` (`lib/db/errors.ts`).
+- **`tagUid` is unique per user** (`filaments_user_id_tag_uid_unique`; NULLs don't collide) so `POST /spools/weigh` always resolves a tag to one spool; the REST API answers duplicates with `409 tag_conflict`.
 - **All weights are gram integers** (`emptyWeightGrams`, `fullFilamentWeightGrams`, `measuredTotalWeightGrams`); display via `formatWeight()` (g below 1 kg, kg above); timestamps are `integer` unix-epoch columns surfaced as `Date` objects (Drizzle `mode: "timestamp"`)
 - Remaining filament: `filamentLeftGrams = measuredTotalWeightGrams − spoolType.emptyWeightGrams` (clamped ≥ 0)
 - Re-weigh (`setMeasuredWeight`) is allowed for the **owner and the current borrower** (active lend) — the borrower re-weighs from the Borrows tab ("Borrowed by you" section)
@@ -243,8 +257,10 @@ promote to `common/` once a second feature imports it.**
 - **Lending** (`lends` table): a request (`status='requested'`) is created by a member on a spool
   they don't own that's actually shared in that group; the filament owner approves (→ `active`) or
   declines. Only the **owner** marks a lend `returned` — no two-step confirmation from the borrower.
-  At most one `requested`/`active` lend per filament is enforced at request time in
-  `app/actions/lends.ts`. Lending never blocks the owner's own re-weigh/edit actions.
+  At most one `requested`/`active` lend per filament: `requestLend` checks first for a friendly
+  message, the partial unique index `lends_one_open_per_filament` makes it hold under
+  concurrency. Status transitions re-check the expected status in the `UPDATE`/`DELETE` `WHERE`,
+  so a racing approve/decline/cancel can't overwrite each other. Lending never blocks the owner's own re-weigh/edit actions.
 - **Authorization**: every group/lend action starts with `requireUser()`; membership/ownership is
   always re-checked in the SQL `WHERE`, never inferred from client-provided ids — same discipline as
   the rest of the app.
@@ -263,7 +279,7 @@ External clients authenticate with long-lived bearer tokens created on `/account
   of `requireUser()`; ownership still enforced in SQL `WHERE`).
 - Endpoints: `GET /me`, `GET /spool-types` (usable ones), `GET|POST /filaments`,
   `GET|PATCH|DELETE /filaments/:id`, `PUT /filaments/:id/weight` (re-weigh). Mutations call
-  `revalidatePath("/")`. Errors: `{"error":{"code","message"}}` with 400/401/404.
+  `revalidatePath("/")`. Errors: `{"error":{"code","message"}}` with 400/401/404/409.
 - `proxy.ts` exempts all of `/api/` from the login redirect; API auth happens in the
   handlers. Groups/lending are not exposed in v1.
 - **Keep `lib/openapi.ts` and `docs/api.md` in sync when endpoints change.**

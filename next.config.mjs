@@ -6,9 +6,6 @@ const nextConfig = {
   // pg resolves its bindings at runtime, so keep it out of the bundle and let
   // Next's file tracing copy it into the standalone output.
   serverExternalPackages: ["pg"],
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true,
   },

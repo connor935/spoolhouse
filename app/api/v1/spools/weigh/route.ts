@@ -10,7 +10,13 @@ import {
 } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
 import { firstIssueMessage, measuredWeightSchema } from '@/lib/schemas';
-import { getOwnedSpool, getOwnedSpoolByTag, serializeSpool } from '../shared';
+import {
+  getOwnedSpool,
+  getOwnedSpoolByTag,
+  isTagConflict,
+  serializeSpool,
+  tagConflict,
+} from '../shared';
 
 // Register-or-refresh a spool by its NFC tag id — the endpoint a scale/reader
 // calls. If a spool with this tagUid already exists for the token owner, its
@@ -84,17 +90,25 @@ export async function POST(request: Request) {
     emptyWeightGrams,
   });
 
-  const [created] = await db
-    .insert(spools)
-    .values({
-      userId: owner.id,
-      materialId,
-      spoolTypeId,
-      fullFilamentWeightGrams: Math.max(1, fullFilamentWeightGrams),
-      measuredTotalWeightGrams: measured,
-      tagUid,
-    })
-    .returning();
+  // A concurrent weigh of the same new tag can register it between the lookup
+  // above and this insert; the unique index rejects the second one.
+  let created: typeof spools.$inferSelect;
+  try {
+    [created] = await db
+      .insert(spools)
+      .values({
+        userId: owner.id,
+        materialId,
+        spoolTypeId,
+        fullFilamentWeightGrams: Math.max(1, fullFilamentWeightGrams),
+        measuredTotalWeightGrams: measured,
+        tagUid,
+      })
+      .returning();
+  } catch (error) {
+    if (isTagConflict(error)) return tagConflict();
+    throw error;
+  }
   revalidatePath('/');
   await emitSpoolChange(owner.id);
   const row = await getOwnedSpool(created.id, owner.id);

@@ -1,7 +1,9 @@
 import 'server-only';
 
 import { and, eq } from 'drizzle-orm';
+import { apiError } from '@/lib/api-auth';
 import { db } from '@/lib/db';
+import { isUniqueViolation } from '@/lib/db/errors';
 import {
   materials,
   spools,
@@ -86,3 +88,17 @@ export function parseId(raw: string): string | null {
   return id.length > 0 && id.length <= 64 ? id : null;
 }
 
+// tagUid is unique per user (index filaments_user_id_tag_uid_unique) so the
+// weigh endpoint always resolves a tag to exactly one spool. Writes that would
+// duplicate a tag fail in SQL and are answered with 409.
+export function isTagConflict(error: unknown): boolean {
+  return isUniqueViolation(error, 'filaments_user_id_tag_uid_unique');
+}
+
+export function tagConflict(): Response {
+  return apiError(
+    409,
+    'tag_conflict',
+    'Another of your spools already has this tagUid'
+  );
+}
