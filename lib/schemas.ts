@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FILAMENT_TYPES } from '@/lib/filament';
 import { PROPERTY_VALUE_TYPES } from '@/lib/property-value';
 
 // Shared validation for the two catalog tables (server actions, via
@@ -63,6 +64,36 @@ export const spoolInputSchema = spoolBodySchema.omit({ tagUid: true });
 // The re-weigh endpoints (PUT .../weight, POST .../weigh) only ever take this
 // one field.
 export const measuredWeightSchema = weightGrams('measuredTotalWeightGrams', 0);
+
+// Extra fields POST /api/v1/spools/weigh needs to register an unknown tag
+// (found-or-created material + spool type). emptyWeightGrams is required: a
+// 0 g spool type would silently overstate every remaining-filament figure
+// derived from it, and spoolTypeSchema refuses it everywhere else too.
+export const NOT_REGISTERED =
+  'No spool for this tag. To register, include at least manufacturer, name and emptyWeightGrams.';
+const registrationField = z
+  .string({ error: NOT_REGISTERED })
+  .trim()
+  .min(1, NOT_REGISTERED);
+
+export const weighRegistrationSchema = z.object({
+  manufacturer: registrationField,
+  name: registrationField,
+  filamentType: z
+    .enum(FILAMENT_TYPES, {
+      error: `filamentType must be one of ${FILAMENT_TYPES.join(', ')}`,
+    })
+    .nullish()
+    .transform((v) => v ?? 'Other'),
+  color: z
+    .string()
+    .nullish()
+    .transform((v) => (v && v.trim() ? v.trim() : null)),
+  emptyWeightGrams: z
+    .number({ error: NOT_REGISTERED })
+    .pipe(spoolTypeSchema.shape.emptyWeightGrams),
+  fullFilamentWeightGrams: weightGrams('fullFilamentWeightGrams', 1).optional(),
+});
 
 const optionalTrimmed = z
   .string()

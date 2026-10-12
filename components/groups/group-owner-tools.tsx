@@ -69,21 +69,25 @@ export function GroupOwnerTools({
   async function handleRemove(userId: string) {
     await run(() => removeMember(group.id, userId), {
       success: 'Member removed',
-      error: 'Could not remove member',
+      // Server action messages are masked in production builds, so name the
+      // likely cause (settleOpenLends refuses while a lend is active).
+      error:
+        'Could not remove member — lends they borrowed or lent in this group must be returned first',
     });
   }
 
   async function handleDelete() {
     const ok = await confirm({
       title: `Delete "${group.name}"?`,
-      description: "This removes it for all members and can't be undone.",
+      description:
+        "This removes it for all members and can't be undone. Pending borrow requests are declined; active lends must be marked returned first.",
       confirmLabel: 'Delete',
       destructive: true,
     });
     if (!ok) return;
     await run(() => deleteGroup(group.id), {
       success: 'Group deleted',
-      error: 'Could not delete group',
+      error: 'Could not delete group — mark its active lends returned first',
       refresh: false,
       resetOnSuccess: false,
       onSuccess: () => router.push('/groups'),

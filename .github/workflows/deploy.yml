@@ -36,6 +36,9 @@ jobs:
       - name: Lint
         run: npx oxlint . --ignore-path .gitignore
 
+      - name: Test
+        run: npm test
+
       # On main the Docker build below compiles the app anyway; on PRs this is
       # the only place a broken build would show up.
       - name: Build

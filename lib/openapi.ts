@@ -536,11 +536,19 @@ export const openApiSpec = {
             description: 'for registration',
           },
           color: { type: 'string', nullable: true, example: '#BB3D43' },
-          fullFilamentWeightGrams: { type: 'integer', example: 1000 },
+          fullFilamentWeightGrams: {
+            type: 'integer',
+            minimum: 1,
+            example: 1000,
+            description:
+              'for registration; defaults to measured minus empty-spool weight',
+          },
           emptyWeightGrams: {
             type: 'integer',
+            minimum: 1,
             example: 250,
-            description: 'empty spool weight for registration',
+            description:
+              'empty spool weight — required (with manufacturer and name) to register an unknown tag',
           },
         },
         required: ['tagUid', 'measuredTotalWeightGrams'],

@@ -11,6 +11,7 @@ npm run dev          # start dev server (+ the local database, see below)
 npm run build        # production build
 npm run start        # serve production build (+ the local database)
 npm run db:serve     # local database only — for drizzle-kit studio / psql
+npm test             # vitest: unit tests for the pure domain logic (lib/**/*.test.ts)
 npm run db:generate  # drizzle-kit: generate migration from schema changes
 npm run db:migrate   # drizzle-kit: apply migrations manually (usually unnecessary, see below)
 npm run db:studio    # drizzle-kit: local DB browser (needs the DB up: dev or db:serve)
@@ -95,7 +96,7 @@ violate it in the same migration (see `drizzle/0007_constraints_and_fk_indexes.s
 ## Tech stack
 
 - **Next.js 16.2.6** (App Router) with **React 19**, server components + server actions
-- **TypeScript** (strict, path alias `@/*` → repo root) — `next build` type-checks, and CI (`check` job) runs `tsc --noEmit` + `oxlint` before anything is built or deployed
+- **TypeScript** (strict, path alias `@/*` → repo root) — `next build` type-checks, and CI (`check` job) runs `tsc --noEmit` + `oxlint` + `npm test` before anything is built or deployed
 - **Tailwind CSS v4** — CSS-first config in `app/globals.css` (`@theme inline`, oklch tokens); there is no `tailwind.config.*`
 - **shadcn/ui** (style `base-nova`) built on **Base UI** (`@base-ui/react`), not Radix — primitives live in `components/ui/`
 - **Drizzle ORM + node-postgres** for data access (PostgreSQL; PGlite locally, migrations via drizzle-kit)
@@ -133,7 +134,7 @@ owner tools — no stock/lend UI there). Pending requests are visible on stock c
 **In-app notifications**: lend lifecycle events write rows to the `notifications` table
 (`lib/notifications.ts` helper, called from `app/actions/lends.ts`; names are denormalized snapshots).
 Bell with unread count in the dashboard header and in every `PageShell`; `/notifications` lists them
-and marks all read on open. **Borrow-request notifications are actionable**: `getNotifications`
+and marks all read on open (which also prunes read notifications older than 90 days). **Borrow-request notifications are actionable**: `getNotifications`
 joins the lend's current status, and clicking such a row opens an approve/decline dialog
 (`components/notifications/notifications-list.tsx`). No polling — counts refresh per page load.
 
@@ -206,12 +207,12 @@ promote to `common/` once a second feature imports it.**
 - **Every server action validates its input with Zod** (`lib/schemas.ts`, `parseOrThrow`) — server actions are public POST endpoints, client-side checks are UX only. Spool actions use `spoolInputSchema` / `measuredWeightSchema`, the REST routes `spoolBodySchema`.
 - **Index every foreign-key column you filter or cascade on** — Postgres does not do it automatically (a composite unique/index whose *leading* column is the FK counts). Unique violations a caller must handle are detected by constraint name via `isUniqueViolation()` (`lib/db/errors.ts`).
 - **`tagUid` is unique per user** (`filaments_user_id_tag_uid_unique`; NULLs don't collide) so `POST /spools/weigh` always resolves a tag to one spool; the REST API answers duplicates with `409 tag_conflict`.
-- **All weights are gram integers** (`emptyWeightGrams`, `fullFilamentWeightGrams`, `measuredTotalWeightGrams`); display via `formatWeight()` (g below 1 kg, kg above); timestamps are `integer` unix-epoch columns surfaced as `Date` objects (Drizzle `mode: "timestamp"`)
+- **All weights are gram integers** (`emptyWeightGrams`, `fullFilamentWeightGrams`, `measuredTotalWeightGrams`); display via `formatWeight()` (g below 1 kg, kg above); timestamps are `timestamptz` columns surfaced as `Date` objects
 - Remaining filament: `filamentLeftGrams = measuredTotalWeightGrams − spoolType.emptyWeightGrams` (clamped ≥ 0)
 - Re-weigh (`setMeasuredWeight`) is allowed for the **owner and the current borrower** (active lend) — the borrower re-weighs from the Borrows tab ("Borrowed by you" section)
 - **Empty** when `filamentLeftGrams ≤ 5`; **Low** when `percentLeft ≤ 15%`
 - **Materials & spool types** are both global catalogs with `status` `approved | pending | rejected` and identical request→review workflows (`requestMaterial`/`requestSpoolType`): a pending entry is **immediately usable by its submitter**, visible to others only after approval; rejection never breaks existing references. Usable-rules: `assertMaterialUsable`/`assertSpoolTypeUsable` + `getUsableMaterials`/`getUsableSpoolTypes`. **Auto-approve** applies to admins AND **trusted contributors** (a `user.trustedContributor` flag toggled by admins on `/admin/users`, declared as a better-auth `additionalFields` in `lib/auth.ts` so it rides the session user; the auto-approve check lives once in `lib/catalog.ts` `request()`).
-- **Material properties** (`properties` = admin-curated definitions with an immutable machine `key` + name/unit/description; `materialProperties` = value rows, unique per material×property): datasheet data (density, diameters, temps — migrated out of the old `materials` extra columns — plus tensile strength, hardness, etc.). **Definitions are admin-only** (managed on `/admin/properties`, `components/admin/property-admin-list.tsx`, no review flow). **Values are wiki-style**: any logged-in user sets/edits a value via `setMaterialProperty` (effective immediately), which records `submittedById` and sets `verified` = the editor is admin; non-admin edits show an "unverified" badge until an admin `verifyMaterialProperty`s them; delete is admin-only. Actions in `app/actions/properties.ts`; read helper `getPropertiesForMaterials` (`lib/material-properties.ts`) feeds both the dashboard material dialog and the catalog rows (`components/materials/material-properties-section.tsx`) and the REST API. The delete-a-material path clears value rows via the catalog factory's `onRemove` hook (FK cascade is inert at runtime — see below).
+- **Material properties** (`properties` = admin-curated definitions with an immutable machine `key` + name/unit/description; `materialProperties` = value rows, unique per material×property): datasheet data (density, diameters, temps — migrated out of the old `materials` extra columns — plus tensile strength, hardness, etc.). **Definitions are admin-only** (managed on `/admin/properties`, `components/admin/property-admin-list.tsx`, no review flow). **Values are wiki-style**: any logged-in user sets/edits a value via `setMaterialProperty` (effective immediately), which records `submittedById` and sets `verified` = the editor is admin; non-admin edits show an "unverified" badge until an admin `verifyMaterialProperty`s them; delete is admin-only. Actions in `app/actions/properties.ts`; read helper `getPropertiesForMaterials` (`lib/material-properties.ts`) feeds both the dashboard material dialog and the catalog rows (`components/materials/material-properties-section.tsx`) and the REST API. The delete-a-material path clears value rows via the catalog factory's `onRemove` hook (the FK cascade would also fire; the hook keeps the intent explicit).
 - **The material catalog is searched in SQL, not in the browser.** A SpoolmanDB import pushes it to
   tens of thousands of rows (460 manufacturers upstream, ~24k materials if you took them all), so
   nothing ships the whole catalog to the client: the spool-form picker queries `searchMaterials`
@@ -221,6 +222,9 @@ promote to `common/` once a second feature imports it.**
   **token-wise**: every whitespace-separated token must appear in manufacturer + name + filament
   type, so "polymaker petg red" matches across three columns (matching `matchesTokens` in
   `lib/search.ts`, which still filters the dashboard's already-loaded inventory client-side).
+  The token concatenation is backed by a `pg_trgm` GIN index (`materials_search_trgm_idx`,
+  `drizzle/0008`) on the exact same expression — change one, change both. PGlite loads the
+  extension in `scripts/pglite-server.mjs`.
   Paged queries order by `(manufacturer, name, id)` — the id breaks ties, without which
   LIMIT/OFFSET can skip or repeat a row.
 - **Every property definition declares a value type** (`properties.valueType`: `number | integer |
@@ -232,7 +236,7 @@ promote to `common/` once a second feature imports it.**
   a comma is already the separator, so "1,75, 2,85" is ambiguous and refused). Types are set on
   `/admin/properties`; **changing one re-validates every existing value and is refused if any no
   longer fit**, then re-normalises the rest so stored values and bounds match. `text` never gets
-  bounds and is never range-filtered. Case table: `npx tsx scripts/check-property-values.ts`.
+  bounds and is never range-filtered. Case table: `lib/property-value.test.ts` (`npm test`).
 - **Property range filters run in SQL**, against `material_properties.value_min`/`value_max`, which
   come from that same normalisation. A row written without bounds silently stops matching range
   filters, so nothing may write `value` without them. `parseBounds()` (`lib/property-filter.ts`)
@@ -261,6 +265,10 @@ promote to `common/` once a second feature imports it.**
   message, the partial unique index `lends_one_open_per_filament` makes it hold under
   concurrency. Status transitions re-check the expected status in the `UPDATE`/`DELETE` `WHERE`,
   so a racing approve/decline/cancel can't overwrite each other. Lending never blocks the owner's own re-weigh/edit actions.
+- **Groups/memberships never leave lends dangling** (`settleOpenLends` in `app/actions/groups.ts`):
+  deleting a group, removing a member or leaving is **refused while a concerned lend is active**
+  (owner marks it returned first); pending requests are closed first — withdrawn when a member
+  leaves on their own, otherwise declined with a notification to the borrower.
 - **Authorization**: every group/lend action starts with `requireUser()`; membership/ownership is
   always re-checked in the SQL `WHERE`, never inferred from client-provided ids — same discipline as
   the rest of the app.
@@ -275,10 +283,12 @@ External clients authenticate with long-lived bearer tokens created on `/account
 - Tokens: `sph_` + 32 random bytes base64url, stored **SHA-256-hashed** in `api_tokens`
   (plaintext shown once at creation; revoke = row delete). `authenticateApiRequest(request)`
   in `lib/api-auth.ts` resolves `Authorization: Bearer …` to the owning user and touches
-  `lastUsedAt` — call it first in every `/api/v1` route handler (the API-route counterpart
+  `lastUsedAt` (at most every 5 min, so a polling scale doesn't write per request) — call it first in every `/api/v1` route handler (the API-route counterpart
   of `requireUser()`; ownership still enforced in SQL `WHERE`).
-- Endpoints: `GET /me`, `GET /spool-types` (usable ones), `GET|POST /filaments`,
-  `GET|PATCH|DELETE /filaments/:id`, `PUT /filaments/:id/weight` (re-weigh). Mutations call
+- Endpoints: `GET /me`, `GET /spool-types` (usable ones), `GET /materials` (paginated),
+  `GET|POST /spools`, `GET|PATCH|DELETE /spools/:id`, `PUT /spools/:id/weight` (re-weigh),
+  `POST /spools/weigh` (register-or-refresh by NFC tag; registering needs manufacturer, name
+  and `emptyWeightGrams` > 0). Mutations call
   `revalidatePath("/")`. Errors: `{"error":{"code","message"}}` with 400/401/404/409.
 - `proxy.ts` exempts all of `/api/` from the login redirect; API auth happens in the
   handlers. Groups/lending are not exposed in v1.
@@ -334,8 +344,8 @@ rule under "Domain rules".
 ## Known gaps / quirks (V0 export leftovers)
 
 - No README, no seed data (fresh DB shows the empty state; spool-type catalog starts empty too)
-- `npm run lint` references eslint, but eslint is not in `devDependencies`
-- Unused V0 placeholder assets in `public/` (`placeholder*.{svg,jpg,png}`)
+- Server-action error messages are masked in production builds, so client toasts use static
+  messages naming the likely cause rather than the thrown text
 
 ## Working notes
 

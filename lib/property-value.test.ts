@@ -1,14 +1,12 @@
-// Case table for lib/property-value.ts — the normalisation rules are subtle
-// (decimal commas, range separators, ambiguous lists) and quietly getting them
-// wrong corrupts the catalog's range filter. Run with:
-//
-//   npx tsx scripts/check-property-values.ts
-//
-// Exits non-zero on the first mismatch. No DB or server needed.
+import { describe, expect, it } from 'vitest';
 import {
   normalizePropertyValue,
   type PropertyValueType,
-} from '../lib/property-value';
+} from '@/lib/property-value';
+
+// The normalisation rules are subtle (decimal commas, range separators,
+// ambiguous lists) and quietly getting them wrong corrupts the catalog's range
+// filter — "1,24" once parsed as 1–24.
 
 const cases: [PropertyValueType, string, string | null][] = [
   // [type, input, expected canonical value or null if it must be rejected]
@@ -39,16 +37,12 @@ const cases: [PropertyValueType, string, string | null][] = [
   ['text', '', null],
 ];
 
-let failures = 0;
-for (const [type, input, expected] of cases) {
-  const result = normalizePropertyValue(type, input);
-  const got = result.ok ? result.value : null;
-  const pass = got === expected;
-  if (!pass) failures++;
-  console.log(
-    `${pass ? 'ok  ' : 'FAIL'} ${type.padEnd(8)} ${JSON.stringify(input).padEnd(24)} -> ${JSON.stringify(got)}${pass ? '' : `  (expected ${JSON.stringify(expected)})`}`
-  );
-}
+describe('normalizePropertyValue', () => {
+  it.each(cases)('%s %j -> %j', (type, input, expected) => {
+    const result = normalizePropertyValue(type, input);
+    expect(result.ok ? result.value : null).toBe(expected);
+  });
+});
 
 // bounds must mirror what the SQL range filter compares against
 const bounds: [PropertyValueType, string, number | null, number | null][] = [
@@ -57,14 +51,11 @@ const bounds: [PropertyValueType, string, number | null, number | null][] = [
   ['list', '1.75, 2.85', 1.75, 2.85],
   ['text', 'anything', null, null],
 ];
-for (const [type, input, min, max] of bounds) {
-  const r = normalizePropertyValue(type, input);
-  const ok = r.ok && r.min === min && r.max === max;
-  if (!ok) failures++;
-  console.log(
-    `${ok ? 'ok  ' : 'FAIL'} bounds  ${type.padEnd(8)} ${JSON.stringify(input).padEnd(15)} -> [${r.ok ? r.min : '?'}, ${r.ok ? r.max : '?'}]`
-  );
-}
 
-console.log(failures === 0 ? '\nall cases pass' : `\n${failures} FAILURES`);
-process.exit(failures === 0 ? 0 : 1);
+describe('normalizePropertyValue bounds', () => {
+  it.each(bounds)('%s %j -> [%s, %s]', (type, input, min, max) => {
+    const result = normalizePropertyValue(type, input);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect([result.min, result.max]).toEqual([min, max]);
+  });
+});

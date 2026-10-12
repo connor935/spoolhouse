@@ -13,6 +13,7 @@ import {
   type Material,
 } from '@/lib/db/schema';
 import { toSpoolView, type SpoolView } from '@/lib/filament';
+import { isMaterialShared } from '@/lib/share-mode';
 import { and, eq, inArray } from 'drizzle-orm';
 
 export type SharedSpool = SpoolView & {
@@ -120,13 +121,8 @@ export async function getSharedFilaments(
 
     const overrideSet =
       overridesByMember.get(member.groupMemberId) ?? new Set<string>();
-    const shared =
-      member.shareMode === 'whitelist'
-        ? overrideSet.has(row.material.id)
-        : member.shareMode === 'blacklist'
-          ? !overrideSet.has(row.material.id)
-          : true; // 'all'
-    if (!shared) continue;
+    if (!isMaterialShared(member.shareMode, overrideSet, row.material.id))
+      continue;
 
     const view = toSpoolView(row.spool, row.spoolType);
     if (view.isEmpty) continue; // empty spools excluded from group stock

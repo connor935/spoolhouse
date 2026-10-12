@@ -3,7 +3,7 @@
 import { db } from '@/lib/db';
 import { lends, notifications } from '@/lib/db/schema';
 import { requireUser } from '@/lib/auth-session';
-import { and, count, desc, eq, isNull } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, lt } from 'drizzle-orm';
 
 function unreadWhere(userId: string) {
   return and(eq(notifications.userId, userId), isNull(notifications.readAt));
@@ -35,10 +35,24 @@ export type NotificationWithStatus = Awaited<
   ReturnType<typeof getNotifications>
 >[number];
 
+// Read notifications older than this are pruned, so the table doesn't grow
+// without bound. Unread ones are kept however old they are.
+const READ_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
+
 export async function markAllRead() {
   const user = await requireUser();
   await db
     .update(notifications)
     .set({ readAt: new Date() })
     .where(unreadWhere(user.id));
+  // Piggybacks on the one place a user's notifications are already written
+  // to (opening /notifications) instead of a scheduled job.
+  await db
+    .delete(notifications)
+    .where(
+      and(
+        eq(notifications.userId, user.id),
+        lt(notifications.readAt, new Date(Date.now() - READ_RETENTION_MS))
+      )
+    );
 }

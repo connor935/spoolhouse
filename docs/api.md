@@ -91,7 +91,10 @@ curl -H "Authorization: Bearer $TOKEN" \
 If a spool with `tagUid` already exists for the owner, its weight is refreshed (`200`,
 `"action":"refreshed"`). Otherwise a new spool is registered (`201`,
 `"action":"registered"`) — the material and spool type are found-or-created from the tag
-data. To register, include at least `manufacturer` and `name`.
+data. To register, include at least `manufacturer`, `name` and `emptyWeightGrams` (> 0);
+otherwise the answer is `400 not_registered`. `filamentType` must be one of the filament
+types (PLA, PETG, …, defaults to `Other`); `fullFilamentWeightGrams` defaults to the
+measured weight minus the empty-spool weight.
 
 ```json
 {
