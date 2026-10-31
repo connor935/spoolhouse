@@ -30,7 +30,7 @@ Package manager is **npm** (`package-lock.json`).
 - Client-side calls go through `authClient` (`lib/auth-client.ts`): sign-in/out, `changePassword`, `requestPasswordReset`/`resetPassword`, `admin.createUser`.
 - Password-reset mails: `lib/mail.ts` — SMTP when `SMTP_HOST` is set, otherwise logged to the server console (dev fallback).
 - Required env: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (see `.env.example`).
-- Pages: `/login`, `/signup` (only when `ALLOW_SIGNUP=true`), `/forgot-password`, `/reset-password`, `/account`, `/materials` + `/spool-types` (catalogs + request), `/admin/users` + `/admin/materials` + `/admin/spool-types` + `/admin/properties` + `/admin/import` (admin only).
+- Pages: `/login`, `/signup` (only when `ALLOW_SIGNUP=true`), `/forgot-password`, `/reset-password`, `/account`, `/stats` (usage, costs, forecasts), `/materials` + `/spool-types` (catalogs + request), `/admin/users` + `/admin/materials` + `/admin/spool-types` + `/admin/properties` + `/admin/import` (admin only).
 - Password min length: `MINIMUM_PASSWORD_LENGTH` env (default 12) — exported as `passwordMinLength` from `lib/auth.ts` and passed to client forms **as a prop from server components** (plain `process.env` reads are undefined in the browser).
 
 ## Database setup
@@ -154,11 +154,12 @@ promote to `common/` once a second feature imports it.**
 | `ui/` | shadcn/Base-UI primitives — never hand-edit for feature needs |
 | `common/` | Cross-cutting widgets used by 2+ features: `confirm-dialog`, `search-input`, `select-field`, `manufacturer-name-fields`, `request-submit-button` |
 | `layout/` | App chrome mounted by layouts/pages: `page-shell`, `app-header`, `user-menu`, `theme-provider`, `live-refresh` |
-| `dashboard/` | The `/` surface: `warehouse-dashboard`, `material-card`, `spool-card`, `material-dialog`, `inventory-filter`, `borrows-dialog`/`borrows-panel`, + `spool-form/` (add/edit-spool dialog, fields, pickers) |
+| `dashboard/` | The `/` surface: `warehouse-dashboard`, `material-card`, `spool-card`, `material-dialog`, `inventory-filter`, `borrows-dialog`/`borrows-panel`, + `spool-form/` (add/edit-spool dialog, fields, pickers, weighing history) |
 | `catalog/` | `/materials` + `/spool-types` (+ their admin twins): generic `catalog`/`catalog-row` and the material/spool-type list, row, edit-dialog and request-form pairs |
 | `materials/` | Material-property UI shared by catalog **and** dashboard: `material-properties-section`, `material-property-filter` |
 | `groups/` | `/groups` + `/groups/[id]` + group stock: create/join forms, `group-stock`, sharing settings, owner tools |
 | `notifications/` | `notification-bell` (rendered by layout chrome) and `notifications-list` |
+| `stats/` | `/stats`: `monthly-usage-chart`, `usage-table` |
 | `auth/` | `auth-card` shell + login/signup/reset-password forms |
 | `account/` | `/account` sections: `account-forms`, `api-tokens-section` |
 | `admin/` | Admin-only surfaces with no catalog equivalent: `create-user-form`, `trusted-contributor-toggle`, `property-admin-list`, `import-manufacturers` |
@@ -168,9 +169,10 @@ promote to `common/` once a second feature imports it.**
 
 | File | Purpose |
 |---|---|
-| `lib/filament.ts` | Domain logic: gram math, thresholds, `SpoolView`, `MaterialInventory`, `toSpoolView`, `groupInventory`, `formatWeight`, `materialLabel`, `spoolTypeLabel`, `FILAMENT_TYPES` |
+| `lib/filament.ts` | Domain logic: gram math, thresholds, `SpoolView`, `MaterialInventory`, `toSpoolView`, `groupInventory`, `formatWeight`, `materialLabel`, `spoolTypeLabel`, `FILAMENT_TYPES`; money (`formatMoney`, `parsePriceCents`, `pricePerGramCents`), drying hint (`needsDrying`, `DRYING_INTERVAL_DAYS`), `lendUsageGrams` |
+| `lib/weighings.ts` / `lib/consumption.ts` / `lib/usage-stats.ts` | Weighing history writer + undo / pure usage math (drops, monthly, rate, forecast) / DB-backed stats for `/stats` and the material dialog |
 | `app/actions/spool-types.ts` / `app/actions/materials.ts` | Catalog actions (usable/catalog queries, request, admin approve/reject) — same pattern for both |
-| `lib/db/schema.ts` | Drizzle tables (`materials`, `spools` [DB: "filaments"], `spoolTypes`, `properties` + `materialProperties` [datasheet values], `groups`, `groupMembers`, `filamentShareOverrides` [material-level], `lends`, `notifications`) + inferred types (re-exports auth schema) |
+| `lib/db/schema.ts` | Drizzle tables (`materials`, `spools` [DB: "filaments"], `spoolTypes`, `spoolWeighings` [weighing history], `properties` + `materialProperties` [datasheet values], `groups`, `groupMembers`, `filamentShareOverrides` [material-level], `lends`, `notifications`) + inferred types (re-exports auth schema) |
 | `components/layout/page-shell.tsx` | Shared sub-page layout (width, back-link, title, bell) — use on every sub-page |
 | `lib/notifications.ts` / `app/actions/notifications.ts` | Notification writer helper / read actions (`getUnreadCount`, `getNotifications`, `markAllRead`) |
 | `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
@@ -188,7 +190,7 @@ promote to `common/` once a second feature imports it.**
 | `components/dashboard/borrows-panel.tsx` / `notifications/notifications-list.tsx` | Dashboard Borrows tab / actionable notification list with approve-decline dialog |
 | `components/dashboard/warehouse-dashboard.tsx` | Main client UI: stats, tabs (incl. Borrows + per-group), dialog state |
 | `components/dashboard/material-card.tsx` | Material card with per-spool rows (re-weigh, edit/delete, lent badge) + add-spool |
-| `components/dashboard/spool-form/spool-form-dialog.tsx` | Add/edit spool: material + spool-type pickers with inline request flows |
+| `components/dashboard/spool-form/spool-form-dialog.tsx` | Add/edit spool: material + spool-type pickers with inline request flows, details (price, location, drying), weighing history + undo |
 | `components/groups/group-stock.tsx` / `group-sharing-settings.tsx` / `group-owner-tools.tsx` | `/groups/[id]` page sections + the dashboard's per-group stock tab |
 | `lib/api-auth.ts` | REST-API token auth: `generateApiToken`, `authenticateApiRequest(request)`, `apiError`/`unauthorized` helpers |
 | `lib/spool-type-usable.ts` | `isSpoolTypeUsable`/`assertSpoolTypeUsable` — shared by server actions and REST API |
@@ -245,6 +247,22 @@ promote to `common/` once a second feature imports it.**
 - **Catalog UI is one generalized component** per catalog (`components/catalog/material-catalog.tsx` / `spool-type-catalog.tsx`): a searchable, manufacturer-grouped, capped (150 rows) list. `/materials` + `/spool-types` render it read-only (own pending/rejected editable); `/admin/materials` + `/admin/spool-types` render the **same** component with `isAdmin` — adds a status filter + "Review pending" shortcut and inline Approve/Reject/Delete + edit-any on each row (`material-catalog-row.tsx` / `spool-type-catalog-row.tsx`). All admin actions are server-enforced (`requireAdmin`), so the inline controls are pure UX. Admin pages fetch `getAllMaterialsForAdmin`/`getAllSpoolTypesForAdmin` (all rows + `spoolCount` for the delete guard).
 - **Spools** (DB table still named `filaments`, TS export `spools` — deliberate, renaming it would churn migrations and the REST API for no gain): a physical spool references `materialId` + `spoolTypeId` + weights. The dashboard groups spools by material (`groupInventory`); adding another spool of the same material is one click on the material card.
 - **Sharing is material-level**: a member's whitelist/blacklist overrides reference material ids (all their spools of it, incl. future ones). Lending stays per physical spool. Group stock is grouped by material across owners.
+- **Weighing history** (`spool_weighings`): every write of `measuredTotalWeightGrams` — dashboard
+  create/edit (edit only when the weight changed), borrower re-weigh, REST create/PATCH/PUT weight,
+  tag weigh — must call `recordWeighing()` (`lib/weighings.ts`) right after, so the newest row always
+  equals the spool's weight. **Usage = sum of drops between consecutive weighings**; increases are
+  ignored (corrections/refills). A mistyped weight is fixed with **undo** (`undoLastWeighing`, edit
+  dialog), which deletes the newest row and restores the previous weight rather than adding a
+  correcting one — that keeps the usage stats clean. Migration `0010` backfilled one baseline row
+  per spool. Forecasts (`dailyRate`) average over the last 60 days or the tracked time if shorter,
+  never under 7 days.
+- **Lend usage**: `approveLend`/`markReturned` snapshot the spool's weight into
+  `lends.startWeightGrams`/`endWeightGrams`; the Borrows tab shows the difference (and its cost).
+- **Spool details**: optional `pricePaidCents` (euro cents; `CURRENCY` in `lib/filament.ts`),
+  `purchasedAt` (date), `location` (free text, matched by the dashboard search per spool),
+  `lastDriedAt`. Hygroscopic types get a "Dry?" badge (click = `markDried`) once
+  `lastDriedAt ?? createdAt` is older than `DRYING_INTERVAL_DAYS`; the `drying_temp` property
+  (seeded definition, migration `0010`) is shown in its tooltip.
 - Filament types: PLA, PETG, ABS, ASA, TPU, Nylon, PC, PVA, HIPS, Other (`FILAMENT_TYPES` in `lib/filament.ts`)
 
 ## Groups & lending
@@ -287,6 +305,7 @@ External clients authenticate with long-lived bearer tokens created on `/account
   of `requireUser()`; ownership still enforced in SQL `WHERE`).
 - Endpoints: `GET /me`, `GET /spool-types` (usable ones), `GET /materials` (paginated),
   `GET|POST /spools`, `GET|PATCH|DELETE /spools/:id`, `PUT /spools/:id/weight` (re-weigh),
+  `GET /spools/:id/weighings` (history),
   `POST /spools/weigh` (register-or-refresh by NFC tag; registering needs manufacturer, name
   and `emptyWeightGrams` > 0). Mutations call
   `revalidatePath("/")`. Errors: `{"error":{"code","message"}}` with 400/401/404/409.

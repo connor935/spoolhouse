@@ -13,12 +13,14 @@ export function MaterialCard({
   visibleSpoolIds,
   onEditSpool,
   onOpenMaterialDialog,
+  dryingTemp,
 }: {
   inventory: MaterialInventory;
   // Tab filtering: only these spools are listed (indices stay material-wide)
   visibleSpoolIds: Set<string>;
   onEditSpool: (s: SpoolView) => void;
   onOpenMaterialDialog: (material: MaterialInventory) => void;
+  dryingTemp?: string | null;
 }) {
   const { material, spools, totalLeftGrams } = inventory;
   const swatch = material?.color || '#000000';
@@ -77,7 +79,13 @@ export function MaterialCard({
       <ul className="divide-border border-border divide-y border-t">
         {spools.map((s, i) =>
           visibleSpoolIds.has(s.id) ? (
-            <SpoolCard key={s.id} spool={s} index={i} onEdit={onEditSpool} />
+            <SpoolCard
+              key={s.id}
+              spool={s}
+              index={i}
+              onEdit={onEditSpool}
+              dryingTemp={dryingTemp}
+            />
           ) : null
         )}
       </ul>

@@ -93,6 +93,7 @@ async function loadLendContext(lendId: string) {
     .select({
       lend: lends,
       ownerId: spools.userId,
+      spoolWeightGrams: spools.measuredTotalWeightGrams,
       materialName: materials.name,
       groupName: groups.name,
     })
@@ -129,16 +130,17 @@ async function transitionLend(
     from: string;
     to: string;
     stampField: 'respondedAt' | 'returnedAt';
+    // Snapshot of the spool's weight at this transition; start − end is what
+    // the borrower used (shown in the Borrows tab).
+    weightField?: 'startWeightGrams' | 'endWeightGrams';
     notifyType: NotificationType;
     invalidStatusMessage: string;
     includeRoot?: boolean;
   }
 ) {
   const authUser = await requireUser();
-  const { lend, materialName, groupName } = await requireSpoolOwner(
-    lendId,
-    authUser.id
-  );
+  const { lend, materialName, groupName, spoolWeightGrams } =
+    await requireSpoolOwner(lendId, authUser.id);
   if (lend.status !== config.from) throw new Error(config.invalidStatusMessage);
   // Re-check the status in the WHERE: a concurrent approve/decline that ran
   // between the read above and this write must make this one a no-op.
@@ -147,6 +149,7 @@ async function transitionLend(
     .set({
       status: config.to,
       [config.stampField]: new Date(),
+      ...(config.weightField && { [config.weightField]: spoolWeightGrams }),
       updatedAt: new Date(),
     })
     .where(and(eq(lends.id, lendId), eq(lends.status, config.from)))
@@ -168,6 +171,7 @@ export async function approveLend(lendId: string) {
     from: 'requested',
     to: 'active',
     stampField: 'respondedAt',
+    weightField: 'startWeightGrams',
     notifyType: 'lend_approved',
     invalidStatusMessage: 'Lend request already handled',
   });
@@ -189,6 +193,7 @@ export async function markReturned(lendId: string) {
     from: 'active',
     to: 'returned',
     stampField: 'returnedAt',
+    weightField: 'endWeightGrams',
     notifyType: 'lend_returned',
     invalidStatusMessage: 'Lend is not active',
   });
@@ -248,6 +253,8 @@ export async function getMyLends() {
       materialManufacturer: materials.manufacturer,
       measuredTotalWeightGrams: spools.measuredTotalWeightGrams,
       emptyWeightGrams: spoolTypes.emptyWeightGrams,
+      fullFilamentWeightGrams: spools.fullFilamentWeightGrams,
+      pricePaidCents: spools.pricePaidCents,
       ownerId: spools.userId,
       ownerName: ownerUser.name,
       borrowerName: borrowerUser.name,

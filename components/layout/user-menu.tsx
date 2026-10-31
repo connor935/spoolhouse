@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  BarChart3,
   CircleUser,
   Disc3,
   Download,
@@ -59,6 +60,10 @@ export function UserMenu({
           <DropdownMenuItem render={<Link href="/account" />}>
             <Settings className="mr-2 h-4 w-4" />
             Account
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/stats" />}>
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Statistics
           </DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/materials" />}>
             <Layers className="mr-2 h-4 w-4" />

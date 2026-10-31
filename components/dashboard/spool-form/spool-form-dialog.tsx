@@ -19,9 +19,12 @@ import { Trash2 } from 'lucide-react';
 import { createSpool, deleteSpool, updateSpool } from '@/app/actions/filaments';
 import { MaterialField } from '@/components/dashboard/spool-form/spool-form-material-field';
 import { SpoolTypeField } from '@/components/dashboard/spool-form/spool-form-spool-type-field';
+import { WeighingHistory } from '@/components/dashboard/spool-form/weighing-history';
 import {
   computeFilamentLeft,
   formatWeight,
+  parsePriceCents,
+  priceInputValue,
   type SpoolView,
 } from '@/lib/filament';
 import type { Material, SpoolType } from '@/lib/db/schema';
@@ -37,8 +40,15 @@ type Props = {
   // no longer holds the whole catalog to look one up in.
   initialMaterial?: Material | null;
   spoolTypes: SpoolType[];
+  // The user's existing storage locations, offered as suggestions
+  locations?: string[];
   isAdmin?: boolean;
 };
+
+// Date-input value ('YYYY-MM-DD') of a timestamp, '' for none
+function dateInputValue(d: Date | null): string {
+  return d ? new Date(d).toISOString().slice(0, 10) : '';
+}
 
 export function SpoolFormDialog({
   open,
@@ -46,6 +56,7 @@ export function SpoolFormDialog({
   spool,
   initialMaterial,
   spoolTypes,
+  locations = [],
   isAdmin = false,
 }: Props) {
   const editing = Boolean(spool);
@@ -66,6 +77,13 @@ export function SpoolFormDialog({
   const [measuredGrams, setMeasuredGrams] = useState(
     spool ? String(spool.measuredTotalWeightGrams) : '1200'
   );
+  const [price, setPrice] = useState(
+    priceInputValue(spool?.pricePaidCents ?? null)
+  );
+  const [purchasedAt, setPurchasedAt] = useState(spool?.purchasedAt ?? '');
+  const [location, setLocation] = useState(spool?.location ?? '');
+  const initialDried = dateInputValue(spool?.lastDriedAt ?? null);
+  const [lastDried, setLastDried] = useState(initialDried);
   // in create mode the measured weight auto-fills as full + empty spool
   // weight until the user edits the field manually (then their value wins).
   const [measuredDirty, setMeasuredDirty] = useState(false);
@@ -110,11 +128,25 @@ export function SpoolFormDialog({
       return;
     }
 
+    const pricePaidCents = parsePriceCents(price);
+    if (pricePaidCents === undefined) {
+      toast.error('Enter the price as a number, e.g. 19.99');
+      return;
+    }
+
     const payload = {
       materialId: selectedMaterial.id,
       spoolTypeId: selectedType.id,
       fullFilamentWeightGrams: full,
       measuredTotalWeightGrams: measuredTotal,
+      pricePaidCents,
+      purchasedAt: purchasedAt || null,
+      location: location.trim() || null,
+      // Only sent when changed: the date input drops the time of day, and an
+      // unrelated edit must not move a "dried just now" stamp to midnight.
+      ...(lastDried !== initialDried && {
+        lastDriedAt: lastDried ? new Date(lastDried).toISOString() : null,
+      }),
     };
 
     try {
@@ -138,7 +170,7 @@ export function SpoolFormDialog({
     if (!spool) return;
     const ok = await confirm({
       title: 'Delete this spool?',
-      description: "This can’t be undone.",
+      description: 'This can’t be undone.',
       confirmLabel: 'Delete',
       destructive: true,
     });
@@ -157,9 +189,11 @@ export function SpoolFormDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit spool' : 'Add new spool'}</DialogTitle>
+            <DialogTitle>
+              {editing ? 'Edit spool' : 'Add new spool'}
+            </DialogTitle>
             <DialogDescription>
               {editing
                 ? 'Update this physical spool.'
@@ -231,6 +265,61 @@ export function SpoolFormDialog({
                 {previewLeft !== null ? formatWeight(previewLeft) : '—'}
               </span>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="pricePaid">Price paid (€)</Label>
+                <Input
+                  id="pricePaid"
+                  inputMode="decimal"
+                  placeholder="optional"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="purchasedAt">Purchased</Label>
+                <Input
+                  id="purchasedAt"
+                  type="date"
+                  value={purchasedAt}
+                  onChange={(e) => setPurchasedAt(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  list="spool-locations"
+                  placeholder="e.g. Dry box 2"
+                  maxLength={100}
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+                <datalist id="spool-locations">
+                  {locations.map((l) => (
+                    <option key={l} value={l} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="lastDried">Last dried</Label>
+                <Input
+                  id="lastDried"
+                  type="date"
+                  value={lastDried}
+                  onChange={(e) => setLastDried(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {editing && spool && (
+              <WeighingHistory
+                spoolId={spool.id}
+                emptyWeightGrams={spool.emptyWeightGrams}
+                onUndone={(grams) => setMeasuredGrams(String(grams))}
+              />
+            )}
 
             <DialogFooter className="mt-2">
               {editing && spool && (

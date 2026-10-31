@@ -220,7 +220,7 @@ export const openApiSpec = {
         tags: ['spools'],
         summary: 'Update a spool',
         description:
-          'Partial update: any subset of materialId, spoolTypeId, weights, tagUid.',
+          'Partial update: any subset of materialId, spoolTypeId, weights, tagUid and the detail fields (price, purchase date, location, last dried). null clears a detail field.',
         operationId: 'updateSpool',
         parameters: [idParameter],
         requestBody: {
@@ -271,6 +271,50 @@ export const openApiSpec = {
           '401': errorResponse('Missing or invalid API token'),
           '404': errorResponse('Not found (or not yours)'),
           '409': errorResponse('tagUid already used by another own spool'),
+        },
+      },
+    },
+    '/spools/{id}/weighings': {
+      get: {
+        tags: ['spools'],
+        summary: 'Weighing history of a spool',
+        description:
+          'Every measured total weight the spool had, newest first. Usage is the sum of drops between consecutive weighings.',
+        operationId: 'listSpoolWeighings',
+        parameters: [
+          idParameter,
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 500, default: 100 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Weighings',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    weighings: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          measuredTotalWeightGrams: { type: 'integer' },
+                          measuredAt: { type: 'string', format: 'date-time' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': errorResponse('Invalid limit'),
+          '401': errorResponse('Missing or invalid API token'),
+          '404': errorResponse('Not found (or not yours)'),
         },
       },
     },
@@ -450,6 +494,31 @@ export const openApiSpec = {
           percentLeft: { type: 'number' },
           isEmpty: { type: 'boolean' },
           isLow: { type: 'boolean' },
+          pricePaidCents: {
+            type: 'integer',
+            minimum: 0,
+            nullable: true,
+            example: 2499,
+            description: 'Purchase price in euro cents',
+          },
+          purchasedAt: {
+            type: 'string',
+            format: 'date',
+            nullable: true,
+            example: '2026-09-30',
+          },
+          location: {
+            type: 'string',
+            maxLength: 100,
+            nullable: true,
+            example: 'Dry box 2',
+          },
+          lastDriedAt: { type: 'string', format: 'date-time', nullable: true },
+          needsDrying: {
+            type: 'boolean',
+            description:
+              'Hygroscopic type not dried within its interval (Nylon/PVA 14 d, TPU/PC 30 d, PETG 60 d)',
+          },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
         },
@@ -477,6 +546,26 @@ export const openApiSpec = {
             example: 1240,
           },
           tagUid: { type: 'string', nullable: true },
+          pricePaidCents: {
+            type: 'integer',
+            minimum: 0,
+            nullable: true,
+            example: 2499,
+            description: 'Purchase price in euro cents',
+          },
+          purchasedAt: {
+            type: 'string',
+            format: 'date',
+            nullable: true,
+            example: '2026-09-30',
+          },
+          location: {
+            type: 'string',
+            maxLength: 100,
+            nullable: true,
+            example: 'Dry box 2',
+          },
+          lastDriedAt: { type: 'string', format: 'date-time', nullable: true },
         },
         required: [
           'materialId',
@@ -494,6 +583,26 @@ export const openApiSpec = {
           fullFilamentWeightGrams: { type: 'integer', minimum: 1 },
           measuredTotalWeightGrams: { type: 'integer', minimum: 0 },
           tagUid: { type: 'string', nullable: true },
+          pricePaidCents: {
+            type: 'integer',
+            minimum: 0,
+            nullable: true,
+            example: 2499,
+            description: 'Purchase price in euro cents',
+          },
+          purchasedAt: {
+            type: 'string',
+            format: 'date',
+            nullable: true,
+            example: '2026-09-30',
+          },
+          location: {
+            type: 'string',
+            maxLength: 100,
+            nullable: true,
+            example: 'Dry box 2',
+          },
+          lastDriedAt: { type: 'string', format: 'date-time', nullable: true },
         },
         minProperties: 1,
       },

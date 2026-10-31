@@ -25,7 +25,7 @@ export type SpoolRow = {
 // Flat JSON view of a spool: computed amounts + its material's descriptive
 // fields + the tag id, for external clients.
 export function serializeSpool({ spool, material, spoolType }: SpoolRow) {
-  const view = toSpoolView(spool, spoolType);
+  const view = toSpoolView(spool, spoolType, material.filamentType);
   return {
     id: spool.id,
     tagUid: spool.tagUid,
@@ -45,6 +45,11 @@ export function serializeSpool({ spool, material, spoolType }: SpoolRow) {
     percentLeft: view.percentLeft,
     isEmpty: view.isEmpty,
     isLow: view.isLow,
+    pricePaidCents: spool.pricePaidCents,
+    purchasedAt: spool.purchasedAt,
+    location: spool.location,
+    lastDriedAt: spool.lastDriedAt?.toISOString() ?? null,
+    needsDrying: view.needsDrying,
     createdAt: spool.createdAt.toISOString(),
     updatedAt: spool.updatedAt.toISOString(),
   };

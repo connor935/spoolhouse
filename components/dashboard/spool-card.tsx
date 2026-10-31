@@ -1,17 +1,25 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
+import { Droplets, MapPin, Pencil } from 'lucide-react';
+import { markDried } from '@/app/actions/filaments';
+import { useAsyncAction } from '@/hooks/use-async-action';
 import { formatWeight, type SpoolView } from '@/lib/filament';
+import { cn } from '@/lib/utils';
 
 export function SpoolCard({
   spool,
   index,
   onEdit,
+  dryingTemp,
 }: {
   spool: SpoolView;
   index: number;
   onEdit: (s: SpoolView) => void;
+  // The material's "Drying temp" property value (°C), if anyone filled it in
+  dryingTemp?: string | null;
 }) {
+  const { pending, run } = useAsyncAction();
+
   const barColor = spool.isEmpty
     ? 'bg-muted-foreground/30'
     : spool.isLow
@@ -43,6 +51,26 @@ export function SpoolCard({
               Low
             </Badge>
           ) : null}
+          {spool.needsDrying && spool.lentToName == null && (
+            <button
+              type="button"
+              className={cn(
+                badgeVariants({ variant: 'outline' }),
+                'border-accent/40 text-accent hover:bg-accent/10 cursor-pointer'
+              )}
+              disabled={pending}
+              title={`${dryingTemp ? `Dry at ${dryingTemp} °C. ` : ''}Not dried for a while — click once it's dried.`}
+              onClick={() =>
+                run(() => markDried(spool.id), {
+                  success: 'Marked as dried today',
+                  error: 'Could not update the spool',
+                })
+              }
+            >
+              <Droplets />
+              Dry?
+            </button>
+          )}
           {spool.lentToName && (
             <Badge variant="outline" className="border-accent/40 text-accent">
               Lent to {spool.lentToName}
@@ -71,6 +99,12 @@ export function SpoolCard({
           <Pencil className="h-4 w-4" />
         </Button>
       </div>
+      {spool.location && (
+        <span className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
+          <MapPin className="h-3 w-3 shrink-0" />
+          <span className="truncate">{spool.location}</span>
+        </span>
+      )}
     </li>
   );
 }

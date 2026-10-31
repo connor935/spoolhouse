@@ -39,10 +39,30 @@ spools already carries returns `409 {"error":{"code":"tag_conflict",…}}`.
 | `GET /api/v1/spools` | All own spools (computed amounts + material + tagUid) |
 | `POST /api/v1/spools` | Create a spool from `materialId` + `spoolTypeId` + weights |
 | `GET /api/v1/spools/:id` | One spool |
-| `PATCH /api/v1/spools/:id` | Partial update (materialId, spoolTypeId, weights, tagUid) |
+| `PATCH /api/v1/spools/:id` | Partial update (materialId, spoolTypeId, weights, tagUid, details — see below) |
 | `DELETE /api/v1/spools/:id` | Delete (204) |
 | `PUT /api/v1/spools/:id/weight` | Re-weigh by id: `{"measuredTotalWeightGrams": n}` |
+| `GET /api/v1/spools/:id/weighings` | Weighing history, newest first (`?limit`, default 100, max 500) |
 | `POST /api/v1/spools/weigh` | **Register-or-refresh by NFC tag** — the scale/reader call |
+
+### Spool details and weighing history
+
+Besides the weights, a spool carries optional details, accepted by `POST`/`PATCH` and
+returned on every spool (`null` clears one on `PATCH`):
+
+| Field | Meaning |
+|---|---|
+| `pricePaidCents` | Purchase price in euro cents (integer ≥ 0) |
+| `purchasedAt` | Purchase date, `YYYY-MM-DD` |
+| `location` | Free-text storage place, ≤ 100 chars |
+| `lastDriedAt` | ISO date-time of the last drying |
+
+Responses also carry `needsDrying` (read-only): a hygroscopic type (Nylon/PVA after 14
+days, TPU/PC 30, PETG 60) not dried since then — or since the spool was created.
+
+Every write of `measuredTotalWeightGrams` — create, `PATCH`, `PUT …/weight`, the tag
+weigh — appends to the spool's weighing history (`GET …/weighings`). The app derives
+usage from it: the sum of weight drops between consecutive weighings.
 
 ### `GET /api/v1/materials` (search, pagination, datasheet properties)
 

@@ -72,3 +72,43 @@ describe('spoolInputSchema', () => {
     ).toBe(false);
   });
 });
+
+describe('spool detail fields', () => {
+  const base = {
+    materialId: 'm',
+    spoolTypeId: 'st',
+    fullFilamentWeightGrams: 1000,
+    measuredTotalWeightGrams: 1200,
+  };
+
+  it('accepts and normalises the optional details', () => {
+    const r = spoolInputSchema.parse({
+      ...base,
+      pricePaidCents: 1999,
+      purchasedAt: '2026-10-01',
+      location: '  Dry box 2 ',
+      lastDriedAt: '2026-10-05T12:00:00.000Z',
+    });
+    expect(r.location).toBe('Dry box 2');
+    expect(r.lastDriedAt).toEqual(new Date('2026-10-05T12:00:00.000Z'));
+  });
+  it('treats a blank location as none', () => {
+    expect(
+      spoolInputSchema.parse({ ...base, location: '   ' }).location
+    ).toBeNull();
+  });
+  it('refuses bad prices and dates', () => {
+    expect(
+      spoolInputSchema.safeParse({ ...base, pricePaidCents: -1 }).success
+    ).toBe(false);
+    expect(
+      spoolInputSchema.safeParse({ ...base, pricePaidCents: 19.5 }).success
+    ).toBe(false);
+    expect(
+      spoolInputSchema.safeParse({ ...base, purchasedAt: '01.10.2026' }).success
+    ).toBe(false);
+    expect(
+      spoolInputSchema.safeParse({ ...base, lastDriedAt: 'yesterday' }).success
+    ).toBe(false);
+  });
+});

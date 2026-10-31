@@ -10,6 +10,7 @@ import { groupInventory } from '@/lib/filament';
 import { getPropertiesForMaterials } from '@/lib/material-properties';
 import { parseConstraints } from '@/lib/property-filter';
 import { getSharedFilaments } from '@/lib/sharing';
+import { getMaterialUsage } from '@/lib/usage-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,7 @@ export default async function Page({
     unreadCount,
     myLends,
     propertyDefinitions,
+    materialUsage,
   ] = await Promise.all([
     getInventory(),
     getUsableSpoolTypes(),
@@ -52,6 +54,7 @@ export default async function Page({
     getUnreadCount(),
     getMyLends(),
     getPropertyDefinitions(),
+    getMaterialUsage(user.id),
   ]);
   const groups = await Promise.all(
     myGroups.map(async ({ group }) => ({
@@ -78,6 +81,7 @@ export default async function Page({
       initialTab={initialTab}
       initialFilters={initialFilters}
       propertiesByMaterialId={propertiesByMaterialId}
+      materialUsage={materialUsage}
       propertyDefinitions={propertyDefinitions}
     />
   );

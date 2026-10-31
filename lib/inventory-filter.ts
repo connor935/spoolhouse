@@ -14,7 +14,9 @@ type PropsByMaterial = Record<string, MaterialPropertyView[]>;
 export function materialMatches(
   m: { id: string; name: string; manufacturer: string; filamentType: string },
   f: InventoryFilters,
-  propsByMaterial: PropsByMaterial
+  propsByMaterial: PropsByMaterial,
+  // Spool-level text the search should also find (its storage location)
+  ...extra: (string | null | undefined)[]
 ): boolean {
   if (f.filamentType && m.filamentType !== f.filamentType) return false;
   if (
@@ -28,7 +30,8 @@ export function materialMatches(
     searchTokens(f.q.trim()),
     m.manufacturer,
     m.name,
-    m.filamentType
+    m.filamentType,
+    ...extra
   );
 }
 
@@ -50,12 +53,19 @@ export function visibleMaterialEntries(
   filters: InventoryFilters,
   propsByMaterial: PropsByMaterial
 ) {
+  // Matched per spool, so searching a location ("dry box") narrows a
+  // material to the spools stored there.
   return inventory
-    .filter((m) => materialMatches(m.material, filters, propsByMaterial))
     .map((m) => ({
       inventory: m,
       visibleIds: new Set(
-        m.spools.filter((s) => spoolMatchesStatus(s, filters)).map((s) => s.id)
+        m.spools
+          .filter(
+            (s) =>
+              spoolMatchesStatus(s, filters) &&
+              materialMatches(m.material, filters, propsByMaterial, s.location)
+          )
+          .map((s) => s.id)
       ),
     }))
     .filter((entry) => entry.visibleIds.size > 0);

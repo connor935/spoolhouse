@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { spools } from '@/lib/db/schema';
 import { apiError, authenticateApiRequest, unauthorized } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
+import { recordWeighing } from '@/lib/weighings';
 import { firstIssueMessage, measuredWeightSchema } from '@/lib/schemas';
 import { getOwnedSpool, parseId, serializeSpool } from '../../shared';
 
@@ -38,6 +39,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
     .where(and(eq(spools.id, id), eq(spools.userId, owner.id)))
     .returning({ id: spools.id });
   if (result.length === 0) return apiError(404, 'not_found', 'Spool not found');
+  await recordWeighing(id, grams, owner.id);
 
   revalidatePath('/');
   await emitSpoolChange(owner.id);
