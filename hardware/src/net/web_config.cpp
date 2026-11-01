@@ -8,6 +8,7 @@
 #include "config_store.h"
 #include "debuglog.h"
 #include "scale.h"
+#include "secrets.h"  // OTA_PASSWORD
 #include "tag_write.h"  // pulls in opentag::TagData
 
 namespace web_config {
@@ -17,11 +18,15 @@ WebServer server(80);
 Scale *g_scale = nullptr;
 StatusFn g_status = nullptr;
 ResetDisplayFn g_resetDisplay = nullptr;
-bool g_updateRejected = false;  // set when an /update POST fails the CSRF check
+// Why the current /update upload is being discarded (checked once, at its
+// first chunk, and answered by handleUpdateDone).
+enum class UpdateReject { None, Csrf, Auth, Disabled };
+UpdateReject g_updateReject = UpdateReject::None;
 // Random per-boot CSRF token: embedded as a hidden field in every form and
 // re-checked on POST, so a page on another origin can't silently submit here
-// (it can't read this token due to the same-origin policy). No login is
-// required — the page is open on the LAN by design.
+// (it can't read this token due to the same-origin policy). Day-to-day use
+// needs no login — the page is open on the LAN by design; see isAdmin() for
+// the few actions that do.
 String g_csrf;
 
 // Reject POSTs whose CSRF token doesn't match this boot's token.
@@ -32,6 +37,19 @@ bool checkCsrf() {
   }
   return true;
 }
+
+// The CSRF token only stops other origins — anyone on the LAN can read it off
+// the page. Actions that could take over the device (flashing firmware, or
+// pointing it, with its API token, at another server) therefore also need the
+// OTA password, as HTTP Digest auth (user "admin"). Without a configured
+// password there is no way to authorize them.
+#ifdef OTA_PASSWORD
+const char *const kAdminPassword = OTA_PASSWORD;
+#else
+const char *const kAdminPassword = "";
+#endif
+bool hasAdminPassword() { return kAdminPassword[0] != '\0'; }
+bool isAdmin() { return hasAdminPassword() && server.authenticate("admin", kAdminPassword); }
 
 String esc(const String &s) {
   String o;
@@ -160,7 +178,8 @@ String page() {
   h += F("<form class=card method=post action=/update enctype='multipart/form-data'>"
          "<h2>Firmware update</h2>");
   h += csrfField();
-  h += F("<p class=muted>Upload a .bin (.pio/build/cyd/firmware.bin). The device reboots when done.</p>"
+  h += F("<p class=muted>Upload a .bin (.pio/build/cyd/firmware.bin). The device reboots when done. "
+         "Asks for user <code>admin</code> and the OTA password.</p>"
          "<input type=file name=firmware accept='.bin'>"
          "<button type=submit>Upload &amp; flash</button></form>");
 
@@ -237,6 +256,9 @@ void handleCalibrate() {
 
 void handleSave() {
   if (!checkCsrf()) return;
+  // Without a password the page stays open, as before: setting the token here
+  // is part of first-time setup. With one, changing URL or token needs it.
+  if (hasAdminPassword() && !isAdmin()) return server.requestAuthentication(DIGEST_AUTH);
   if (server.hasArg("url")) {
     const String u = server.arg("url");
     if (u.length()) config_store::setServerUrl(u);
@@ -252,18 +274,21 @@ void handleSave() {
 void handleUpdateUpload() {
   HTTPUpload &up = server.upload();
   if (up.status == UPLOAD_FILE_START) {
-    // The csrf field precedes the file part, so it's parsed by now. Reject
-    // cross-origin uploads (which can't read this boot's token).
-    g_updateRejected = (server.arg("csrf") != g_csrf);
-    if (g_updateRejected) {
-      Serial.println("[update] rejected: bad csrf");
+    // The csrf field precedes the file part, so it's parsed by now; the
+    // Authorization header came with the request head.
+    if (!hasAdminPassword()) g_updateReject = UpdateReject::Disabled;
+    else if (server.arg("csrf") != g_csrf) g_updateReject = UpdateReject::Csrf;
+    else if (!isAdmin()) g_updateReject = UpdateReject::Auth;
+    else g_updateReject = UpdateReject::None;
+    if (g_updateReject != UpdateReject::None) {
+      Serial.printf("[update] rejected (%d)\n", (int)g_updateReject);
       return;
     }
     if (g_status) g_status("Firmware update", "receiving...");
     Serial.printf("[update] start: %s\n", up.filename.c_str());
     if (!Update.begin(UPDATE_SIZE_UNKNOWN)) Update.printError(Serial);
   } else if (up.status == UPLOAD_FILE_WRITE) {
-    if (g_updateRejected) return;
+    if (g_updateReject != UpdateReject::None) return;
     if (Update.write(up.buf, up.currentSize) != up.currentSize) Update.printError(Serial);
     if (g_status) {
       char b[24];
@@ -271,7 +296,7 @@ void handleUpdateUpload() {
       g_status("Firmware update", b);
     }
   } else if (up.status == UPLOAD_FILE_END) {
-    if (g_updateRejected) return;
+    if (g_updateReject != UpdateReject::None) return;
     if (Update.end(true)) {
       Serial.printf("[update] ok: %u bytes\n", (unsigned)up.totalSize);
       if (g_status) g_status("Update complete", "rebooting");
@@ -283,10 +308,14 @@ void handleUpdateUpload() {
 }
 
 void handleUpdateDone() {
-  if (g_updateRejected) {
-    g_updateRejected = false;
-    server.send(403, "text/plain", "bad csrf token");
-    return;
+  const UpdateReject reject = g_updateReject;
+  g_updateReject = UpdateReject::None;
+  // The browser asks for the password and re-sends the upload with it.
+  if (reject == UpdateReject::Auth) return server.requestAuthentication(DIGEST_AUTH);
+  if (reject == UpdateReject::Csrf) return server.send(403, "text/plain", "bad csrf token");
+  if (reject == UpdateReject::Disabled) {
+    return server.send(403, "text/plain",
+                       "browser updates are disabled: set OTA_PASSWORD in secrets.h and flash over USB once");
   }
   const bool ok = !Update.hasError();
   server.send(200, "text/html",

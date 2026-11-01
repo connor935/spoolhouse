@@ -561,6 +561,14 @@ void doUpload() {
     return;
   }
   const int avg = (int)lroundf(measured);
+  // A spool is on the scale (canUpload), so <= 0 g means the tare is off — the
+  // server would reject a negative weight, and 0 g would empty the spool.
+  if (avg <= 0) {
+    overlayMessage("Bad reading", "re-tare the empty scale", TFT_RED);
+    delay(2000);
+    restoreUi();
+    return;
+  }
 
   overlayMessage("Uploading...", String(avg) + " g", TFT_YELLOW);
   String action;
