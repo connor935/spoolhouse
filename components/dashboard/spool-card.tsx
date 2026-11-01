@@ -38,6 +38,12 @@ export function SpoolCard({
         <span className="w-16 shrink-0 font-mono text-sm font-semibold tabular-nums">
           {formatWeight(spool.filamentLeftGrams)}
         </span>
+        {spool.location && spool.lentToName == null && (
+          <span className="text-muted-foreground flex items-center gap-1 text-xs">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">{spool.location}</span>
+          </span>
+        )}
         <div className="flex items-center gap-4">
           {spool.isEmpty ? (
             <Badge
@@ -99,12 +105,6 @@ export function SpoolCard({
           <Pencil className="h-4 w-4" />
         </Button>
       </div>
-      {spool.location && (
-        <span className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
-          <MapPin className="h-3 w-3 shrink-0" />
-          <span className="truncate">{spool.location}</span>
-        </span>
-      )}
     </li>
   );
 }
