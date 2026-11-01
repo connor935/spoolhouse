@@ -35,6 +35,9 @@ bool CrealityDecoder::decode(NfcReader &reader, const NfcUid &uid, FilamentInfo 
   out = FilamentInfo{};
   out.valid = true;
   strncpy(out.manufacturer, manufacturer(), sizeof(out.manufacturer) - 1);
+  // The record has no dependable per-spool id, so the tag's NFC UID is it
+  // (stable for the tag's lifetime, unique enough within one user's spools).
+  strncpy(out.spoolId, uid.toHexString().c_str(), sizeof(out.spoolId) - 1);
 
   // Material id: 5 chars at offset 12
   strncpy(out.material, data + 12, 5);

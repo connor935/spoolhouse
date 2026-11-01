@@ -98,7 +98,11 @@ constexpr int WEIGHT_CY = 184;     // vertical centre of the weight readout
 constexpr int FOOTER_H = 16;
 int footerY() { return tft.height() - FOOTER_H; }
 
-bool canUpload() { return tagPresent && filament.valid; }
+// Needs a working scale (otherwise readInstant() yields a stale 0 g that would
+// overwrite the spool's weight) and a per-spool id to send as tagUid — a Bambu
+// tag whose tray-UID block failed to read has none; lifting and re-placing the
+// spool re-reads it.
+bool canUpload() { return scaleOk && tagPresent && filament.valid && filament.spoolId[0]; }
 
 void drawFooterHint() {
   tft.fillRect(0, footerY(), tft.width(), FOOTER_H, TFT_BLACK);
@@ -545,6 +549,7 @@ bool measureTrimmed(uint32_t durationMs, float &avg) {
 // Measure the weight for 4 s (trimmed average, after the tap settles) and
 // upload the result to Spoolhouse.
 void doUpload() {
+  if (!canUpload()) return;
   overlayMessage("Measuring...", "hold still", TFT_SKYBLUE);
   delay(MEASURE_SETTLE_MS);
 

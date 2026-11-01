@@ -1,6 +1,7 @@
 #include "spoolhouse_client.h"
 
 #include <HTTPClient.h>
+#include <ctype.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
 
@@ -21,11 +22,31 @@ String jsonEscape(const char *s) {
   return out;
 }
 
-// Base filament type = first word of the material name ("PLA Matte" -> "PLA").
-String baseType(const char *material) {
-  String m = material;
-  const int sp = m.indexOf(' ');
-  return sp > 0 ? m.substring(0, sp) : m;
+// Map a tag's type or material name onto the server's FILAMENT_TYPES
+// (lib/filament.ts) by its leading token: "PLA-CF"/"PLA Matte" -> "PLA",
+// "PET-G"/"PETG HF" -> "PETG", "PA6-CF"/"PAHT-CF"/"PA" -> "Nylon". Anything
+// else returns "" and the field is omitted — the server then files the
+// material under "Other" instead of rejecting the whole registration.
+String serverFilamentType(const char *raw) {
+  String s = raw;
+  s.trim();
+  s.toUpperCase();
+  if (s.startsWith("PET-G") || s.startsWith("PETG")) return "PETG";
+  int end = 0;
+  while (end < (int)s.length() && isalnum((unsigned char)s[end])) end++;
+  const String tok = s.substring(0, end);
+  static const char *const kSame[][2] = {
+      {"PLA", "PLA"}, {"ABS", "ABS"}, {"ASA", "ASA"}, {"TPU", "TPU"},
+      {"PC", "PC"},   {"PVA", "PVA"}, {"HIPS", "HIPS"}, {"NYLON", "Nylon"},
+  };
+  for (const auto &t : kSame) {
+    if (tok == t[0]) return t[1];
+  }
+  // Polyamides: PA, PA6, PA12, PAHT, … (but not PAxx look-alikes like "PASTEL")
+  if (tok == "PA" || tok == "PAHT" || (tok.startsWith("PA") && tok.length() > 2 && isdigit((unsigned char)tok[2]))) {
+    return "Nylon";
+  }
+  return "";
 }
 
 bool waitConnected(uint32_t timeoutMs) {
@@ -118,9 +139,11 @@ Result postWeigh(const FilamentInfo &f, int grams, String *action) {
   if (f.material[0]) {
     body += ",\"name\":\"" + jsonEscape(f.material) + "\"";
     // Prefer the tag's explicit type (e.g. Spoolhouse custom tags); otherwise
-    // derive it from the material name ("PLA Matte" -> "PLA").
-    const String type = f.filamentType[0] ? String(f.filamentType) : baseType(f.material);
-    body += ",\"filamentType\":\"" + jsonEscape(type.c_str()) + "\"";
+    // derive it from the material name ("PLA Matte" -> "PLA"). Omitted when
+    // neither maps to a server type (the server then uses "Other").
+    String type = f.filamentType[0] ? serverFilamentType(f.filamentType) : String();
+    if (!type.length()) type = serverFilamentType(f.material);
+    if (type.length()) body += ",\"filamentType\":\"" + type + "\"";
   }
   if (f.hasColor) body += ",\"color\":\"" + jsonEscape(f.color) + "\"";
   if (f.nominalWeightGrams) body += ",\"fullFilamentWeightGrams\":" + String(f.nominalWeightGrams);
