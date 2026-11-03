@@ -1,10 +1,12 @@
 # syntax=docker/dockerfile:1
 
 # ---- base -------------------------------------------------------------------
-# Debian (glibc) slim. Node 24 to match the version pinned in .node-version
-# (fnm) for local dev. No native modules to compile: the DB drivers are pg
+# Debian (glibc) slim. Node 26 (LTS) to match .node-version (fnm) for local dev;
+# the floating 26 tag picks up each security patch on the next deploy, since
+# CI builds with pull: true.
+# No native modules to compile: the DB drivers are pg
 # (pure JS) and PGlite (WASM).
-FROM node:24-bookworm-slim AS base
+FROM node:26-bookworm-slim AS base
 WORKDIR /app
 
 # ---- deps -------------------------------------------------------------------
