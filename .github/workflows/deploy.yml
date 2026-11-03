@@ -83,6 +83,9 @@ jobs:
           tags: |
             ${{ env.IMAGE_BASE }}:latest
             ${{ env.IMAGE_BASE }}:sha-${{ github.sha }}
+          # Always re-resolve node:24-bookworm-slim so Node security patches land
+          # with the next deploy instead of hiding behind a cached base layer.
+          pull: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -98,6 +101,9 @@ jobs:
           tags: |
             ${{ env.IMAGE_BASE }}-tools:latest
             ${{ env.IMAGE_BASE }}-tools:sha-${{ github.sha }}
+          # Always re-resolve node:24-bookworm-slim so Node security patches land
+          # with the next deploy instead of hiding behind a cached base layer.
+          pull: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
