@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     # Same Node base as the Dockerfile. A container instead of
     # actions/setup-node, which the repo's action allowlist doesn't permit.
-    container: node:24-bookworm-slim
+    container: node:26-bookworm-slim
     permissions:
       contents: read
     steps:
@@ -83,7 +83,7 @@ jobs:
           tags: |
             ${{ env.IMAGE_BASE }}:latest
             ${{ env.IMAGE_BASE }}:sha-${{ github.sha }}
-          # Always re-resolve node:24-bookworm-slim so Node security patches land
+          # Always re-resolve node:26-bookworm-slim so Node security patches land
           # with the next deploy instead of hiding behind a cached base layer.
           pull: true
           cache-from: type=gha
@@ -101,7 +101,7 @@ jobs:
           tags: |
             ${{ env.IMAGE_BASE }}-tools:latest
             ${{ env.IMAGE_BASE }}-tools:sha-${{ github.sha }}
-          # Always re-resolve node:24-bookworm-slim so Node security patches land
+          # Always re-resolve node:26-bookworm-slim so Node security patches land
           # with the next deploy instead of hiding behind a cached base layer.
           pull: true
           cache-from: type=gha
