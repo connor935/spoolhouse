@@ -28,6 +28,11 @@ updates:
       # Tracks the Node major in the Dockerfile; bump it together with the image by hand.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # TypeScript 7 (the Go port) no longer exposes the JS compiler API that
+      # `next build` uses for its type check ("do not have the required
+      # package(s) installed"). Hold it until Next.js supports TS 7.
+      - dependency-name: "typescript"
+        versions: [">=7.0.0"]
     # Major updates are not grouped, so each one gets its own PR.
 
   - package-ecosystem: github-actions
