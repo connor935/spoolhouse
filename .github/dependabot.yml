@@ -1,0 +1,44 @@
+# Dependabot: one bundled PR per month instead of one PR per package.
+# Security fixes are not tied to this schedule — they open as soon as an alert
+# appears, likewise bundled into a single PR.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: Europe/Berlin
+    # Skip releases younger than a week (supply-chain safety, time for hotfixes).
+    # Does not apply to security updates.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # All minor and patch updates, runtime and dev, in one PR.
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+      # All security fixes found at the same time in one PR.
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+    ignore:
+      # Tracks the Node major in the Dockerfile; bump it together with the image by hand.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    # Major updates are not grouped, so each one gets its own PR.
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns: ["*"]
