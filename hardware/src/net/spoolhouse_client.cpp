@@ -1,8 +1,10 @@
 #include "spoolhouse_client.h"
 
 #include <HTTPClient.h>
+#include <ctype.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include <esp_wifi.h>
 
 #include "config.h"
 #include "config_store.h"
@@ -11,21 +13,69 @@
 namespace spoolhouse {
 namespace {
 
-// Minimal JSON string escaping for the short ASCII fields we send.
+// Length of the valid UTF-8 sequence starting at p, or 0 if it isn't one.
+int utf8SeqLen(const unsigned char *p) {
+  int n;
+  if (p[0] >= 0xC2 && p[0] <= 0xDF) n = 2;
+  else if (p[0] >= 0xE0 && p[0] <= 0xEF) n = 3;
+  else if (p[0] >= 0xF0 && p[0] <= 0xF4) n = 4;
+  else return 0;
+  for (int i = 1; i < n; i++) {
+    if ((p[i] & 0xC0) != 0x80) return 0;  // also stops at the terminating NUL
+  }
+  return n;
+}
+
+// JSON string escaping for fields that come straight off a tag: control
+// characters become \u00XX and bytes that aren't valid UTF-8 (e.g. Latin-1)
+// become '?', so an odd tag can't make the whole request body invalid.
 String jsonEscape(const char *s) {
   String out;
-  for (const char *p = s; *p; p++) {
-    if (*p == '"' || *p == '\\') out += '\\';
-    out += *p;
+  for (const unsigned char *p = (const unsigned char *)s; *p;) {
+    if (*p == '"' || *p == '\\') {
+      out += '\\';
+      out += (char)*p++;
+    } else if (*p < 0x20) {
+      char buf[7];
+      snprintf(buf, sizeof(buf), "\\u%04x", *p++);
+      out += buf;
+    } else if (*p < 0x80) {
+      out += (char)*p++;
+    } else if (const int n = utf8SeqLen(p)) {
+      for (int i = 0; i < n; i++) out += (char)*p++;
+    } else {
+      out += '?';
+      p++;
+    }
   }
   return out;
 }
 
-// Base filament type = first word of the material name ("PLA Matte" -> "PLA").
-String baseType(const char *material) {
-  String m = material;
-  const int sp = m.indexOf(' ');
-  return sp > 0 ? m.substring(0, sp) : m;
+// Map a tag's type or material name onto the server's FILAMENT_TYPES
+// (lib/filament.ts) by its leading token: "PLA-CF"/"PLA Matte" -> "PLA",
+// "PET-G"/"PETG HF" -> "PETG", "PA6-CF"/"PAHT-CF"/"PA" -> "Nylon". Anything
+// else returns "" and the field is omitted — the server then files the
+// material under "Other" instead of rejecting the whole registration.
+String serverFilamentType(const char *raw) {
+  String s = raw;
+  s.trim();
+  s.toUpperCase();
+  if (s.startsWith("PET-G") || s.startsWith("PETG")) return "PETG";
+  int end = 0;
+  while (end < (int)s.length() && isalnum((unsigned char)s[end])) end++;
+  const String tok = s.substring(0, end);
+  static const char *const kSame[][2] = {
+      {"PLA", "PLA"}, {"ABS", "ABS"}, {"ASA", "ASA"}, {"TPU", "TPU"},
+      {"PC", "PC"},   {"PVA", "PVA"}, {"HIPS", "HIPS"}, {"NYLON", "Nylon"},
+  };
+  for (const auto &t : kSame) {
+    if (tok == t[0]) return t[1];
+  }
+  // Polyamides: PA, PA6, PA12, PAHT, … (but not PAxx look-alikes like "PASTEL")
+  if (tok == "PA" || tok == "PAHT" || (tok.startsWith("PA") && tok.length() > 2 && isdigit((unsigned char)tok[2]))) {
+    return "Nylon";
+  }
+  return "";
 }
 
 bool waitConnected(uint32_t timeoutMs) {
@@ -34,6 +84,12 @@ bool waitConnected(uint32_t timeoutMs) {
     delay(150);
   }
   return WiFi.status() == WL_CONNECTED;
+}
+
+// True if the WiFi driver has credentials saved from an earlier connect.
+bool hasSavedWifi() {
+  wifi_config_t conf;
+  return esp_wifi_get_config(WIFI_IF_STA, &conf) == ESP_OK && conf.sta.ssid[0] != 0;
 }
 
 // True if secrets.h holds real WiFi credentials (not the placeholders).
@@ -74,7 +130,11 @@ void provision(void (*onPortalStart)(const char *apName)) {
   WiFiManagerParameter pUrl("url", "Spoolhouse base URL", config_store::serverUrl().c_str(), 128);
   wm.addParameter(&pToken);
   wm.addParameter(&pUrl);
-  wm.setConfigPortalTimeout(0);  // stay in setup until the user provisions
+  // With known credentials the network is most likely just not up yet (the
+  // scale boots faster than the router after a power cut): give the portal a
+  // few minutes, then reboot and retry them. Unprovisioned, wait for setup.
+  const bool haveCredentials = !config_store::forcePortal() && (hasSavedWifi() || secretsHaveWifi());
+  wm.setConfigPortalTimeout(haveCredentials ? 180 : 0);
   if (onPortalStart) {
     wm.setAPCallback([onPortalStart](WiFiManager *) { onPortalStart(PORTAL_AP_NAME); });
   }
@@ -118,9 +178,11 @@ Result postWeigh(const FilamentInfo &f, int grams, String *action) {
   if (f.material[0]) {
     body += ",\"name\":\"" + jsonEscape(f.material) + "\"";
     // Prefer the tag's explicit type (e.g. Spoolhouse custom tags); otherwise
-    // derive it from the material name ("PLA Matte" -> "PLA").
-    const String type = f.filamentType[0] ? String(f.filamentType) : baseType(f.material);
-    body += ",\"filamentType\":\"" + jsonEscape(type.c_str()) + "\"";
+    // derive it from the material name ("PLA Matte" -> "PLA"). Omitted when
+    // neither maps to a server type (the server then uses "Other").
+    String type = f.filamentType[0] ? serverFilamentType(f.filamentType) : String();
+    if (!type.length()) type = serverFilamentType(f.material);
+    if (type.length()) body += ",\"filamentType\":\"" + type + "\"";
   }
   if (f.hasColor) body += ",\"color\":\"" + jsonEscape(f.color) + "\"";
   if (f.nominalWeightGrams) body += ",\"fullFilamentWeightGrams\":" + String(f.nominalWeightGrams);

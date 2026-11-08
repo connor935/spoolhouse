@@ -68,8 +68,8 @@ independently.
 and — for encrypted vendor tags — `mifareReadBlock()` (re-select + authenticate a sector
 with a 6-byte key + read a block) guarded by `supportsMifareClassic()`. `main.cpp` and the
 spool decoders only talk to this interface. The active implementation is the **CLRC663**
-(`clrc663_reader.{h,cpp}`, via the iwanders/MFRC630 library); a PN532 implementation
-(`pn532_reader.{h,cpp}`) is kept as an alternate.
+(`clrc663_reader.{h,cpp}`, via the iwanders/MFRC630 library). An earlier PN532
+implementation was removed; it is in the git history if a second reader is ever needed.
 
 Swapping readers is the one instance line in `main.cpp` (`NfcReader &nfc = …`).
 Nothing else changes.
