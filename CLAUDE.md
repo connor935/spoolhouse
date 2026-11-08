@@ -83,7 +83,10 @@ duplicated. The deploy workflow's pre-start `scripts/migrate.mjs` step uses the 
 resolution.
 
 **CI/CD** (`.github/workflows/deploy.yml`): a `check` job (typecheck, oxlint, and on PRs a
-full `next build`) gates everything; only pushes to `main` build and deploy. Images are
+full `next build`) gates everything; only pushes to `main` build and deploy. The `deploy` job
+only starts the Deploy workflow in the private `server` repo (`gh workflow run`,
+`DEPLOY_DISPATCH_TOKEN` in the `production` environment) and waits for it — SSH key, host,
+user and paths live only there, never in this public repo. Images are
 tagged `:latest` **and** `:sha-<commit>` — roll back by pinning an older sha in the server's
 compose file. The runtime image has a Docker `HEALTHCHECK` against `GET /api/health`
 (public, `select 1`, 503 when the DB is unreachable), and the deploy runs
