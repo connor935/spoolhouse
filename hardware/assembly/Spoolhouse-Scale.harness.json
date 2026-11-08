@@ -1,0 +1,894 @@
+{
+  "version": 1,
+  "name": "Spoolhouse Scale",
+  "nodes": [
+    {
+      "id": "bfcn74b8",
+      "type": "board",
+      "position": {
+        "x": 688,
+        "y": 272
+      },
+      "width": 196,
+      "height": 600,
+      "data": {
+        "label": "CYD",
+        "color": "#f59e0b"
+      },
+      "measured": {
+        "width": 196,
+        "height": 600
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "t5qn7fj7",
+      "type": "board",
+      "position": {
+        "x": 360,
+        "y": 272
+      },
+      "width": 188,
+      "height": 280,
+      "data": {
+        "label": "CLRC663",
+        "color": "#0ea5e9"
+      },
+      "measured": {
+        "width": 188,
+        "height": 280
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "5jgtps1n",
+      "type": "board",
+      "position": {
+        "x": 184,
+        "y": 664
+      },
+      "width": 356,
+      "height": 224,
+      "data": {
+        "label": "HX711",
+        "color": "#10b981"
+      },
+      "measured": {
+        "width": 356,
+        "height": 224
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "0ici9ed8",
+      "type": "board",
+      "position": {
+        "x": -336,
+        "y": 472
+      },
+      "width": 180,
+      "height": 168,
+      "data": {
+        "label": "Weight Sensor (BL)",
+        "color": "#ef4444"
+      },
+      "measured": {
+        "width": 180,
+        "height": 168
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "81xs8264",
+      "type": "board",
+      "position": {
+        "x": -64,
+        "y": 472
+      },
+      "width": 180,
+      "height": 168,
+      "data": {
+        "label": "Weight Sensor (BR)",
+        "color": "#ef4444"
+      },
+      "measured": {
+        "width": 180,
+        "height": 168
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "vlmnh0ga",
+      "type": "board",
+      "position": {
+        "x": -344,
+        "y": 272
+      },
+      "width": 188,
+      "height": 168,
+      "data": {
+        "label": "Weight Sensor (TL)",
+        "color": "#ef4444"
+      },
+      "measured": {
+        "width": 188,
+        "height": 168
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "rgn8fhl2",
+      "type": "board",
+      "position": {
+        "x": -64,
+        "y": 272
+      },
+      "width": 180,
+      "height": 168,
+      "data": {
+        "label": "Weight Sensor (TR)",
+        "color": "#ef4444"
+      },
+      "measured": {
+        "width": 180,
+        "height": 168
+      },
+      "selected": false,
+      "dragging": false,
+      "resizing": false
+    },
+    {
+      "id": "vly89z8t",
+      "type": "connector",
+      "position": {
+        "x": 32,
+        "y": 424
+      },
+      "data": {
+        "label": "CH1",
+        "pinCount": 4,
+        "side": "left",
+        "pinLabels": {
+          "1": "GND",
+          "2": "IO22",
+          "3": "IO27",
+          "4": "3V3"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "parentId": "bfcn74b8",
+      "measured": {
+        "width": 130,
+        "height": 125
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "li2ltqpm",
+      "type": "connector",
+      "position": {
+        "x": 32,
+        "y": 40
+      },
+      "data": {
+        "label": "TF Card",
+        "pinCount": 9,
+        "side": "left",
+        "pinLabels": {
+          "1": "DAT2",
+          "2": "CD/DAT3 (IO5)",
+          "3": "CMD (IO23)",
+          "4": "3V3",
+          "5": "CLK (IO18)",
+          "6": "GND",
+          "7": "DAT0 (IO19)",
+          "8": "DAT1",
+          "9": "CD"
+        },
+        "partId": null,
+        "accessories": [],
+        "hasShell": true,
+        "pinDesignations": {
+          "8": "",
+          "9": ""
+        }
+      },
+      "parentId": "bfcn74b8",
+      "measured": {
+        "width": 130,
+        "height": 259
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "0quzclgx",
+      "type": "connector",
+      "position": {
+        "x": 24,
+        "y": 40
+      },
+      "data": {
+        "label": "J1",
+        "pinCount": 8,
+        "side": "right",
+        "pinLabels": {
+          "1": "NSS/SDA",
+          "2": "SCK/SCL",
+          "3": "MOSI",
+          "4": "MISO",
+          "5": "IRQ",
+          "6": "GND",
+          "7": "SD",
+          "8": "3V3"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 213
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "t5qn7fj7"
+    },
+    {
+      "id": "0gu3431r",
+      "type": "connector",
+      "position": {
+        "x": 192,
+        "y": 32
+      },
+      "data": {
+        "label": "J2",
+        "pinCount": 4,
+        "side": "right",
+        "pinLabels": {
+          "1": "GND",
+          "2": "DT",
+          "3": "SCK",
+          "4": "VCC"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "parentId": "5jgtps1n",
+      "measured": {
+        "width": 130,
+        "height": 125
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "4z8uggri",
+      "type": "connector",
+      "position": {
+        "x": 32,
+        "y": 32
+      },
+      "data": {
+        "label": "J3",
+        "pinCount": 6,
+        "side": "left",
+        "pinLabels": {
+          "1": "E+",
+          "2": "E-",
+          "3": "A-",
+          "4": "A+",
+          "5": "B-",
+          "6": "B+"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "parentId": "5jgtps1n",
+      "measured": {
+        "width": 130,
+        "height": 169
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "svj4vs6h",
+      "type": "connector",
+      "position": {
+        "x": 24,
+        "y": 40
+      },
+      "data": {
+        "label": "J4",
+        "pinCount": 3,
+        "side": "right",
+        "pinLabels": {
+          "1": "+",
+          "2": "C",
+          "3": "-"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 103
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "vlmnh0ga"
+    },
+    {
+      "id": "imzaeevc",
+      "type": "connector",
+      "position": {
+        "x": 24,
+        "y": 40
+      },
+      "data": {
+        "label": "J5",
+        "pinCount": 3,
+        "side": "left",
+        "pinLabels": {
+          "1": "+",
+          "2": "C",
+          "3": "-"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 103
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "rgn8fhl2"
+    },
+    {
+      "id": "3mak8017",
+      "type": "connector",
+      "position": {
+        "x": 16,
+        "y": 40
+      },
+      "data": {
+        "label": "J6",
+        "pinCount": 3,
+        "side": "right",
+        "pinLabels": {
+          "1": "+",
+          "2": "C",
+          "3": "-"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "parentId": "0ici9ed8",
+      "measured": {
+        "width": 130,
+        "height": 103
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "3a82yfet",
+      "type": "connector",
+      "position": {
+        "x": 24,
+        "y": 40
+      },
+      "data": {
+        "label": "J7",
+        "pinCount": 3,
+        "side": "left",
+        "pinLabels": {
+          "1": "+",
+          "2": "C",
+          "3": "-"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 103
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "81xs8264"
+    },
+    {
+      "id": "tdb4mblq",
+      "type": "connector",
+      "position": {
+        "x": 32,
+        "y": 320
+      },
+      "data": {
+        "label": "J8",
+        "pinCount": 1,
+        "side": "left",
+        "pinLabels": {
+          "1": "3V3"
+        },
+        "partId": null,
+        "accessories": []
+      },
+      "measured": {
+        "width": 130,
+        "height": 59
+      },
+      "selected": false,
+      "dragging": false,
+      "parentId": "bfcn74b8"
+    }
+  ],
+  "edges": [
+    {
+      "type": "wire",
+      "source": "svj4vs6h",
+      "sourceHandle": "pin-3",
+      "target": "imzaeevc",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "BU",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__svj4vs6hpin-3-imzaeevcpin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "3mak8017",
+      "sourceHandle": "pin-3",
+      "target": "3a82yfet",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "BU",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__3mak8017pin-3-3a82yfetpin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "imzaeevc",
+      "sourceHandle": "pin-1",
+      "target": "3a82yfet",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "WH",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__imzaeevcpin-1-3a82yfetpin-1",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "svj4vs6h",
+      "sourceHandle": "pin-1",
+      "target": "3mak8017",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "WH",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__svj4vs6hpin-1-3mak8017pin-1",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "svj4vs6h",
+      "sourceHandle": "pin-2",
+      "target": "4z8uggri",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": [],
+        "points": [
+          {
+            "x": -128,
+            "y": 392
+          },
+          {
+            "x": -40,
+            "y": 768
+          }
+        ],
+        "name": "C_TL",
+        "labelOffset": {
+          "x": 211.18484876430932,
+          "y": 203.18484876430932
+        }
+      },
+      "id": "xy-edge__svj4vs6hpin-2-4z8uggripin-1",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "imzaeevc",
+      "sourceHandle": "pin-2",
+      "target": "4z8uggri",
+      "targetHandle": "pin-4",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": [],
+        "points": [
+          {
+            "x": -104,
+            "y": 392
+          },
+          {
+            "x": -32,
+            "y": 736
+          }
+        ],
+        "name": "C_TR",
+        "labelOffset": {
+          "x": 91.2057314850638,
+          "y": 179.20573148506378
+        }
+      },
+      "id": "xy-edge__imzaeevcpin-2-4z8uggripin-4",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "3a82yfet",
+      "sourceHandle": "pin-2",
+      "target": "4z8uggri",
+      "targetHandle": "pin-2",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": [],
+        "points": [
+          {
+            "x": -24,
+            "y": 704
+          }
+        ],
+        "name": "C_BR",
+        "labelOffset": {
+          "x": -32.957537213589994,
+          "y": 192
+        }
+      },
+      "id": "xy-edge__3a82yfetpin-2-4z8uggripin-2",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "3mak8017",
+      "sourceHandle": "pin-2",
+      "target": "4z8uggri",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": [],
+        "points": [
+          {
+            "x": -56,
+            "y": 784
+          }
+        ],
+        "name": "C_BL",
+        "labelOffset": {
+          "x": 171.54052496796191,
+          "y": 75.54052496796191
+        }
+      },
+      "id": "xy-edge__3mak8017pin-2-4z8uggripin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0gu3431r",
+      "sourceHandle": "pin-1",
+      "target": "vly89z8t",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "BK",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0gu3431rpin-1-vly89z8tpin-1",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0gu3431r",
+      "sourceHandle": "pin-2",
+      "target": "vly89z8t",
+      "targetHandle": "pin-2",
+      "data": {
+        "color": "TQ",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0gu3431rpin-2-vly89z8tpin-2",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0gu3431r",
+      "sourceHandle": "pin-3",
+      "target": "vly89z8t",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "PK",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0gu3431rpin-3-vly89z8tpin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0gu3431r",
+      "sourceHandle": "pin-4",
+      "target": "vly89z8t",
+      "targetHandle": "pin-4",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0gu3431rpin-4-vly89z8tpin-4",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-6",
+      "target": "li2ltqpm",
+      "targetHandle": "shell",
+      "data": {
+        "color": "BK",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-6-li2ltqpmshell",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-7",
+      "target": "0quzclgx",
+      "targetHandle": "pin-6",
+      "data": {
+        "color": "BK",
+        "stripe": "BK",
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-7-0quzclgxpin-6",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-1",
+      "target": "li2ltqpm",
+      "targetHandle": "pin-2",
+      "data": {
+        "color": "VT",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-1-li2ltqpmpin-2",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-3",
+      "target": "li2ltqpm",
+      "targetHandle": "pin-3",
+      "data": {
+        "color": "OG",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-3-li2ltqpmpin-3",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-2",
+      "target": "li2ltqpm",
+      "targetHandle": "pin-5",
+      "data": {
+        "color": "PK",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-2-li2ltqpmpin-5",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-4",
+      "target": "li2ltqpm",
+      "targetHandle": "pin-7",
+      "data": {
+        "color": "YE",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-4-li2ltqpmpin-7",
+      "selected": false
+    },
+    {
+      "type": "wire",
+      "source": "0quzclgx",
+      "sourceHandle": "pin-8",
+      "target": "tdb4mblq",
+      "targetHandle": "pin-1",
+      "data": {
+        "color": "RD",
+        "stripe": null,
+        "gauge": "24 AWG",
+        "cableId": null,
+        "partId": null,
+        "coverings": []
+      },
+      "id": "xy-edge__0quzclgxpin-8-tdb4mblqpin-1",
+      "selected": false
+    }
+  ],
+  "cables": [],
+  "parts": [
+    {
+      "id": "fqiry9hw",
+      "type": "Mounting Hardware",
+      "mpn": "Heat Set Insert M3",
+      "manufacturer": "Ruthex",
+      "description": "https://amzn.eu/d/0b9HPckK",
+      "cost": 0.09,
+      "manualQty": 26
+    },
+    {
+      "id": "62g0grqo",
+      "type": "Screw",
+      "mpn": "Countersunk M3x6",
+      "cost": 0.04,
+      "manualQty": 26
+    },
+    {
+      "id": "ziob7tes",
+      "type": "PCB",
+      "mpn": "HX711",
+      "description": "https://amzn.eu/d/09gSECSa",
+      "cost": 1.6,
+      "manualQty": 1
+    },
+    {
+      "id": "z6igt2la",
+      "type": "PCB",
+      "mpn": "CLRC663",
+      "description": "https://de.aliexpress.com/item/1005009206202001.html",
+      "cost": 11.07,
+      "manualQty": 1
+    },
+    {
+      "id": "blrrtrmg",
+      "type": "PCB",
+      "mpn": "Cheap Yellow Display",
+      "description": "https://amzn.eu/d/08TuXSqS",
+      "cost": 17,
+      "manualQty": 1
+    },
+    {
+      "id": "u32rbyta",
+      "type": "Ext",
+      "mpn": "Kitchen Scale",
+      "description": "https://amzn.eu/d/0i4XcGJX",
+      "manufacturer": "Söhnle",
+      "cost": 15,
+      "manualQty": 1
+    },
+    {
+      "id": "8ughzlvr",
+      "type": "Ext",
+      "mpn": "Felt Glider 50mm",
+      "description": "https://amzn.eu/d/08yTZHSM",
+      "cost": 0.28,
+      "manualQty": 4
+    },
+    {
+      "id": "mrmi7fhd",
+      "type": "wire",
+      "mpn": "Misc Wires",
+      "cost": 1,
+      "manualQty": 1
+    },
+    {
+      "id": "y3ent21a",
+      "type": "Filament",
+      "mpn": "Bambulab PLA",
+      "cost": 16,
+      "manualQty": 0.4
+    }
+  ],
+  "assembly": "# Spoolhouse scale firmware\n\nPlatformIO firmware for an ESP32 **Cheap Yellow Display** (ESP32-2432S028R) that turns a\n5 kg load cell + NFC reader into a spool scale: the display shows the current weight and,\nwhen a recognized filament spool is placed on it, the decoded filament details\n(manufacturer, material, colour, nominal weight, hotend temps).\n\n**Tap the touchscreen to tare** (zero) the scale — any touch triggers it, and the\non-screen TARE bar flashes green to confirm. The on-board BOOT button also tares, as a\nbackup. The scale additionally tares on boot, so whatever sits on it at power-up reads 0 g.\n\n## Build & flash\n\nRequires [PlatformIO](https://platformio.org/) (`pio`).\n\n```sh\npio run                 # compile\npio run -t upload       # flash over USB\npio device monitor      # serial log @ 115200\n```\n\n## Wiring\n\nDisplay and XPT2046 touch use the CYD's stock wiring (nothing to connect). The TFT is\ndriven on the **HSPI** peripheral (`USE_HSPI_PORT`); the touch controller uses the **VSPI**\nperipheral on its own dedicated pins. Only the external sensors below need wiring.\n\n| Peripheral | Signal | ESP32 pin |\n|---|---|---|\n| HX711 (5 kg cell) | DT | IO22 |\n| | SCK | IO27 |\n| CLRC663 (SPI mode) | MOSI | IO23 |\n| | MISO | IO19 |\n| | SCK | IO18 |\n| | SS | IO5 (the former SD-card CS pad) |\n| XPT2046 touch (on-board) | CLK / CS / MOSI / MISO / IRQ | IO25 / IO33 / IO32 / IO39 / IO36 |\n\nNotes:\n\n- The **SD-card holder is removed** from this board; its CS pad (IO5) is repurposed as\n  the CLRC663 chip select. The chip select must go to a real GPIO, **not** ground — SPI\n  register accesses are framed by chip-select edges.\n- The CLRC663 is driven as **software SPI** (bit-banged), which frees the VSPI hardware\n  peripheral for the touchscreen; UID polling doesn't need hardware-SPI speed. A MIFARE\n  auth can still occasionally fail on first contact, so decoders retry a few times.\n- Touch tare uses only press *detection* (no coordinate mapping), so it needs no\n  calibration — any touch tares.\n\n## Weight calibration\n\n`HX711_COUNTS_PER_GRAM` in `include/config.h` is a placeholder. To calibrate:\n\n1. Flash, open the serial monitor, and let it tare (empty scale at boot = 0 g).\n2. Put a known weight on the scale (e.g. a 500 g calibration weight).\n3. Adjust `HX711_COUNTS_PER_GRAM` by `displayed grams / real grams` and re-flash until\n   the display matches. (Higher factor → lower displayed weight.)\n\nThe scale tares on every boot: whatever is on it at power-up reads as 0 g.\n\n## Two abstraction layers\n\nThe firmware separates *which reader chip* from *which tag format*, so both sides evolve\nindependently.\n\n### NFC reader — `src/nfc/`\n\n`nfc_reader.h` defines the `NfcReader` interface: `begin()`, `readUid()`, `chipName()`,\nand — for encrypted vendor tags — `mifareReadBlock()` (re-select + authenticate a sector\nwith a 6-byte key + read a block) guarded by `supportsMifareClassic()`. `main.cpp` and the\nspool decoders only talk to this interface. The active implementation is the **CLRC663**\n(`clrc663_reader.{h,cpp}`, via the iwanders/MFRC630 library); a PN532 implementation\n(`pn532_reader.{h,cpp}`) is kept as an alternate.\n\nSwapping readers is the one instance line in `main.cpp` (`NfcReader &nfc = …`).\nNothing else changes.\n\n### Spool tag formats — `src/spool/`\n\n`spool_decoder.h` defines `SpoolDecoder`: each manufacturer decoder both *detects* whether\na tag is theirs and *decodes* it into the normalized `FilamentInfo` (`filament_info.h`).\n`SpoolRegistry` tries each decoder in order and returns the first match; `main.cpp`\nregisters them and never hard-codes a manufacturer.\n\nImplemented decoders (registered in `main.cpp`, tried in this order):\n\n| Decoder | Tag | Keys / access | Status |\n|---|---|---|---|\n| **Bambu Lab** (`bambu_decoder`) | MIFARE Classic 1K | per-sector Key A = HKDF-SHA256(UID) — `bambu_keys.{h,cpp}` | **verified on hardware** (material always; colour/weight best-effort) |\n| **Creality** (`creality_decoder`) | MIFARE Classic 1K | default key `FF…FF`, ASCII in blocks 4–6 | untested — needs a Creality spool |\n| **OpenTag3D** (`opentag_decoder`) | NTAG21x, NDEF | MIME `application/opentag3d`, fixed binary payload | untested — needs an OpenTag spool |\n\nThe Bambu key derivation is community-reverse-engineered and published for\ninteroperability. The Creality format is only partially documented publicly (no reliable\nweight field), so that decoder surfaces manufacturer, material id and colour. OpenTag3D is\nread via the NTAG page path (`readNtagPages` on `NfcReader`); the sibling **OpenPrintTag**\nspec is similar but distinct — a future decoder in this same interface.\n\nAdding a manufacturer: implement `SpoolDecoder` in a new `src/spool/*_decoder.{h,cpp}` and\nregister it in `main.cpp`. Reader and decoders are independent — swapping the NFC chip\nnever touches the decoders, and vice versa.\n"
+}

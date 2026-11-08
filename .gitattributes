@@ -1,0 +1,7 @@
+# CAD / print artifacts live in Git LFS (the ASCII STEP would otherwise count
+# as hundreds of thousands of diff lines; 3MF keeps all models together).
+*.step filter=lfs diff=lfs merge=lfs -text
+*.stp filter=lfs diff=lfs merge=lfs -text
+*.3mf filter=lfs diff=lfs merge=lfs -text
+*.stl binary
+*.pdf filter=lfs diff=lfs merge=lfs -text

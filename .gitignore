@@ -21,3 +21,7 @@ data/
 .env
 .env.docker
 .claude/
+
+# Firmware secrets (WiFi password, API token). Local only; use secrets.h.example.
+# Also ignored by hardware/.gitignore — this is a repo-wide belt-and-suspenders.
+**/secrets.h

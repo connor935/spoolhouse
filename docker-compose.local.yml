@@ -1,0 +1,26 @@
+# Local / LAN run — e.g. the ESP32 scale demo. No Traefik, no external network.
+# Publishes on 0.0.0.0:3000 (reachable from other devices on the LAN) and keeps
+# the SQLite DB on the host (./data). The production stack is docker-compose.yml.
+#
+#   docker compose -f docker-compose.local.yml up -d --build
+#
+# Requires .env.docker (see .env.docker.example) with BETTER_AUTH_SECRET and
+# BETTER_AUTH_URL set to http://<this-host-LAN-IP>:3000.
+services:
+  app:
+    build:
+      context: .
+      target: runner
+    image: spoolhouse:local
+    restart: unless-stopped
+    # Run as root so the container can write the host bind-mounted ./data
+    # (the production image runs as the unprivileged 'node' user with a named
+    # volume it owns; a host bind mount doesn't inherit that ownership).
+    user: "0:0"
+    env_file: .env.docker
+    environment:
+      DATABASE_PATH: /data/spoolhouse.db
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
