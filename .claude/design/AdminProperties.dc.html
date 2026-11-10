@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Properties</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}">
+<div class="page">
+<div class="side"><dc-import name="Nav" active="properties" dark="{{dark}}" hint-size="240px,900px"></dc-import></div>
+<main class="main">
+<div class="wrap">
+
+<header class="head">
+<div class="kick crumb" style="justify-content: space-between"><span><span style="color: var(--accent)">A3</span> — Admin / Properties</span><span>8 definitions · 3,904 values</span></div>
+<div class="head-row">
+<h1 class="h1">Properties</h1>
+<a class="btn btn-acc" href="PropertyDialog.dc.html" style="color: var(--accent-fg)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>New property</a>
+</div>
+<p class="muted" style="margin: 0; max-width: 720px">Datasheet property definitions shown on materials (tensile strength, hardness, glass-transition temp, …). Any member can fill in a material's values; admins verify them.</p>
+</header>
+
+<div class="scroll">
+<table class="tbl">
+<thead><tr><th scope="col">Name</th><th scope="col">Key</th><th scope="col">Unit</th><th scope="col">Value type</th><th scope="col">In use</th><th scope="col" class="r">Actions</th></tr></thead>
+<tbody>
+<tr><td style="font-weight: 500">Density</td><td class="mono muted" style="font-size: 13px">density</td><td class="mono">g/cm³</td><td><span class="tag">number</span></td><td class="kick">1,812 material values</td><td class="r"><button class="ibtn" aria-label="Edit Density"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" aria-label="Delete Density, in use"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td></tr>
+<tr><td style="font-weight: 500">Diameter</td><td class="mono muted" style="font-size: 13px">diameter</td><td class="mono">mm</td><td><span class="tag">list</span></td><td class="kick">1,640 material values</td><td class="r"><button class="ibtn" aria-label="Edit Diameter"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" aria-label="Delete Diameter, in use"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td></tr>
+<tr><td style="font-weight: 500">Extruder temp</td><td class="mono muted" style="font-size: 13px">extruder_temp</td><td class="mono">°C</td><td><span class="tag">range</span></td><td class="kick">412 material values</td><td class="r"><button class="ibtn" aria-label="Edit Extruder temp"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" aria-label="Delete, in use"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td></tr>
+<tr><td style="font-weight: 500">Bed temp</td><td class="mono muted" style="font-size: 13px">bed_temp</td><td class="mono">°C</td><td><span class="tag">range</span></td><td class="kick">398 material values</td><td class="r"><button class="ibtn" aria-label="Edit Bed temp"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" aria-label="Delete, in use"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td></tr>
+<tr><td style="font-weight: 500">Drying temp</td><td class="mono muted" style="font-size: 13px">drying_temp</td><td class="mono">°C</td><td><span class="tag">integer</span></td><td class="kick">96 material values</td><td class="r"><button class="ibtn" aria-label="Edit Drying temp"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" aria-label="Delete, in use"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td></tr>
+<tr><td style="font-weight: 500">Tensile strength</td><td class="mono muted" style="font-size: 13px">tensile_strength</td><td class="mono">MPa</td><td><span class="tag">number</span></td><td class="kick">41 material values</td><td class="r"><button class="ibtn" aria-label="Edit Tensile strength"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" aria-label="Delete, in use"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td></tr>
+<tr><td style="font-weight: 500">Hardness</td><td class="mono muted" style="font-size: 13px">hardness</td><td class="mono">Shore D</td><td><span class="tag">integer</span></td><td class="kick">5 material values</td><td class="r"><button class="ibtn" aria-label="Edit Hardness"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" aria-label="Delete, in use"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td></tr>
+<tr><td style="font-weight: 500">Finish</td><td class="mono muted" style="font-size: 13px">finish</td><td class="kick">—</td><td><span class="tag">text</span></td><td class="kick">0 material values</td><td class="r"><button class="ibtn" aria-label="Edit Finish"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn" aria-label="Delete Finish"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></td></tr>
+</tbody>
+</table>
+</div>
+
+<section>
+<div class="sec"><span class="n">i</span><h2>Value types</h2><span class="rule"></span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+<div class="rowline" style="border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px"><span class="tag">number</span><span class="help">A decimal number, e.g. 1.24</span></div>
+<div class="rowline" style="border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px"><span class="tag">integer</span><span class="help">A whole number, e.g. 220</span></div>
+<div class="rowline" style="border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px"><span class="tag">range</span><span class="help">A range like 210–230, or a single number</span></div>
+<div class="rowline" style="border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px"><span class="tag">list</span><span class="help">Numbers separated by commas, e.g. 1.75, 2.85</span></div>
+<div class="rowline" style="border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px"><span class="tag">text</span><span class="help">Any text</span></div>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? false;
+return { dark, themeClass: dark ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

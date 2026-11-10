@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Join group</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 1000px; height: 700px; position: relative; overflow: hidden; display: grid; place-items: center">
+<div class="ruler" aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 12px"></div>
+<div class="kick" style="position: absolute; top: 24px; left: 32px">…/groups/join/aB3xY9</div>
+<div role="dialog" aria-labelledby="jg" style="width: 460px; border: 1px solid var(--ink); border-radius: 6px; background: var(--card); overflow: hidden">
+<div style="padding: 28px 28px 20px; display: flex; flex-direction: column; gap: 16px; border-bottom: 2px solid var(--ink)">
+<span class="logo" style="width: 40px; height: 40px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg></span>
+<span class="kick">Group invite</span>
+<h1 id="jg" class="h1" style="font-size: 44px">Join “Print Farm Friends”?</h1>
+<p class="muted" style="margin: 0">You've been invited to join this group and share spools with its members.</p>
+</div>
+<div style="padding: 16px 28px; display: flex; gap: 28px"><span style="display: flex; flex-direction: column; gap: 4px"><span class="kick">Members</span><span class="num" style="font-size: 30px">5</span></span><span style="display: flex; flex-direction: column; gap: 4px"><span class="kick">Shared spools</span><span class="num" style="font-size: 30px">23</span></span><span style="display: flex; flex-direction: column; gap: 4px"><span class="kick">Owner</span><span style="font-weight: 500; padding-top: 6px">Anna Weber</span></span></div>
+<div style="padding: 14px 28px 24px; display: flex; gap: 10px; justify-content: flex-end"><button class="btn btn-out">Cancel</button><button class="btn btn-acc">Join group</button></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":700}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? false) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

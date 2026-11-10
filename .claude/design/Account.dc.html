@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Account</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}">
+<div class="page">
+<div class="side"><dc-import name="Nav" active="account" dark="{{dark}}" hint-size="240px,900px"></dc-import></div>
+<main class="main">
+<div class="wrap" style="gap: 36px; max-width: 1080px">
+
+<header class="head">
+<div class="kick crumb" style="justify-content: space-between"><span>— Account</span><span>Admin · member since Jan 2026</span></div>
+<h1 class="h1">Account</h1>
+</header>
+
+<div class="cols">
+<section style="flex: 1 1 380px; min-width: 0">
+<div class="sec"><span class="n">01</span><h2>Display name</h2><span class="rule"></span></div>
+<div style="display: flex; gap: 10px; align-items: flex-end"><div class="field" style="flex: 1"><span class="lab">Display name</span><label class="inp ink"><input value="Felix" aria-label="Display name"></label></div><button class="btn btn-out" style="height: 38px">Save name</button></div>
+<p class="help" style="margin: 8px 0 0">Shown to members of your groups.</p>
+</section>
+<section style="flex: 1 1 380px; min-width: 0">
+<div class="sec"><span class="n">02</span><h2>Change password</h2><span class="rule"></span></div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div class="field"><span class="lab">Current password</span><label class="inp"><input type="password" value="••••••••••••••" aria-label="Current password"></label></div>
+<div class="field"><span class="lab">New password</span><label class="inp foc"><input type="password" value="••••••••••••••••" aria-label="New password"></label><div style="display: flex; align-items: center; gap: 8px"><span class="meter" style="flex: 1; height: 6px"><i style="width: 100%"></i></span><span class="kick" style="color: var(--accent)">16 / 12 min.</span></div></div>
+<div class="field"><span class="lab">Repeat new password</span><label class="inp"><input type="password" value="••••••••••••••••" aria-label="Repeat new password"></label></div>
+<button class="btn btn-pri" style="align-self: flex-end">Change password</button>
+</div>
+</section>
+</div>
+
+<section>
+<div class="sec"><span class="n">03</span><h2>API tokens</h2><span class="rule"></span><a class="kick" href="#" style="color: var(--accent)">API docs →</a></div>
+<p class="muted" style="margin: 0 0 16px; max-width: 720px">Let external scales or scripts read your inventory and post weighings. A token acts as you — keep it secret, revoke it when a device is gone.</p>
+<div style="display: flex; gap: 10px; align-items: flex-end; max-width: 560px"><div class="field" style="flex: 1"><span class="lab">Token name</span><label class="inp ink"><input value="Scale script" aria-label="Token name" placeholder="e.g. Scale script"></label></div><button class="btn btn-pri" style="height: 38px">Create token</button></div>
+
+<div role="status" style="margin-top: 16px; border: 2px solid var(--accent); border-radius: 4px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: color-mix(in oklab, var(--accent) 6%, var(--card))">
+<div style="display: flex; align-items: center; gap: 8px"><span class="tag fill">New</span><span style="font-weight: 600">Scale script</span></div>
+<div style="display: flex; gap: 10px; align-items: center"><code class="mono" style="flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--ink); border-radius: 4px; background: var(--card); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">sph_live_7Kd9qXw2mT4nV8bR1pLz6cYe3uHs0aJf</code><button class="btn btn-acc"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>Copy</button></div>
+<span class="help" style="color: var(--fg)"><strong>Copy it now</strong> — this token won't be shown again.</span>
+</div>
+
+<div class="scroll" style="margin-top: 20px">
+<table class="tbl">
+<thead><tr><th scope="col">Name</th><th scope="col">Created</th><th scope="col">Last used</th><th scope="col" class="r"></th></tr></thead>
+<tbody>
+<tr><td style="font-weight: 500">Scale script</td><td class="mono" style="font-size: 13px">10 Nov 2026</td><td class="kick">never</td><td class="r"><button class="btn btn-ghost btn-sm" style="color: var(--destructive)">Revoke</button></td></tr>
+<tr><td style="font-weight: 500">Home Assistant</td><td class="mono" style="font-size: 13px">02 Apr 2026</td><td class="kick" style="color: var(--fg)">12 min ago</td><td class="r"><button class="btn btn-ghost btn-sm" style="color: var(--destructive)">Revoke</button></td></tr>
+<tr><td style="font-weight: 500">NFC reader</td><td class="mono" style="font-size: 13px">18 Jan 2026</td><td class="kick">3 mo ago</td><td class="r"><button class="btn btn-ghost btn-sm" style="color: var(--destructive)">Revoke</button></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? false;
+return { dark, themeClass: dark ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

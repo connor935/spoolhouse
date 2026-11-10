@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Re-weigh popover and sheet</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 1120px; height: 900px; padding: 40px; display: flex; gap: 48px; overflow: hidden">
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<span class="kick">Desktop · click on a spool tile</span>
+<div style="display: flex; gap: 24px; padding: 18px 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--border)">
+<div style="width: 170px; display: flex; flex-direction: column; gap: 6px"><span class="sw" style="width: 30px; height: 30px; background: #1F1F1F"></span><span class="nm">Galaxy Black</span><span class="kick">Prusament · PLA</span></div>
+<div style="position: relative; flex: 1">
+<div class="slots">
+<div class="slot" style="width: 170px"><div style="display: flex; align-items: center; gap: 6px"><span class="id">#01</span><span class="tag inv">A2</span></div><span class="w">742 g</span><div class="meter"><i style="width: 74%"></i></div></div>
+<div class="slot sel" style="width: 170px"><div style="display: flex; align-items: center; gap: 6px"><span class="id">#03</span><span class="tag inv">A3</span></div><span class="w">1,000 g</span><div class="meter"><i style="width: 100%"></i></div></div>
+</div>
+<div class="pop" role="dialog" aria-labelledby="rw-t" style="position: absolute; left: 120px; top: 132px; width: 320px; padding: 16px; display: flex; flex-direction: column; gap: 14px; z-index: 2">
+<span aria-hidden="true" style="position: absolute; top: -7px; left: 120px; width: 12px; height: 12px; background: var(--card); border-left: 1px solid var(--ink); border-top: 1px solid var(--ink); transform: rotate(45deg)"></span>
+<div style="display: flex; align-items: center; justify-content: space-between"><h3 id="rw-t" class="h2" style="font-size: 22px">Re-weigh #03 Galaxy Black</h3><button class="ibtn" aria-label="Close"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+<div class="field"><span class="lab">Measured total weight (g)</span><label class="inp r foc" style="height: 48px; font-size: 20px"><input value="1112" aria-label="Measured total weight" style="font-size: 20px"><span class="unit">g</span></label><span class="help">Last: 1,193 g total · 2 weeks ago</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border)">
+<div style="display: flex; flex-direction: column; gap: 4px"><span class="kick">Filament left</span><span class="mono" style="font-size: 12px; color: var(--accent)">−81 g since last</span></div>
+<span class="num" style="font-size: 36px">919<small>g</small></span>
+</div>
+<div class="meter"><i style="width: 92%"></i></div>
+<div style="display: flex; align-items: center; justify-content: space-between"><a href="SpoolEdit.dc.html" class="kick" style="color: var(--accent)">Edit all details</a><button class="btn btn-acc btn-sm">Save<span class="kbd">↵</span></button></div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="width: 390px; display: flex; flex-direction: column; gap: 14px; flex: none">
+<span class="kick">Mobile · bottom sheet (borrowed spool)</span>
+<div style="position: relative; width: 390px; height: 780px; border: 1px solid var(--ink); border-radius: 22px; overflow: hidden; background: var(--bg)">
+<div aria-hidden="true" style="padding: 70px 16px; display: flex; flex-direction: column; gap: 12px"><div class="ghost" style="height: 40px; width: 200px"></div><div class="ghost" style="height: 100px"></div><div class="ghost" style="height: 100px"></div></div>
+<div class="scrim" style="position: absolute; inset: 0"></div>
+<div role="dialog" aria-labelledby="rw-m" style="position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 2px solid var(--ink); border-radius: 14px 14px 0 0; padding: 10px 18px 26px; display: flex; flex-direction: column; gap: 16px">
+<span aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 999px; background: var(--border)"></span>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="kick">Borrowed from Mia Koch</span><h3 id="rw-m" class="h2" style="font-size: 28px">Re-weigh #04 Basic Cyan</h3></div>
+<div class="field"><span class="lab">Measured total weight (g)</span><label class="inp r foc" style="height: 56px"><input value="460" aria-label="Measured total weight" inputmode="numeric" style="font-size: 24px"><span class="unit">g</span></label><span class="help">Put the whole spool on a scale.</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between"><div style="display: flex; flex-direction: column; gap: 4px"><span class="kick">Filament left</span><span class="mono" style="font-size: 12px; color: var(--accent)">−58 g · counts toward this borrow</span></div><span class="num">260<small>g</small></span></div>
+<div class="meter"><i style="width: 26%"></i></div>
+<button class="btn btn-acc btn-lg" style="width: 100%">Save</button>
+<a href="SpoolEdit.dc.html" class="kick" style="align-self: center; color: var(--accent)">Edit all details</a>
+</div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1120,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? false) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

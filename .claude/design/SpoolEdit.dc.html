@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Edit spool</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 960px; height: 1340px; position: relative; overflow: hidden">
+
+<div aria-hidden="true" class="ghostpage" style="position: absolute; inset: 0; display: flex">
+<div style="width: 200px; background: var(--sidebar); border-right: 1px solid var(--border); padding: 20px 14px; display: flex; flex-direction: column; gap: 12px"><div class="ghost" style="height: 28px; width: 120px"></div><div class="ghost" style="height: 14px"></div><div class="ghost" style="height: 14px"></div></div>
+<div style="flex: 1; padding: 30px; display: flex; flex-direction: column; gap: 16px"><div class="ghost" style="height: 44px; width: 260px"></div><div style="height: 2px; background: var(--ink)"></div><div class="ghost" style="height: 120px"></div></div>
+</div>
+<div class="scrim" style="position: absolute; inset: 0"></div>
+
+<div role="dialog" aria-modal="true" aria-labelledby="dlg-t" class="dlg" style="position: absolute; left: 200px; top: 30px; width: 560px">
+<div class="dlg-h">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="kick">Galaxy Black / #01</span><h2 id="dlg-t" class="h2" style="font-size: 32px">Edit spool</h2></div>
+<button class="ibtn" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+</div>
+<p class="muted" style="margin: 0; font-size: 13px">Update this physical spool.</p>
+</div>
+
+<div class="dlg-b" style="gap: 18px">
+
+<div class="grid2">
+<div class="field"><div class="lab"><span>Material</span><button class="linkbtn">+ Add new</button></div><span class="inp"><span class="sw" style="background: #1F1F1F"></span><span style="flex: 1"><span class="muted">Prusament ·</span> Galaxy Black</span><span class="tag">PLA</span></span></div>
+<div class="field"><div class="lab"><span>Spool type</span><button class="linkbtn">+ Add new</button></div><span class="inp"><span style="flex: 1"><span class="muted">Prusament ·</span> Cardboard 1 kg</span><span class="mono muted" style="font-size: 12px">193 g</span></span><span class="help">Empty spool weight: 193 g.</span></div>
+</div>
+
+<div class="grid2">
+<div class="field"><span class="lab">Full filament weight (g)</span><label class="inp r"><input value="1000" aria-label="Full filament weight"><span class="unit">g</span></label></div>
+<div class="field"><span class="lab">Measured total weight (g)</span><label class="inp r foc"><input value="935" aria-label="Measured total weight"><span class="unit">g</span></label><span class="help">Put the whole spool on a scale and enter the value.</span></div>
+</div>
+
+<div class="result">
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1"><span class="kick">Calculated filament left</span><div class="meter"><i style="width: 74%"></i></div><span class="fine">935 g total − 193 g empty spool</span></div>
+<span class="num" style="font-size: 44px">742<small>g</small></span>
+</div>
+
+<div class="grid2">
+<div class="field"><span class="lab">Price paid (€)</span><label class="inp r"><input value="19.99" aria-label="Price paid"><span class="unit">€</span></label></div>
+<div class="field"><span class="lab">Purchased</span><label class="inp"><input value="2026-03-14" class="mono" aria-label="Purchased"></label></div>
+<div class="field"><span class="lab">Location</span><label class="inp"><span class="tag inv">A2</span><input value="" aria-label="Location" placeholder=""></label></div>
+<div class="field"><span class="lab">Last dried</span><label class="inp"><input value="2026-08-02" class="mono" aria-label="Last dried"></label></div>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px"><span class="kick">NFC tag · set via API</span><span class="mono" style="font-size: 12px">04:A2:3F:9B:61:80</span></div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div class="sec" style="margin-bottom: 0"><span class="n">E</span><h2 style="font-size: 14px">Weighing history</h2><span class="rule"></span><button class="btn btn-out btn-sm"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>Undo last</button></div>
+<svg viewBox="0 0 500 60" width="100%" height="60" role="img" aria-label="Remaining filament over time, from 1000 g in March to 742 g today" style="display: block">
+<line x1="0" y1="59" x2="500" y2="59" stroke="var(--ink)" stroke-width="1.5"/>
+<polyline points="0,6 300,16 420,24 500,32" fill="none" stroke="var(--accent)" stroke-width="2"/>
+<circle cx="0" cy="6" r="3" fill="var(--accent)"/><circle cx="300" cy="16" r="3" fill="var(--accent)"/><circle cx="420" cy="24" r="3" fill="var(--accent)"/><circle cx="500" cy="32" r="4" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+</svg>
+<div>
+<div class="rowline" style="padding: 8px 0"><span class="kick" style="width: 150px; color: var(--fg)">10 Nov 2026 · 14:02</span><span style="flex: 1"></span><span class="mono" style="font-weight: 600">742 g</span><span class="mono muted" style="font-size: 12px">(935 g total)</span></div>
+<div class="rowline" style="padding: 8px 0"><span class="kick" style="width: 150px">03 Nov 2026 · 09:15</span><span style="flex: 1"></span><span class="mono">800 g</span><span class="mono muted" style="font-size: 12px">(993 g total)</span></div>
+<div class="rowline" style="padding: 8px 0"><span class="kick" style="width: 150px">21 Oct 2026 · 18:40</span><span style="flex: 1"></span><span class="mono">905 g</span><span class="mono muted" style="font-size: 12px">(1,098 g total)</span></div>
+<div class="rowline" style="padding: 8px 0"><span class="kick" style="width: 150px">14 Mar 2026 · 11:00</span><span style="flex: 1"></span><span class="mono">1,000 g</span><span class="mono muted" style="font-size: 12px">(1,193 g total)</span></div>
+</div>
+</div>
+
+</div>
+
+<div class="dlg-f">
+<button class="btn btn-ghost" style="color: var(--destructive); padding-left: 0"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>Delete spool</button>
+<span style="flex: 1"></span>
+<button class="btn btn-out">Cancel</button>
+<button class="btn btn-acc">Save changes</button>
+</div>
+</div>
+
+<div class="toast" role="status" style="position: absolute; right: 24px; bottom: 24px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Weight restored to 935 g total</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":960,"height":1340}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? false) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

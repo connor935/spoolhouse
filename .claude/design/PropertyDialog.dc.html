@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Edit property dialog</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 680px; height: 780px; position: relative; overflow: hidden">
+<div class="scrim" style="position: absolute; inset: 0"></div>
+<div role="dialog" aria-modal="true" aria-labelledby="pd" class="dlg" style="position: absolute; left: 60px; top: 40px; width: 560px">
+<div class="dlg-h"><div style="display: flex; justify-content: space-between; align-items: flex-start"><div style="display: flex; flex-direction: column; gap: 8px"><span class="kick">A3 — Properties</span><h2 id="pd" class="h2" style="font-size: 30px">Edit property</h2></div><button class="ibtn" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div></div>
+<div class="dlg-b" style="gap: 16px">
+<div class="grid2">
+<div class="field"><span class="lab">Name</span><label class="inp"><input value="Extruder temp" aria-label="Name" placeholder="e.g. Tensile strength"></label></div>
+<div class="field"><span class="lab">Key <span class="kick">fixed</span></span><span class="inp" style="background: var(--muted)"><span class="mono" style="flex: 1">extruder_temp</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span></div>
+</div>
+<div class="grid2">
+<div class="field"><span class="lab">Unit <span class="kick">optional</span></span><label class="inp"><input value="°C" aria-label="Unit" placeholder="e.g. MPa"></label></div>
+<div></div>
+</div>
+<div class="field"><span class="lab">Description <span class="kick">optional</span></span><span class="inp" style="height: 72px; align-items: flex-start; padding-top: 9px">Nozzle temperature range recommended by the manufacturer.</span></div>
+<div class="field"><span class="lab">Value type</span>
+<div class="seg" role="radiogroup" aria-label="Value type"><button role="radio" aria-checked="false">Number</button><button role="radio" aria-checked="false">Integer</button><button role="radio" aria-checked="false">Range</button><button class="on" role="radio" aria-checked="true">List</button><button role="radio" aria-checked="false">Text</button></div>
+<span class="help">Numbers separated by commas, e.g. 1.75, 2.85</span>
+</div>
+<div class="alert" role="alert" style="color: var(--fg); border-color: var(--destructive)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--destructive); margin-top: 1px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Changing the type re-checks all <strong class="mono">412</strong> existing values; the change is refused if any no longer fit.</span></div>
+</div>
+<div class="dlg-f"><span style="flex: 1"></span><button class="btn btn-out">Cancel</button><button class="btn btn-pri">Save property</button></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":680,"height":780}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? false) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

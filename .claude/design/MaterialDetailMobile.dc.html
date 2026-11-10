@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Material detail mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 390px; height: 1760px; position: relative; overflow: hidden; display: flex; flex-direction: column">
+
+<header style="height: 56px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--sidebar); border-bottom: 1px solid var(--border)">
+<a class="ibtn" href="Inventory.dc.html" aria-label="Back to inventory" style="width: 44px; height: 44px; color: var(--fg)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="m15 18-6-6 6-6"/></svg></a>
+<span class="kick" style="color: var(--fg)">Inventory</span>
+<button class="ibtn" aria-label="More actions" style="margin-left: auto; width: 44px; height: 44px; color: var(--fg)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+</header>
+
+<main style="flex: 1; min-height: 0; overflow: hidden; padding: 18px 16px 120px; display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: flex; flex-direction: column; gap: 12px; padding-bottom: 16px; border-bottom: 2px solid var(--ink)">
+<span class="kick"><span style="color: var(--accent)">02</span> — Inventory / Galaxy Black</span>
+<div style="display: flex; align-items: center; gap: 14px">
+<span class="sw" style="width: 48px; height: 48px; background: #1F1F1F; border-width: 2px"></span>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 10px"><h1 class="h1" style="font-size: 44px">Galaxy Black</h1></div>
+<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap"><span class="tag">PLA</span><span class="kick" style="color: var(--fg)">Prusament</span><span class="kick">· #1F1F1F</span></div>
+</div>
+</div>
+</div>
+
+<section aria-label="Key figures" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid var(--ink); margin-top: -24px">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 12px 14px 0; border-bottom: 1px solid var(--border)"><span class="kick">Your stock</span><span class="num">2.16<small>kg</small></span><span class="kick">3 spools</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 0 14px 14px; border-left: 1px solid var(--border); border-bottom: 1px solid var(--border)"><span class="kick">Used · 30 d</span><span class="num">340<small>g</small></span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 12px 14px 0"><span class="kick">Lasts about</span><span class="num">~6<small>mo</small></span></div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px 0 14px 14px; border-left: 1px solid var(--border)"><span class="kick">Stock value</span><span class="num">€43<small>.18</small></span></div>
+</section>
+
+<section>
+<div class="sec"><span class="n">01</span><h2>Your spools</h2><span class="rule"></span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div class="slot" style="width: auto"><div style="display: flex; align-items: center; gap: 6px"><span class="id">#01</span><span class="tag inv">A2</span></div><span class="w">742 g</span><div class="meter"><i style="width: 74%"></i></div></div>
+<div class="slot" style="width: auto"><div style="display: flex; align-items: center; gap: 6px"><span class="id">#02</span><span class="tag acc">Lent · Jonas</span></div><span class="w">418 g</span><div class="meter"><i style="width: 42%"></i></div></div>
+<div class="slot" style="width: auto"><div style="display: flex; align-items: center; gap: 6px"><span class="id">#03</span><span class="tag inv">A3</span><span class="tag mut">Full</span></div><span class="w">1,000 g</span><div class="meter"><i style="width: 100%"></i></div></div>
+<button class="slot add" style="width: auto; min-height: 96px"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span class="kick" style="color: inherit">Spool</span></button>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">02</span><h2>Usage</h2><span class="rule"></span></div>
+<div role="img" aria-label="Monthly usage of Galaxy Black over 12 months" style="height: 110px; display: flex; align-items: flex-end; gap: 5px; border-bottom: 2px solid var(--ink)">
+<div class="cb" style="height: 28px"></div><div class="cb" style="height: 43px"></div><div class="cb" style="height: 38px"></div><div class="cb" style="height: 62px"></div><div class="cb" style="height: 48px"></div><div class="cb" style="height: 19px"></div><div class="cb" style="height: 23px"></div><div class="cb" style="height: 45px"></div><div class="cb" style="height: 104px"></div><div class="cb" style="height: 72px"></div><div class="cb" style="height: 66px"></div><div class="cb now" style="height: 21px"></div>
+</div>
+<p style="margin: 12px 0 0; font-size: 13px"><span class="mono" style="font-weight: 600">340 g</span> used in the last 30 days · lasts about <span class="mono" style="font-weight: 600">6 months</span> at this pace</p>
+</section>
+
+<section>
+<div class="sec"><span class="n">03</span><h2>Properties</h2><span class="rule"></span><button class="linkbtn">+ Add</button></div>
+<div>
+<div class="kv" style="grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px"><span>Density</span><span class="mono">1.24 <span class="muted">g/cm³</span></span><button class="ibtn" aria-label="Edit Density"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button></div>
+<div class="kv" style="grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px"><span>Diameter</span><span class="mono">1.75, 2.85 <span class="muted">mm</span></span><button class="ibtn" aria-label="Edit Diameter"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button></div>
+<div class="kv" style="grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px"><span>Extruder temp</span><span class="mono">210–230 <span class="muted">°C</span></span><button class="ibtn" aria-label="Edit Extruder temp"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button></div>
+<div class="kv" style="grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px"><span>Bed temp</span><span class="mono">60 <span class="muted">°C</span></span><button class="ibtn" aria-label="Edit Bed temp"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button></div>
+<div class="kv" style="grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px"><span style="display: flex; flex-direction: column; gap: 4px">Drying temp<span class="tag mut" style="align-self: flex-start">Unverified</span></span><span class="mono">55 <span class="muted">°C</span></span><button class="ibtn" aria-label="Edit Drying temp"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button></div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">04</span><h2>In your groups</h2><span class="rule"></span></div>
+<div class="rowline"><span class="tag avt">AW</span><span style="flex: 1">Anna · <span class="mono">#02</span></span><span class="disp" style="font-size: 20px">960 g</span><button class="btn btn-pri btn-sm">Request</button></div>
+</section>
+
+</main>
+
+<a class="btn btn-acc" href="SpoolSheetMobile.dc.html" aria-label="Add spool" style="position: absolute; right: 16px; bottom: 84px; width: 56px; height: 56px; padding: 0; border-radius: 999px; box-shadow: 0 0 0 4px var(--bg), 0 6px 18px rgba(0,119,133,.35); color: var(--accent-fg)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 24px; height: 24px"><path d="M5 12h14"/><path d="M12 5v14"/></svg></a>
+
+<nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; background: var(--sidebar); border-top: 1px solid var(--ink); padding-bottom: 4px">
+<a href="Main.dc.html" style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: 500 10px 'Geist Mono', monospace; letter-spacing: .06em; color: var(--muted-fg)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>HOME</a>
+<a href="Inventory.dc.html" aria-current="page" style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: 500 10px 'Geist Mono', monospace; letter-spacing: .06em; color: var(--fg); border-top: 3px solid var(--accent); margin-top: -1px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: var(--accent)"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/></svg>STOCK</a>
+<a href="Borrows.dc.html" style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: 500 10px 'Geist Mono', monospace; letter-spacing: .06em; color: var(--muted-fg)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>BORROWS</a>
+<a href="Groups.dc.html" style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: 500 10px 'Geist Mono', monospace; letter-spacing: .06em; color: var(--muted-fg)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/></svg>GROUPS</a>
+<a href="Statistics.dc.html" style="flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: 500 10px 'Geist Mono', monospace; letter-spacing: .06em; color: var(--muted-fg)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>STATS</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":1760}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? false) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

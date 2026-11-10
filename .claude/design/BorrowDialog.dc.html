@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Borrow request dialog</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 640px; height: 620px; position: relative; overflow: hidden">
+<div class="scrim" style="position: absolute; inset: 0"></div>
+<div role="dialog" aria-modal="true" aria-labelledby="br" class="dlg" style="position: absolute; left: 60px; top: 60px; width: 520px">
+<div class="dlg-h"><div style="display: flex; justify-content: space-between; align-items: flex-start"><div style="display: flex; flex-direction: column; gap: 8px"><span class="kick">Print Farm Friends · just now</span><h2 id="br" class="h2" style="font-size: 30px">Borrow request</h2></div><a class="ibtn" href="Notifications.dc.html" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></a></div></div>
+<div class="dlg-b">
+<p style="margin: 0"><strong style="font-weight: 600">Anna Weber</strong> wants to borrow one of your spools.</p>
+<div style="display: flex; gap: 14px; align-items: center; padding: 14px 14px 14px 28px; border: 1px solid var(--ink); border-radius: 4px; position: relative">
+<span aria-hidden="true" style="position: absolute; left: 10px; top: 50%; margin-top: -4px; width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--ink); background: var(--bg)"></span>
+<span class="sw" style="width: 34px; height: 34px; background: #F26B21"></span>
+<span style="display: flex; flex-direction: column; gap: 6px; flex: 1"><span style="display: flex; gap: 8px; align-items: center"><span class="id">#03</span><span class="nm" style="font-size: 20px">Prusa Orange</span><span class="tag">PETG</span><span class="tag inv">B1</span></span><span class="meter" style="width: 100%"><i style="width: 66%"></i></span></span>
+<span class="num" style="font-size: 34px">655<small>g</small></span>
+</div>
+<p class="help" style="margin: 0">While lent, you can't edit this spool. Anna re-weighs it; only you can mark it returned.</p>
+</div>
+<div class="dlg-f"><span style="flex: 1"></span><button class="btn btn-out">Decline</button><button class="btn btn-pri">Approve</button></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":640,"height":620}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? false) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

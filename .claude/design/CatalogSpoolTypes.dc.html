@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Catalog spool types</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}">
+<div class="page">
+<div class="side"><dc-import name="Nav" active="spooltypes" dark="{{dark}}" hint-size="240px,900px"></dc-import></div>
+<main class="main">
+<div class="wrap" style="gap: 20px">
+
+<header class="head">
+<div class="kick crumb" style="justify-content: space-between"><span><span style="color: var(--accent)">07</span> — Spool types</span><span>Global catalog · 1,312 entries</span></div>
+<div class="head-row">
+<h1 class="h1">Spool types</h1>
+<button class="btn btn-acc"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Request spool type<span class="kbd">R</span></button>
+</div>
+<p class="muted" style="margin: 0; max-width: 680px">Global spool types and their empty weights. Missing one? Request it below — you can use it immediately while an admin reviews it.</p>
+</header>
+
+<div class="cols" style="margin-top: -8px">
+<div style="flex: 3 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div role="toolbar" aria-label="Search" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<label class="inp ink" style="flex: 1 1 280px; width: auto"><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input value="cardboard" aria-label="Search spool types" placeholder="Search spool type or manufacturer…"></label>
+<span class="kick" style="margin-left: auto"><span style="color: var(--fg)">48</span> of 1,312</span>
+</div>
+<div>
+<div class="mfr"><h2 class="nm" style="margin: 0; font-size: 20px">Extrudr</h2><span class="kick">3</span></div>
+<div class="crow" style="grid-template-columns: minmax(0, 1fr) auto auto"><span style="font-weight: 500">Cardboard 1.1 kg</span><span></span><span class="disp" style="font-size: 20px">216<small class="muted" style="font-size: 12px; margin-left: 2px">g</small></span></div>
+<div class="crow" style="grid-template-columns: minmax(0, 1fr) auto auto"><span style="font-weight: 500">Cardboard 2.5 kg</span><span></span><span class="disp" style="font-size: 20px">410<small class="muted" style="font-size: 12px; margin-left: 2px">g</small></span></div>
+<div class="mfr"><h2 class="nm" style="margin: 0; font-size: 20px">Polymaker</h2><span class="kick">4</span></div>
+<div class="crow" style="grid-template-columns: minmax(0, 1fr) auto auto"><span style="font-weight: 500">Cardboard 1 kg (2022+)</span><span></span><span class="disp" style="font-size: 20px">140<small class="muted" style="font-size: 12px; margin-left: 2px">g</small></span></div>
+<div class="crow" style="grid-template-columns: minmax(0, 1fr) auto auto"><span style="font-weight: 500">Cardboard 3 kg</span><span class="tag mut">Pending review</span><span class="disp" style="font-size: 20px">520<small class="muted" style="font-size: 12px; margin-left: 2px">g</small></span></div>
+<div class="mfr"><h2 class="nm" style="margin: 0; font-size: 20px">Prusament</h2><span class="kick">2</span></div>
+<div class="crow" style="grid-template-columns: minmax(0, 1fr) auto auto"><span style="font-weight: 500">Cardboard 1 kg</span><span class="tag acc">In use · 9</span><span class="disp" style="font-size: 20px">193<small class="muted" style="font-size: 12px; margin-left: 2px">g</small></span></div>
+<div class="crow" style="grid-template-columns: minmax(0, 1fr) auto auto"><span style="font-weight: 500">Cardboard 2 kg</span><span class="tag rej">Rejected</span><span class="disp" style="font-size: 20px">330<small class="muted" style="font-size: 12px; margin-left: 2px">g</small></span></div>
+</div>
+<span class="kick">Showing 48 of 48</span>
+</div>
+
+<aside aria-labelledby="req-t" style="flex: 1.3 1 340px; min-width: 0; border: 1px solid var(--ink); border-radius: 6px; background: var(--card); overflow: hidden">
+<div style="padding: 16px 18px; border-bottom: 2px solid var(--ink); display: flex; flex-direction: column; gap: 6px"><span class="kick">Side panel</span><h2 id="req-t" class="h2">Request a new spool type</h2></div>
+<div style="padding: 18px; display: flex; flex-direction: column; gap: 14px">
+<div class="field"><span class="lab">Manufacturer</span><label class="inp"><input value="Sunlu" aria-label="Manufacturer" placeholder="e.g. Prusament"></label></div>
+<div class="field"><span class="lab">Spool name</span><label class="inp foc"><input value="Plastic 1 kg (refill)" aria-label="Spool name" placeholder="e.g. Cardboard 1 kg"></label></div>
+<div class="field"><span class="lab">Empty spool weight (g)</span><label class="inp r"><input value="178" aria-label="Empty spool weight"><span class="unit">g</span></label><span class="help">Weigh an empty spool of this type. Must be greater than 0 g.</span></div>
+<p class="note" style="margin: 0">You can use it immediately; an admin will review it for the global catalog.</p>
+<div style="display: flex; gap: 8px; justify-content: flex-end"><button class="btn btn-ghost">Cancel</button><button class="btn btn-pri">Request</button></div>
+</div>
+</aside>
+</div>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? false;
+return { dark, themeClass: dark ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

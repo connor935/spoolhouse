@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Overview (dark)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{--bg:#F7FBFC;--fg:#0D1C27;--card:#FFFFFF;--primary:#072D3D;--primary-fg:#F7FBFC;--muted:#E8F0F3;--muted-fg:#59656E;--accent:#007785;--accent-fg:#F8FDFE;--destructive:#E7000B;--destructive-fg:#FFFFFF;--border:#D6E0E3;--input:#D6E0E3;--sidebar:#FAFCFD;--sb-active:#E8F0F3;--sb-active-fg:#072D3D;--ring:#007785;--ink:#0D1C27;--sw-ring:rgba(13,28,39,.18);background:var(--bg);color:var(--fg);font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.app.dark{--bg:#071117;--fg:#EEF3F4;--card:#0C1A22;--primary:#EEF3F4;--primary-fg:#0C1A22;--muted:#18262E;--muted-fg:#8D9BA3;--accent:#0F919C;--accent-fg:#020B0F;--destructive:#FF6467;--destructive-fg:#1F0506;--border:rgba(255,255,255,.12);--input:rgba(255,255,255,.15);--sidebar:#0C1A22;--sb-active:#18262E;--sb-active-fg:#EEF3F4;--ring:#0F919C;--ink:rgba(238,243,244,.55);--sw-ring:rgba(255,255,255,.22)}
+.app *{box-sizing:border-box}
+.app :focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--fg);text-decoration:underline}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted-fg)}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.kick{font:500 11px/1.2 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-fg)}
+.sec{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sec .n{font:600 11px/1 'Geist Mono',monospace;color:var(--accent)}
+.sec h2{margin:0;font:600 16px/1 'Barlow Condensed',Geist,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
+.sec .rule{flex:1;height:1px;background:var(--border)}
+.sec a{font:500 11px/1 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 5px;border-radius:3px;font:600 10.5px/1 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--ink);color:var(--fg);white-space:nowrap;background:transparent}
+.tag.low{background:var(--destructive);border-color:var(--destructive);color:var(--destructive-fg)}
+.tag.acc{border-color:var(--accent);color:var(--accent)}
+.tag.mut{border-color:var(--border);color:var(--muted-fg)}
+.tag.inv{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:6px;border:1px solid transparent;font:500 14px/1 Geist,sans-serif;cursor:pointer;white-space:nowrap}
+.btn-acc{background:var(--accent);color:var(--accent-fg)}
+.btn-pri{background:var(--primary);color:var(--primary-fg)}
+.btn-out{background:var(--card);color:var(--fg);border-color:var(--ink)}
+.btn-sm{height:30px;padding:0 10px;font-size:13px}
+.kbd{display:inline-grid;place-items:center;box-sizing:border-box;height:18px;min-width:18px;padding:0 4px;font:500 11px/1 'Geist Mono',monospace;border-radius:3px;border:1px solid currentColor;opacity:.7}
+.ibtn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;border:0;background:transparent;color:var(--muted-fg);cursor:pointer;flex:none}
+.sb{background:var(--sidebar);border-right:1px solid var(--border)}
+.logo{display:grid;place-items:center;width:32px;height:32px;border-radius:7px;background:var(--accent);color:var(--accent-fg);flex:none}
+.logo .i{width:18px;height:18px;stroke-width:1.5}
+.nav{position:relative;display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:var(--fg);font:400 14px/1 Geist,sans-serif;border:0;background:transparent;text-align:left;width:100%;cursor:pointer}
+.nav:hover{background:var(--muted);color:var(--fg);text-decoration:none}
+.nav .i{color:var(--muted-fg)}
+.nav.on{background:var(--sb-active);color:var(--sb-active-fg);font-weight:600}
+.nav.on .i{color:var(--accent)}
+.nav.on::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.nav.sub{height:32px;font-size:13px}
+.pill{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:var(--accent-fg);font:600 11px/20px 'Geist Mono',monospace;text-align:center}
+.cnt{margin-left:auto;font:500 12px/1 'Geist Mono',monospace;color:var(--muted-fg)}
+.sw{display:inline-block;width:14px;height:14px;border-radius:999px;border:1px solid var(--sw-ring);box-shadow:inset 0 1px 2px rgba(0,0,0,.22);flex:none}
+.peg{background-image:radial-gradient(circle,color-mix(in oklab,var(--fg) 11%,transparent) 1px,transparent 1.4px);background-size:18px 18px}
+.ro{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);background:var(--bg)}
+.ro>a{display:flex;flex-direction:column;gap:10px;padding:16px 20px 18px;color:var(--fg);border-left:1px solid var(--border)}
+.ro>a:first-child{border-left:0;padding-left:0}
+.ro>a:hover{text-decoration:none;background:color-mix(in oklab,var(--accent) 5%,transparent)}
+.big{font:600 58px/.9 'Barlow Condensed',Geist,sans-serif;letter-spacing:0;font-variant-numeric:tabular-nums lining-nums}
+.big small{font-size:16px;letter-spacing:0;color:var(--muted-fg);margin-left:4px}
+.label{position:relative;background:var(--card);border:1px solid var(--ink);border-radius:4px}
+.label::before{content:"";position:absolute;left:10px;top:13px;width:7px;height:7px;border-radius:50%;border:1px solid var(--ink);background:var(--bg)}
+.lh{display:flex;align-items:center;gap:6px;padding:8px 10px 8px 26px}
+.perf{border-top:1px dashed var(--ink);opacity:.45}
+.lname{font:600 17px/1 'Barlow Condensed',Geist,sans-serif;letter-spacing:.03em;text-transform:uppercase}
+.meter{position:relative;height:10px;background:var(--muted);-webkit-mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px);mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px)}
+.meter>i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.meter.low>i{background:var(--destructive)}
+.code{display:block;height:16px;width:84px;background:repeating-linear-gradient(90deg,var(--fg) 0 1px,transparent 1px 3px,var(--fg) 3px 5px,transparent 5px 6px,var(--fg) 6px 7px,transparent 7px 10px,var(--fg) 10px 12px,transparent 12px 13px);opacity:.8}
+.led{display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--border)}
+.led:first-child{border-top:0;padding-top:0}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border)}
+.row:first-child{border-top:0;padding-top:0}
+.cb{flex:1;background:var(--accent)}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<aside class="sb" aria-label="Sidebar" style="flex: 1 1 240px; min-width: 240px; display: flex; flex-direction: column; gap: 2px; padding: 12px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 4px 14px 6px">
+<span class="logo"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg></span>
+<span style="font-size: 17px; font-weight: 600; letter-spacing: -0.03em">Spoolhouse</span>
+<button class="ibtn" aria-label="Collapse sidebar" style="margin-left: auto"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
+</div>
+<nav aria-label="Main" style="display: flex; flex-direction: column; gap: 2px">
+<a class="nav on" href="OverviewDark.dc.html" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Overview</a>
+<a class="nav" href="Inventory.dc.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg>Inventory<span class="cnt">14</span></a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Borrows<span class="pill">1</span></a>
+<a class="nav" href="Group.dc.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/></svg>Groups<svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="margin-left: auto; width: 14px; height: 14px"><path d="m6 9 6 6 6-6"/></svg></a>
+<div style="display: flex; flex-direction: column; gap: 2px; margin-left: 18px; padding-left: 8px; border-left: 1px solid var(--border)">
+<a class="nav sub" href="Group.dc.html">Print Farm Friends<span class="cnt">23</span></a>
+<a class="nav sub" href="#">Makerspace Kiel<span class="cnt">61</span></a>
+</div>
+<a class="nav" href="Statistics.dc.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Statistics</a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Notifications<span class="pill">4</span></a>
+</nav>
+<div class="kick" style="padding: 18px 10px 6px">Catalog</div>
+<nav aria-label="Catalog" style="display: flex; flex-direction: column; gap: 2px">
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>Materials</a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M6 12c0-1.7.7-3.2 1.8-4.2"/><circle cx="12" cy="12" r="2"/><path d="M18 12c0 1.7-.7 3.2-1.8 4.2"/></svg>Spool types</a>
+</nav>
+<div class="kick" style="padding: 18px 10px 6px">Admin</div>
+<nav aria-label="Admin" style="display: flex; flex-direction: column; gap: 2px">
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Users</a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>Review materials<span class="pill">7</span></a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>Review spool types<span class="pill">2</span></a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></svg>Properties</a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Import catalog</a>
+</nav>
+<div style="margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border)">
+<button class="nav" style="height: 44px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg><span style="display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">Felix</span><span class="muted" style="font-size: 12px">Admin</span></span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="margin-left: auto; width: 14px; height: 14px"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></button>
+</div>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 28px 40px 56px">
+<div style="max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px">
+
+<header style="display: flex; flex-direction: column; gap: 10px">
+<div class="kick" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap"><span><span style="color: var(--accent)">01</span> — Overview</span><span>Mon 09 Nov 2026 · last weighing 14:02</span></div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+<h1 style="margin: 0; font-family: 'Barlow Condensed', Geist, sans-serif; font-size: 60px; line-height: 0.88; font-weight: 600; letter-spacing: 0; text-transform: uppercase">Overview</h1>
+<button class="btn btn-acc"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add spool<span class="kbd">N</span></button>
+</div>
+</header>
+
+<section aria-label="Key figures" class="ro">
+<a href="Inventory.dc.html"><span class="kick">Spools in stock</span><span class="big">14<small>/ 19</small></span><span class="kick" style="display: flex; align-items: center; gap: 6px; letter-spacing: 0.04em"><span class="tag low">2 low</span>5 empty</span></a>
+<a href="Inventory.dc.html"><span class="kick">Filament left</span><span class="big">8.09<small>kg</small></span><span class="kick" style="letter-spacing: 0.04em">8 materials · 3 types</span></a>
+<a href="Statistics.dc.html"><span class="kick">Used · 30 days</span><span style="display: flex; align-items: flex-end; justify-content: space-between; gap: 10px"><span class="big">1.18<small>kg</small></span><svg viewBox="0 0 120 32" width="96" height="28" aria-hidden="true" style="flex: none; overflow: visible"><polyline points="0,22 8,20 16,24 24,15 32,18 40,11 48,17 56,13 64,19 72,9 80,12 88,16 96,10 104,13 112,6 120,11" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/><circle cx="120" cy="11" r="2.5" fill="var(--accent)"/></svg></span><span class="kick" style="letter-spacing: 0.04em">−12 % vs. prev. 30 days</span></a>
+<a href="Statistics.dc.html"><span class="kick">Stock value</span><span class="big">€214<small>.60</small></span><span style="display: flex; align-items: center; gap: 10px"><span class="meter" style="width: 84px"><i style="width: 78%"></i></span><span class="kick" style="letter-spacing: 0.04em">11/14 priced</span></span></a>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 40px 0; align-items: flex-start">
+
+<div style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 40px; padding-right: 40px">
+
+<section>
+<div class="sec"><span class="n">02</span><h2>Running low</h2><span class="rule"></span><a href="Inventory.dc.html">Inventory →</a></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+
+<article class="label">
+<div class="lh"><span class="tag inv">AMS 2</span><span class="tag" style="margin-left: auto">PLA</span><span class="sw" style="background: #0086D6"></span></div>
+<div class="perf"></div>
+<div style="padding: 12px 12px 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono muted" style="font-size: 12px">#01</span><span class="lname">Basic Cyan</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between"><span class="mono" style="font-family: 'Barlow Condensed', Geist, sans-serif; font-size: 40px; font-weight: 600; letter-spacing: 0; line-height: 0.9">142<small class="muted" style="font-size: 13px; margin-left: 3px">g</small></span><span class="tag low">Low</span></div>
+<div class="meter low"><i style="width: 14%"></i></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span class="kick">~3 wk left</span></div>
+</div>
+</article>
+
+<article class="label">
+<div class="lh"><span class="tag inv">B1</span><span class="tag" style="margin-left: auto">PETG</span><span class="sw" style="background: #F26B21"></span></div>
+<div class="perf"></div>
+<div style="padding: 12px 12px 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono muted" style="font-size: 12px">#02</span><span class="lname">Prusa Orange</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between"><span class="mono" style="font-family: 'Barlow Condensed', Geist, sans-serif; font-size: 40px; font-weight: 600; letter-spacing: 0; line-height: 0.9">86<small class="muted" style="font-size: 13px; margin-left: 3px">g</small></span><span class="tag low">Low</span></div>
+<div class="meter low"><i style="width: 9%"></i></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span class="kick">~6 wk left</span></div>
+</div>
+</article>
+
+<article class="label">
+<div class="lh"><span class="tag inv">D2</span><span class="tag" style="margin-left: auto">PLA</span><span class="sw" style="background: #ECEAE3"></span></div>
+<div class="perf"></div>
+<div style="padding: 12px 12px 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono muted" style="font-size: 12px">×2</span><span class="lname">Cotton White</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between"><span class="mono" style="font-family: 'Barlow Condensed', Geist, sans-serif; font-size: 40px; font-weight: 600; letter-spacing: 0; line-height: 0.9">410<small class="muted" style="font-size: 13px; margin-left: 3px">g</small></span><span class="tag mut">Forecast</span></div>
+<div class="meter"><i style="width: 21%"></i></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span class="kick">~10 wk left</span></div>
+</div>
+</article>
+
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">03</span><h2>Monthly usage</h2><span class="rule"></span><a href="Statistics.dc.html">Statistics →</a></div>
+<div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px"><span class="mono" style="font-size: 28px; font-weight: 500; letter-spacing: -0.04em">12.83<small class="muted" style="font-size: 14px; margin-left: 4px">kg</small></span><span class="kick">in 12 months · Ø 1.07 kg</span></div>
+<div role="img" aria-label="Bar chart of monthly filament usage, December 2025 to November 2026, peak 1.62 kg in October; November is month to date" style="display: flex; flex-direction: column; gap: 8px">
+<div style="position: relative; height: 150px; display: flex; align-items: flex-end; gap: 6px; border-bottom: 2px solid var(--ink)">
+<div style="position: absolute; left: 0; right: 0; bottom: 65px; border-top: 1px dotted var(--border)"></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 130px; border-top: 1px dotted var(--border)"></div>
+<div class="cb" style="height: 71px"></div>
+<div class="cb" style="height: 99px"></div>
+<div class="cb" style="height: 83px"></div>
+<div class="cb" style="height: 119px"></div>
+<div class="cb" style="height: 105px"></div>
+<div class="cb" style="height: 64px"></div>
+<div class="cb" style="height: 60px"></div>
+<div class="cb" style="height: 91px"></div>
+<div class="cb" style="height: 131px"></div>
+<div class="cb" style="height: 111px"></div>
+<div class="cb" style="height: 140px; position: relative"><span class="mono" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--fg)">1.62</span></div>
+<div class="cb" style="height: 35px; background: repeating-linear-gradient(135deg, var(--accent) 0 2px, transparent 2px 5px); box-shadow: inset 0 0 0 1px var(--accent)"></div>
+</div>
+<div class="kick" style="display: flex; gap: 6px; text-align: center; letter-spacing: 0.04em">
+<span style="flex: 1">Dec</span><span style="flex: 1">Jan</span><span style="flex: 1">Feb</span><span style="flex: 1">Mar</span><span style="flex: 1">Apr</span><span style="flex: 1">May</span><span style="flex: 1">Jun</span><span style="flex: 1">Jul</span><span style="flex: 1">Aug</span><span style="flex: 1">Sep</span><span style="flex: 1; color: var(--fg)">Oct</span><span style="flex: 1">Nov*</span>
+</div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">04</span><h2>Recent activity</h2><span class="rule"></span><a href="#">All →</a></div>
+<div>
+<div class="led"><span class="kick">14:02</span><span>Weighed <strong style="font-weight: 600">Galaxy Black #1</strong> — <span class="mono">742 g</span> <span class="mono muted">(−58)</span></span><span class="tag mut">Weigh</span></div>
+<div class="led"><span class="kick" style="color: var(--accent)">● 11:40</span><span><strong style="font-weight: 600">Anna Weber</strong> requested <strong style="font-weight: 600">Prusa Orange #3</strong></span><span class="tag acc">Request</span></div>
+<div class="led"><span class="kick">Yday</span><span><strong style="font-weight: 600">Mia Koch</strong> approved your request for <strong style="font-weight: 600">Basic Cyan #4</strong></span><span class="tag mut">Borrow</span></div>
+<div class="led"><span class="kick">07 Nov</span><span>Weighed <strong style="font-weight: 600">Prusa Orange #2</strong> — <span class="mono">86 g</span> <span class="mono muted">(−41)</span></span><span class="tag mut">Weigh</span></div>
+</div>
+</section>
+
+</div>
+
+<div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 40px; padding-left: 40px; border-left: 1px solid var(--border)">
+
+<section>
+<div class="sec"><span class="n">05</span><h2>Borrows</h2><span class="rule"></span><a href="#">Open →</a></div>
+<div style="border: 1px dashed var(--ink); border-radius: 4px; background: var(--card); padding: 14px; display: flex; flex-direction: column; gap: 12px">
+<div class="kick" style="display: flex; justify-content: space-between"><span style="color: var(--accent)">Request · Print Farm Friends</span><span>3 h ago</span></div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="display: flex; flex-direction: column; gap: 2px"><span class="kick">From</span><span style="font-weight: 600">Anna Weber</span></span>
+<svg class="i muted" viewBox="0 0 24 24" aria-hidden="true" style="margin: 14px 4px 0"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+<span style="display: flex; flex-direction: column; gap: 2px"><span class="kick">Wants</span><span style="display: flex; align-items: center; gap: 6px; font-weight: 600"><span class="sw" style="width: 12px; height: 12px; background: #F26B21"></span>#03 Prusa Orange</span></span>
+</div>
+<div style="display: flex; gap: 8px"><button class="btn btn-pri btn-sm" style="flex: 1">Approve</button><button class="btn btn-out btn-sm" style="flex: 1">Decline</button></div>
+</div>
+<div style="margin-top: 14px">
+<div class="row"><span class="tag acc">Out</span><span style="flex: 1; min-width: 0"><span style="font-weight: 500">#02 Galaxy Black</span> <span class="muted">→ Jonas</span></span><span class="kick">12 Oct</span></div>
+<div class="row"><span class="tag">In</span><span style="flex: 1; min-width: 0"><span style="font-weight: 500">#04 Basic Cyan</span> <span class="muted">← Mia</span></span><button class="btn btn-out btn-sm">Weigh</button></div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">06</span><h2>Needs drying</h2><span class="rule"></span><span class="mono muted" style="font-size: 11px">2</span></div>
+<div>
+<div class="row"><span class="sw" style="background: #C8102E"></span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">#01 Fire Engine Red</span><span class="kick" style="letter-spacing: 0.04em">PETG · dried 94 d ago</span></span><button class="btn btn-out btn-sm">Mark dried</button></div>
+<div class="row"><span class="sw" style="background: #4A4E54"></span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">#03 Graphite</span><span class="kick" style="letter-spacing: 0.04em">ASA · never dried</span></span><button class="btn btn-out btn-sm">Mark dried</button></div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">07</span><h2>Groups</h2><span class="rule"></span><a href="#">All →</a></div>
+<div>
+<a class="row" href="Group.dc.html" style="color: var(--fg); text-decoration: none"><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">Print Farm Friends</span><span class="kick" style="letter-spacing: 0.04em">5 members · 23 shared</span></span><svg class="i muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="row" href="#" style="color: var(--fg); text-decoration: none"><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">Makerspace Kiel</span><span class="kick" style="letter-spacing: 0.04em">12 members · 61 shared</span></span><svg class="i muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+</div>
+</section>
+
+</div>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? true) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

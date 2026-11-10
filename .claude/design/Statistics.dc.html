@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Statistics</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app{--bg:#F7FBFC;--fg:#0D1C27;--card:#FFFFFF;--primary:#072D3D;--primary-fg:#F7FBFC;--muted:#E8F0F3;--muted-fg:#59656E;--accent:#007785;--accent-fg:#F8FDFE;--destructive:#E7000B;--destructive-fg:#FFFFFF;--border:#D6E0E3;--sidebar:#FAFCFD;--sb-active:#E8F0F3;--sb-active-fg:#072D3D;--ring:#007785;--ink:#0D1C27;--sw-ring:rgba(13,28,39,.18);background:var(--bg);color:var(--fg);font-family:Geist,ui-sans-serif,system-ui,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.app.dark{--bg:#071117;--fg:#EEF3F4;--card:#0C1A22;--primary:#EEF3F4;--primary-fg:#0C1A22;--muted:#18262E;--muted-fg:#8D9BA3;--accent:#0F919C;--accent-fg:#020B0F;--destructive:#FF6467;--destructive-fg:#1F0506;--border:rgba(255,255,255,.12);--sidebar:#0C1A22;--sb-active:#18262E;--sb-active-fg:#EEF3F4;--ring:#0F919C;--ink:rgba(238,243,244,.55);--sw-ring:rgba(255,255,255,.22)}
+.app *{box-sizing:border-box}
+.app :focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--fg);text-decoration:underline}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted-fg)}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.kick{font:500 11px/1.2 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-fg)}
+.sec{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.sec .n{font:600 11px/1 'Geist Mono',monospace;color:var(--accent)}
+.sec h2{margin:0;font:600 16px/1 'Barlow Condensed',Geist,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
+.sec .rule{flex:1;height:1px;background:var(--border)}
+.tag{display:inline-flex;align-items:center;height:18px;padding:0 5px;border-radius:3px;font:600 10.5px/1 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--ink);color:var(--fg);white-space:nowrap}
+.tag.low{background:var(--destructive);border-color:var(--destructive);color:var(--destructive-fg)}
+.ibtn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;border:0;background:transparent;color:var(--muted-fg);cursor:pointer;flex:none}
+.sb{background:var(--sidebar);border-right:1px solid var(--border)}
+.logo{display:grid;place-items:center;width:32px;height:32px;border-radius:7px;background:var(--accent);color:var(--accent-fg);flex:none}
+.logo .i{width:18px;height:18px;stroke-width:1.5}
+.nav{position:relative;display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;color:var(--fg);font:400 14px/1 Geist,sans-serif;border:0;background:transparent;text-align:left;width:100%;cursor:pointer}
+.nav:hover{background:var(--muted);color:var(--fg);text-decoration:none}
+.nav .i{color:var(--muted-fg)}
+.nav.on{background:var(--sb-active);color:var(--sb-active-fg);font-weight:600}
+.nav.on .i{color:var(--accent)}
+.nav.on::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.pill{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:var(--accent-fg);font:600 11px/20px 'Geist Mono',monospace;text-align:center}
+.cnt{margin-left:auto;font:500 12px/1 'Geist Mono',monospace;color:var(--muted-fg)}
+.sw{display:inline-block;width:14px;height:14px;border-radius:999px;border:1px solid var(--sw-ring);box-shadow:inset 0 1px 2px rgba(0,0,0,.22);flex:none}
+.peg{background-image:radial-gradient(circle,color-mix(in oklab,var(--fg) 11%,transparent) 1px,transparent 1.4px);background-size:18px 18px}
+.ro{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);background:var(--bg)}
+.ro>div{display:flex;flex-direction:column;gap:10px;padding:16px 20px 18px;border-left:1px solid var(--border)}
+.ro>div:first-child{border-left:0;padding-left:0}
+.big{font:600 58px/.9 'Barlow Condensed',Geist,sans-serif;letter-spacing:0;font-variant-numeric:tabular-nums lining-nums}
+.big small{font-size:16px;letter-spacing:0;color:var(--muted-fg);margin-left:4px}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:6px;overflow:hidden;background:var(--card)}
+.seg button{height:30px;padding:0 12px;border:0;border-left:1px solid var(--border);background:transparent;color:var(--muted-fg);font:500 11px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button.on{background:var(--fg);color:var(--bg)}
+.panel{background:var(--bg)}
+.col{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;position:relative}
+.cb{background:var(--accent)}
+.gl{position:absolute;left:0;right:0;border-top:1px dotted var(--border)}
+.gl span{position:absolute;left:-46px;top:-7px;width:38px;text-align:right;font:500 10.5px 'Geist Mono',monospace;color:var(--muted-fg)}
+.meter{position:relative;height:10px;background:var(--muted);-webkit-mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px);mask:repeating-linear-gradient(90deg,#000 0 5px,transparent 5px 7px)}
+.meter>i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.meter.low>i{background:var(--destructive)}
+.hb{height:6px;background:var(--fg);opacity:.85}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font:500 10.5px/1 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-fg);padding:0 12px 10px;border-bottom:1px solid var(--ink);white-space:nowrap}
+.tbl td{padding:12px;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:middle}
+.tbl th:first-child,.tbl td:first-child{padding-left:0}
+.tbl th:last-child,.tbl td:last-child{padding-right:0}
+.tbl .r{text-align:right}
+.nm{font:600 17px/1 'Barlow Condensed',Geist,sans-serif;letter-spacing:.03em;text-transform:uppercase}
+</style>
+</helmet>
+<div class="{{themeClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<aside class="sb" aria-label="Sidebar" style="flex: 1 1 240px; min-width: 240px; display: flex; flex-direction: column; gap: 2px; padding: 12px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 4px 4px 14px 6px">
+<span class="logo"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg></span>
+<span style="font-size: 17px; font-weight: 600; letter-spacing: -0.03em">Spoolhouse</span>
+<button class="ibtn" aria-label="Collapse sidebar" style="margin-left: auto"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
+</div>
+<nav aria-label="Main" style="display: flex; flex-direction: column; gap: 2px">
+<a class="nav" href="Main.dc.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>Overview</a>
+<a class="nav" href="Inventory.dc.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg>Inventory<span class="cnt">14</span></a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>Borrows<span class="pill">1</span></a>
+<a class="nav" href="Group.dc.html"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/></svg>Groups<svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="margin-left: auto; width: 14px; height: 14px"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="nav on" href="Statistics.dc.html" aria-current="page"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Statistics</a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Notifications<span class="pill">4</span></a>
+</nav>
+<div class="kick" style="padding: 18px 10px 6px">Catalog</div>
+<nav aria-label="Catalog" style="display: flex; flex-direction: column; gap: 2px">
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>Materials</a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M6 12c0-1.7.7-3.2 1.8-4.2"/><circle cx="12" cy="12" r="2"/><path d="M18 12c0 1.7-.7 3.2-1.8 4.2"/></svg>Spool types</a>
+</nav>
+<div class="kick" style="padding: 18px 10px 6px">Admin</div>
+<nav aria-label="Admin" style="display: flex; flex-direction: column; gap: 2px">
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Users</a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>Review materials<span class="pill">7</span></a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>Review spool types<span class="pill">2</span></a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></svg>Properties</a>
+<a class="nav" href="#"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Import catalog</a>
+</nav>
+<div style="margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border)">
+<button class="nav" style="height: 44px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg><span style="display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">Felix</span><span class="muted" style="font-size: 12px">Admin</span></span><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="margin-left: auto; width: 14px; height: 14px"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></button>
+</div>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 28px 40px 56px">
+<div style="max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px">
+
+<header style="display: flex; flex-direction: column; gap: 10px">
+<div class="kick" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap"><span><span style="color: var(--accent)">05</span> — Statistics</span><span>Usage = Σ weight decrease between weighings</span></div>
+<h1 style="margin: 0; font-family: 'Barlow Condensed', Geist, sans-serif; font-size: 60px; line-height: 0.88; font-weight: 600; letter-spacing: 0; text-transform: uppercase">Statistics</h1>
+</header>
+
+<section aria-label="Key figures" class="ro">
+<div><span class="kick">Used · 30 days</span><span class="big">1.18<small>kg</small></span><span class="kick" style="letter-spacing: 0.04em">−12 % vs. prev. 30 days</span></div>
+<div><span class="kick">Average / month</span><span class="big">1.07<small>kg</small></span><span class="kick" style="letter-spacing: 0.04em">last 12 months</span></div>
+<div><span class="kick">Cost · 30 days</span><span class="big">€27<small>.40</small></span><span class="kick" style="letter-spacing: 0.04em">priced spools only</span></div>
+<div><span class="kick">Stock value</span><span class="big">€214<small>.60</small></span><span style="display: flex; align-items: center; gap: 10px"><span class="meter" style="width: 84px"><i style="width: 78%"></i></span><span class="kick" style="letter-spacing: 0.04em">11/14 priced</span></span></div>
+</section>
+
+<section class="panel">
+<div class="sec"><span class="n">01</span><h2>Monthly usage</h2><span class="rule"></span><div class="seg" role="group" aria-label="Unit"><button class="on" aria-pressed="true">Grams</button><button aria-pressed="false">Cost</button></div></div>
+<div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 22px"><span class="mono" style="font-size: 28px; font-weight: 500; letter-spacing: -0.04em">12.83<small class="muted" style="font-size: 14px; margin-left: 4px">kg</small></span><span class="kick">Dec 2025 – Nov 2026</span></div>
+<div role="img" aria-label="Bar chart of monthly filament usage. Peak 1.62 kg in October 2026, lowest 0.69 kg in June; November is month to date." style="padding-left: 48px; display: flex; flex-direction: column; gap: 10px">
+<div style="position: relative; height: 260px; display: flex; align-items: flex-end; gap: 8px; border-bottom: 2px solid var(--ink)">
+<div class="gl" style="bottom: 72px"><span>0.5</span></div>
+<div class="gl" style="bottom: 144px"><span>1.0</span></div>
+<div class="gl" style="bottom: 217px"><span>1.5</span></div>
+<div class="col"><div class="cb" style="height: 118px"></div></div>
+<div class="col"><div class="cb" style="height: 165px"></div></div>
+<div class="col"><div class="cb" style="height: 139px"></div></div>
+<div class="col"><div class="cb" style="height: 199px"></div></div>
+<div class="col"><div class="cb" style="height: 175px"></div></div>
+<div class="col"><div class="cb" style="height: 107px"></div></div>
+<div class="col"><div class="cb" style="height: 100px"></div></div>
+<div class="col"><div class="cb" style="height: 152px"></div></div>
+<div class="col"><div class="cb" style="height: 220px"></div></div>
+<div class="col"><div class="cb" style="height: 186px"></div></div>
+<div class="col">
+<div style="position: absolute; bottom: 246px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; white-space: nowrap; z-index: 1">
+<div style="background: var(--fg); color: var(--bg); padding: 6px 9px; border-radius: 3px; display: flex; flex-direction: column; gap: 2px"><span class="mono" style="font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7">Oct 2026</span><span class="mono" style="font-size: 13px; font-weight: 600">1,620 g · €38.10</span></div>
+</div>
+<div class="cb" style="height: 234px; box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--fg)"></div>
+</div>
+<div class="col"><div class="cb" style="height: 59px; background: repeating-linear-gradient(135deg, var(--accent) 0 2px, transparent 2px 5px); box-shadow: inset 0 0 0 1px var(--accent)"></div></div>
+</div>
+<div class="kick" style="display: flex; gap: 8px; text-align: center; letter-spacing: 0.04em">
+<span style="flex: 1">Dec</span><span style="flex: 1">Jan</span><span style="flex: 1">Feb</span><span style="flex: 1">Mar</span><span style="flex: 1">Apr</span><span style="flex: 1">May</span><span style="flex: 1">Jun</span><span style="flex: 1">Jul</span><span style="flex: 1">Aug</span><span style="flex: 1">Sep</span><span style="flex: 1; color: var(--fg); font-weight: 600">Oct</span><span style="flex: 1">Nov*</span>
+</div>
+<div class="kick" style="letter-spacing: 0.04em">kg / month · * month to date (hatched)</div>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+
+<section class="panel" style="flex: 3 1 620px; min-width: 0">
+<div class="sec"><span class="n">02</span><h2>By material</h2><span class="rule"></span><span class="kick">Runs out first ↑</span></div>
+<div style="overflow-x: auto">
+<table class="tbl">
+<thead><tr><th scope="col">Material</th><th scope="col">Used · 90 d</th><th scope="col" class="r">In stock</th><th scope="col">Runway · 12 mo</th></tr></thead>
+<tbody>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #0086D6"></span><span class="nm">Basic Cyan</span><span class="tag">PLA</span></span></td><td><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="width: 58px">640 g</span><span class="hb" style="width: 43px"></span></span></td><td class="r mono">142 g</td><td><span style="display: flex; align-items: center; gap: 10px"><span class="meter low" style="width: 120px"><i style="width: 6%"></i></span><span class="tag low">3 wk</span></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #F26B21"></span><span class="nm">Prusa Orange</span><span class="tag">PETG</span></span></td><td><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="width: 58px">1,480 g</span><span class="hb" style="width: 100px"></span></span></td><td class="r mono">741 g</td><td><span style="display: flex; align-items: center; gap: 10px"><span class="meter" style="width: 120px"><i style="width: 12%"></i></span><span class="mono">6 wk</span></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #ECEAE3"></span><span class="nm">Cotton White</span><span class="tag">PLA</span></span></td><td><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="width: 58px">520 g</span><span class="hb" style="width: 35px"></span></span></td><td class="r mono">410 g</td><td><span style="display: flex; align-items: center; gap: 10px"><span class="meter" style="width: 120px"><i style="width: 19%"></i></span><span class="mono">10 wk</span></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #22242A"></span><span class="nm">Galaxy Black</span><span class="tag">PLA</span></span></td><td><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="width: 58px">980 g</span><span class="hb" style="width: 66px"></span></span></td><td class="r mono">2,160 g</td><td><span style="display: flex; align-items: center; gap: 10px"><span class="meter" style="width: 120px"><i style="width: 50%"></i></span><span class="mono">6 mo</span></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #C8102E"></span><span class="nm">Fire Engine Red</span><span class="tag">PETG</span></span></td><td><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="width: 58px">140 g</span><span class="hb" style="width: 9px"></span></span></td><td class="r mono">560 g</td><td><span style="display: flex; align-items: center; gap: 10px"><span class="meter" style="width: 120px"><i style="width: 100%"></i></span><span class="mono">1 yr</span></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #9ADBC0"></span><span class="nm">Mint</span><span class="tag">PLA</span></span></td><td><span style="display: flex; align-items: center; gap: 10px"><span class="mono" style="width: 58px">310 g</span><span class="hb" style="width: 21px"></span></span></td><td class="r mono">1,380 g</td><td><span style="display: flex; align-items: center; gap: 10px"><span class="meter" style="width: 120px"><i style="width: 100%"></i></span><span class="mono">&gt;1 yr</span></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #C9A23F"></span><span class="nm">Silk Gold</span><span class="tag">PLA</span></span></td><td><span class="mono muted">—</span></td><td class="r mono">1,885 g</td><td><span class="kick">No recent use</span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #4A4E54"></span><span class="nm">Graphite</span><span class="tag">ASA</span></span></td><td><span class="mono muted">—</span></td><td class="r mono">812 g</td><td><span class="kick">No recent use</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="panel" style="flex: 2 1 340px; min-width: 0">
+<div class="sec"><span class="n">03</span><h2>By filament type</h2><span class="rule"></span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px">
+<span class="kick">Stock composition · 8.09 kg</span>
+<div style="display: flex; height: 28px; gap: 2px">
+<div style="width: 74%; background: var(--accent); display: flex; align-items: center; padding-left: 8px"><span class="mono" style="font-size: 11px; font-weight: 600; color: var(--accent-fg)">PLA 74%</span></div>
+<div style="width: 16%; background: var(--primary); display: flex; align-items: center; padding-left: 6px"><span class="mono" style="font-size: 11px; font-weight: 600; color: var(--primary-fg)">PETG</span></div>
+<div style="width: 10%; background: repeating-linear-gradient(135deg, var(--fg) 0 1.5px, transparent 1.5px 5px); box-shadow: inset 0 0 0 1px var(--ink)"></div>
+</div>
+<div class="kick" style="display: flex; justify-content: flex-end; letter-spacing: 0.04em">ASA 10%</div>
+</div>
+<table class="tbl">
+<thead><tr><th scope="col">Type</th><th scope="col" class="r">Used · 90 d</th><th scope="col" class="r">In stock</th><th scope="col" class="r">Lasts</th></tr></thead>
+<tbody>
+<tr><td><span class="tag">PETG</span></td><td class="r mono">1,620 g</td><td class="r mono">1,301 g</td><td class="r mono">10 wk</td></tr>
+<tr><td><span class="tag">PLA</span></td><td class="r mono">2,450 g</td><td class="r mono">5,977 g</td><td class="r mono">7 mo</td></tr>
+<tr><td><span class="tag">ASA</span></td><td class="r mono muted">—</td><td class="r mono">812 g</td><td class="r kick">Idle</td></tr>
+</tbody>
+</table>
+</section>
+
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1360}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? false) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

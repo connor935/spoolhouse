@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Manage materials</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}">
+<div class="page">
+<div class="side"><dc-import name="Nav" active="reviewmat" dark="{{dark}}" hint-size="240px,900px"></dc-import></div>
+<main class="main">
+<div class="wrap" style="gap: 20px">
+
+<header class="head">
+<div class="kick crumb" style="justify-content: space-between"><span><span style="color: var(--accent)">A2</span> — Admin / Review materials</span><span>Global catalog · 23,871 entries</span></div>
+<div class="head-row">
+<h1 class="h1">Manage materials</h1>
+<div style="display: flex; gap: 8px; align-items: center"><div class="seg" role="tablist" aria-label="Catalog"><button class="on" role="tab" aria-selected="true">Materials</button><button role="tab" aria-selected="false">Spool types · 2</button></div><a class="btn btn-acc" href="ReviewQueue.dc.html" style="color: var(--accent-fg)">Review pending (7)<svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></div>
+</div>
+</header>
+
+<div role="toolbar" aria-label="Filter" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: -8px">
+<label class="inp ink" style="flex: 1 1 260px; width: auto"><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input aria-label="Search materials" placeholder="Search manufacturer, material or color…"></label>
+<div class="seg" role="group" aria-label="Status"><button class="on" aria-pressed="true">All</button><button aria-pressed="false">Approved</button><button aria-pressed="false">Pending 7</button><button aria-pressed="false">Rejected 3</button></div>
+<button class="btn btn-out">All types<svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<span class="kick" style="margin-left: auto"><span style="color: var(--fg)">23,871</span> · pending first</span>
+</div>
+
+<div class="scroll">
+<table class="tbl">
+<thead><tr><th scope="col">Material</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col">Submitted</th><th scope="col" class="r">Actions</th></tr></thead>
+<tbody>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #23407A"></span><span><span class="muted">Sunlu ·</span> <span style="font-weight: 500">Galaxy Blue</span></span></span></td><td><span class="tag">PLA</span></td><td><span class="tag mut">Pending review</span></td><td><span style="display: flex; flex-direction: column; gap: 2px"><span>Anna Weber</span><span class="kick">2 h ago</span></span></td><td class="r"><span style="display: inline-flex; gap: 6px; align-items: center"><button class="btn btn-pri btn-sm">Approve</button><button class="btn btn-out btn-sm">Reject</button><button class="ibtn" aria-label="Edit"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn" aria-label="Delete"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #9ADBC0"></span><span><span class="muted">Extrudr ·</span> <span style="font-weight: 500">Mint</span></span></span></td><td><span class="tag">PLA</span></td><td><span class="tag mut">Pending review</span></td><td><span style="display: flex; flex-direction: column; gap: 2px"><span>Tom Richter</span><span class="kick">1 d ago</span></span></td><td class="r"><span style="display: inline-flex; gap: 6px; align-items: center"><button class="btn btn-pri btn-sm">Approve</button><button class="btn btn-out btn-sm">Reject</button><button class="ibtn" aria-label="Edit"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" title="In use by 1 spool(s)" aria-label="Delete, in use by 1 spool"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #2E7D4F"></span><span><span class="muted">Fiberlogy ·</span> <span style="font-weight: 500">Easy PETG Bottle Green</span></span></span></td><td><span class="tag">PETG</span></td><td><span class="tag mut">Pending review</span></td><td><span style="display: flex; flex-direction: column; gap: 2px"><span>Mia Koch</span><span class="kick">3 d ago</span></span></td><td class="r"><span style="display: inline-flex; gap: 6px; align-items: center"><button class="btn btn-pri btn-sm">Approve</button><button class="btn btn-out btn-sm">Reject</button><button class="ibtn" aria-label="Edit"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn" aria-label="Delete"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: conic-gradient(#E85D75, #F2C14E, #5BC0BE, #6C63FF, #E85D75)"></span><span><span class="muted">Sunlu ·</span> <span style="font-weight: 500">Silk Rainbow</span></span></span></td><td><span class="tag">PLA</span></td><td><span class="tag rej">Rejected</span></td><td><span style="display: flex; flex-direction: column; gap: 2px"><span>Mia Koch</span><span class="kick">5 d ago</span></span></td><td class="r"><span style="display: inline-flex; gap: 6px; align-items: center"><button class="btn btn-pri btn-sm">Approve</button><button class="ibtn" aria-label="Edit"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn" aria-label="Delete"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></span></td></tr>
+<tr><td><span style="display: flex; align-items: center; gap: 10px"><span class="sw" style="background: #1F1F1F"></span><span><span class="muted">Prusament ·</span> <span style="font-weight: 500">Galaxy Black</span></span><span class="tag mut">Imported</span></span></td><td><span class="tag">PLA</span></td><td><span class="kick">Approved</span></td><td><span class="kick">SpoolmanDB</span></td><td class="r"><span style="display: inline-flex; gap: 6px; align-items: center; position: relative"><button class="ibtn" aria-label="Edit"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><button class="ibtn dis" aria-disabled="true" aria-describedby="t3" aria-label="Delete, in use"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button><span id="t3" role="tooltip" class="tip" style="position: absolute; right: 0; top: 34px; z-index: 2">In use by 3 spool(s)</span></span></td></tr>
+</tbody>
+</table>
+</div>
+<span class="kick" style="padding-top: 18px">Pending first, oldest at the top in the queue view</span>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? false;
+return { dark, themeClass: dark ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

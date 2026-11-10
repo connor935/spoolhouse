@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Shared patterns</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}" style="width: 1440px; height: 1880px; overflow: hidden; padding: 48px; display: flex; flex-direction: column; gap: 48px">
+
+<section>
+<div class="sec"><span class="n">01</span><h2>Filters panel · Inventory &amp; Group stock</h2><span class="rule"></span><span class="kick">Desktop · expands under the toolbar · state in URL</span></div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 0; border-top: 2px solid var(--ink)">
+<label class="inp ink" style="flex: 1 1 280px; width: auto"><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input aria-label="Search" placeholder="Search manufacturer, material or color…"></label>
+<div class="seg" role="group" aria-label="Status"><button class="on" aria-pressed="true">In stock 14</button><button aria-pressed="false">Empty 5</button><button aria-pressed="false">All 19</button></div>
+<button class="btn btn-pri" aria-expanded="true"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></svg>Filters · 3</button>
+</div>
+<div style="border: 1px solid var(--ink); border-radius: 4px; background: var(--card); padding: 18px; display: grid; grid-template-columns: 1.2fr 0.8fr 2fr; gap: 28px">
+<div class="field"><span class="lab"><span style="display: flex; align-items: center; gap: 6px"><span class="dot"></span>Filament type</span></span><div style="display: flex; gap: 6px; flex-wrap: wrap"><button class="tag fill" style="height: 26px; padding: 0 8px">PLA</button><button class="tag fill" style="height: 26px; padding: 0 8px">PETG</button><button class="tag" style="height: 26px; padding: 0 8px">ABS</button><button class="tag" style="height: 26px; padding: 0 8px">ASA</button><button class="tag" style="height: 26px; padding: 0 8px">TPU</button><button class="tag" style="height: 26px; padding: 0 8px">Nylon</button></div>
+<label class="chk" style="margin-top: 12px"><input type="checkbox" checked>Hide lent <span class="kick">group stock only</span></label></div>
+<div class="field"><span class="lab"><span style="display: flex; align-items: center; gap: 6px"><span class="dot"></span>Min. remaining (g)</span></span><label class="inp r"><input value="300" aria-label="Minimum remaining"><span class="unit">g</span></label><span class="help">e.g. 300</span></div>
+<div class="field"><span class="lab">Properties</span>
+<div class="kv" style="grid-template-columns: 150px 1fr 20px 1fr 50px; gap: 8px; padding: 6px 0; border-top: 0"><span style="display: flex; align-items: center; gap: 6px"><span class="dot"></span>Density</span><label class="inp r" style="height: 32px"><input value="1.20" aria-label="Density min"></label><span class="muted" style="text-align: center">–</span><label class="inp r" style="height: 32px"><input value="1.30" aria-label="Density max"></label><span class="kick">g/cm³</span></div>
+<div class="kv" style="grid-template-columns: 150px 1fr 20px 1fr 50px; gap: 8px; padding: 6px 0"><span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px"></span>Extruder temp</span><label class="inp r" style="height: 32px"><input placeholder="min" aria-label="Extruder temp min"></label><span class="muted" style="text-align: center">–</span><label class="inp r" style="height: 32px"><input placeholder="max" aria-label="Extruder temp max"></label><span class="kick">°C</span></div>
+<div class="kv" style="grid-template-columns: 150px 1fr 20px 1fr 50px; gap: 8px; padding: 6px 0"><span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px"></span>Bed temp</span><label class="inp r" style="height: 32px"><input placeholder="min" aria-label="Bed temp min"></label><span class="muted" style="text-align: center">–</span><label class="inp r" style="height: 32px"><input placeholder="max" aria-label="Bed temp max"></label><span class="kick">°C</span></div>
+<div style="display: flex; justify-content: flex-end; gap: 8px; padding-top: 6px"><button class="btn btn-ghost btn-sm">Clear all</button></div>
+</div>
+</div>
+</section>
+
+<div style="display: flex; gap: 48px; align-items: flex-start">
+<section style="flex: 1">
+<div class="sec"><span class="n">02</span><h2>Destructive confirm</h2><span class="rule"></span></div>
+<div style="display: flex; gap: 20px">
+<div role="alertdialog" aria-labelledby="c1" class="dlg" style="width: 360px">
+<div style="padding: 20px 22px; display: flex; flex-direction: column; gap: 8px"><h3 id="c1" class="h2" style="font-size: 24px">Delete this spool?</h3><p class="muted" style="margin: 0; font-size: 14px">This can't be undone.</p></div>
+<div class="dlg-f" style="justify-content: flex-end"><button class="btn btn-out btn-sm">Cancel</button><button class="btn btn-danger btn-sm">Delete spool</button></div>
+</div>
+<div role="alertdialog" aria-labelledby="c2" class="dlg" style="width: 360px">
+<div style="padding: 20px 22px; display: flex; flex-direction: column; gap: 8px"><h3 id="c2" class="h2" style="font-size: 24px">Delete Density?</h3><p class="muted" style="margin: 0; font-size: 14px">Removes this datasheet value from the material.</p></div>
+<div class="dlg-f" style="justify-content: flex-end"><button class="btn btn-out btn-sm">Cancel</button><button class="btn btn-danger btn-sm">Delete</button></div>
+</div>
+</div>
+</section>
+<section style="width: 460px">
+<div class="sec"><span class="n">03</span><h2>Toasts</h2><span class="rule"></span><span class="kick">bottom right · mobile top</span></div>
+<div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end">
+<div class="toast" role="status"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Weight restored to 935 g total</div>
+<div class="toast" role="status"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Resubmitted for review</div>
+<div class="toast err" role="alert"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>Measured weight can't be less than the empty spool weight</div>
+<div class="toast err" role="alert"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>Use a dot, not a comma: “1.75, 2.85”</div>
+</div>
+</section>
+</div>
+
+<section>
+<div class="sec"><span class="n">04</span><h2>Empty states</h2><span class="rule"></span></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<div class="empty" style="grid-row: span 2; padding: 40px 28px; gap: 14px">
+<span class="kick">Overview · new user</span>
+<span class="logo" style="width: 48px; height: 48px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 26px; height: 26px; color: var(--accent-fg)"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/></svg></span>
+<h3 class="h2" style="font-size: 34px">Your shelf is empty</h3>
+<p class="muted" style="margin: 0; max-width: 300px">Add a spool, weigh it now and then, and Spoolhouse tracks what's left, what you use and what it costs.</p>
+<ol style="margin: 4px 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; text-align: left"><li class="kick"><span style="color: var(--accent)">01</span> Pick a material from the catalog</li><li class="kick"><span style="color: var(--accent)">02</span> Weigh the full spool</li><li class="kick"><span style="color: var(--accent)">03</span> Re-weigh after printing</li></ol>
+<button class="btn btn-acc btn-lg">Add your first spool</button>
+</div>
+<div class="empty"><span class="kick">Inventory</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/></svg><span>No spools match these filters.</span><button class="btn btn-out btn-sm">Clear filters</button></div>
+<div class="empty"><span class="kick">Statistics</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span style="max-width: 300px">No usage yet. Re-weigh your spools now and then and this page fills up…</span></div>
+<div class="empty"><span class="kick">Groups</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/></svg><span>You're not in a group yet.</span><span class="help">Invite-only groups for sharing and lending spools with people nearby.</span><div style="display: flex; gap: 8px"><button class="btn btn-pri btn-sm">Create a group</button><button class="btn btn-out btn-sm">Join with code</button></div></div>
+<div class="empty"><span class="kick">Notifications</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>All quiet. Borrow requests and replies show up here.</span></div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">05</span><h2>404 · error page</h2><span class="rule"></span></div>
+<div style="position: relative; height: 320px; border: 1px solid var(--ink); border-radius: 4px; background: var(--bg); display: flex; align-items: center; gap: 48px; padding: 0 64px; overflow: hidden">
+<div class="ruler" aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 12px"></div>
+<span class="disp" style="font-size: 200px; line-height: 0.8; color: var(--accent)">404</span>
+<div style="display: flex; flex-direction: column; gap: 12px; max-width: 460px">
+<span class="kick">Error · shelf not found</span>
+<h3 class="h1" style="font-size: 52px">Nothing on this shelf</h3>
+<p class="muted" style="margin: 0">The page you're looking for isn't in the warehouse — maybe it moved, or the link is old.</p>
+<div style="display: flex; gap: 8px"><button class="btn btn-pri">Back to overview</button><button class="btn btn-out">Search catalog</button></div>
+</div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1880}}'>
+class Component extends DCLogic {
+renderVals() {
+return { themeClass: (this.props.dark ?? false) ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

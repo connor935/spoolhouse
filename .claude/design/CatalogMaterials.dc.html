@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Catalog materials</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}">
+<div class="page">
+<div class="side"><dc-import name="Nav" active="materials" dark="{{dark}}" hint-size="240px,900px"></dc-import></div>
+<main class="main">
+<div class="wrap" style="gap: 20px">
+
+<header class="head">
+<div class="kick crumb" style="justify-content: space-between"><span><span style="color: var(--accent)">06</span> — Materials</span><span>Global catalog · 23,871 entries</span></div>
+<div class="head-row">
+<h1 class="h1">Materials</h1>
+<a class="btn btn-acc" href="RequestForms.dc.html" style="color: var(--accent-fg); text-decoration: none"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Request material<span class="kbd">R</span></a>
+</div>
+<p class="muted" style="margin: 0; max-width: 680px">Global material catalog. Missing one? Request it below — you can use it immediately while an admin reviews it.</p>
+</header>
+
+<div role="toolbar" aria-label="Search and filter" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: -8px">
+<label class="inp ink" style="flex: 1 1 320px; width: auto"><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input value="pla" aria-label="Search materials" placeholder="Search manufacturer, material or color…"><span class="kbd" style="color: var(--muted-fg)">/</span></label>
+<button class="btn btn-out">All types<svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<button class="btn btn-out"><svg class="i s" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/></svg>Filters<span class="pill" style="margin-left: 2px">1</span></button>
+<button class="btn btn-ghost">Clear</button>
+<span class="kick" style="margin-left: auto"><span style="color: var(--fg)">1,204</span> of 23,871</span>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: -8px"><span class="kick">Active</span><span class="tag acc" style="height: 22px">Density 1.20–1.30 g/cm³ <button class="ibtn" aria-label="Remove filter" style="width: 14px; height: 14px; color: inherit"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width: 10px; height: 10px"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></span></div>
+
+<div>
+<div class="mfr"><h2 class="nm" style="margin: 0; font-size: 20px">Bambu Lab</h2><span class="kick">214</span></div>
+<a class="crow" href="#"><span class="sw" style="background: #0086D6"></span><span style="font-weight: 500">Basic Cyan</span><span class="tag acc">In your stock · 1</span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="crow" href="#"><span class="sw" style="background: #F2F2EE"></span><span style="font-weight: 500">Basic Jade White</span><span></span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="crow" href="#"><span class="sw" style="background: #E4BD68"></span><span style="font-weight: 500">Matte Desert Tan</span><span></span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+
+<div class="mfr"><h2 class="nm" style="margin: 0; font-size: 20px">Prusament</h2><span class="kick">96</span></div>
+<a class="crow" href="MaterialDetail.dc.html"><span class="sw" style="background: #1F1F1F"></span><span style="font-weight: 500">Galaxy Black</span><span class="tag acc">In your stock · 3</span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="crow" href="#"><span class="sw" style="background: #4B2D5E"></span><span style="font-weight: 500">Galaxy Purple</span><span></span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="crow" href="#"><span class="sw" style="background: #F26B21"></span><span style="font-weight: 500">Prusa Orange</span><span></span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+
+<div class="mfr"><h2 class="nm" style="margin: 0; font-size: 20px">Sunlu</h2><span class="kick">142</span></div>
+<a class="crow" href="#"><span class="sw" style="background: #23407A"></span><span style="font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap">Galaxy Blue <span class="tag mut">Pending review</span><span class="kick">yours · editable</span></span><span></span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="crow" href="#"><span class="sw" style="background: conic-gradient(#E85D75, #F2C14E, #5BC0BE, #6C63FF, #E85D75)"></span><span style="font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap">Silk Rainbow <span class="tag rej">Rejected</span><span class="kick">yours · edit to resubmit</span></span><span></span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="crow" href="#"><span class="sw" style="background: #C9A23F"></span><span style="font-weight: 500">Silk Gold</span><span class="tag acc">In your stock · 2</span><span class="tag">PLA</span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 6px"><span class="kick">Showing first 150 of 1,204 — refine your search.</span><button class="btn btn-out">Load more</button></div>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? false;
+return { dark, themeClass: dark ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>

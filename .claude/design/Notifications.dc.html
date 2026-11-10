@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Notifications</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}">
+<div class="page">
+<div class="side"><dc-import name="Nav" active="notifications" dark="{{dark}}" hint-size="240px,900px"></dc-import></div>
+<main class="main">
+<div class="wrap" style="max-width: 920px">
+
+<header class="head">
+<div class="kick crumb" style="justify-content: space-between"><span>— Notifications</span><span>4 unread · marked read when you leave</span></div>
+<h1 class="h1">Notifications</h1>
+</header>
+
+<div>
+<div class="led-n" style="display: grid; grid-template-columns: 14px 90px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border)"><span class="dot" aria-label="Unread"></span><span class="kick" style="color: var(--fg)">just now</span><span><strong style="font-weight: 600">Anna Weber</strong> requested to borrow <strong style="font-weight: 600">Prusa Orange #3</strong> in <span class="muted">Print Farm Friends</span></span><a class="btn btn-pri btn-sm" href="BorrowDialog.dc.html" style="color: var(--primary-fg)">Respond</a></div>
+<div style="display: grid; grid-template-columns: 14px 90px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border)"><span class="dot" aria-label="Unread"></span><span class="kick" style="color: var(--fg)">12 min ago</span><span><strong style="font-weight: 600">Lena Schulz</strong> requested to borrow <strong style="font-weight: 600">Silk Gold #2</strong> in <span class="muted">Makerspace Kiel</span></span><button class="btn btn-pri btn-sm">Respond</button></div>
+<div style="display: grid; grid-template-columns: 14px 90px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border)"><span class="dot" aria-label="Unread"></span><span class="kick" style="color: var(--fg)">3 h ago</span><span><strong style="font-weight: 600">Mia Koch</strong> approved your request for <strong style="font-weight: 600">Basic Cyan #4</strong></span><span class="tag acc">Approved</span></div>
+<div style="display: grid; grid-template-columns: 14px 90px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border)"><span class="dot" aria-label="Unread"></span><span class="kick" style="color: var(--fg)">2 d ago</span><span><strong style="font-weight: 600">Jonas Brandt</strong> declined your request for <strong style="font-weight: 600">Graphite #7</strong></span><span class="tag mut">Declined</span></div>
+<div style="display: grid; grid-template-columns: 14px 90px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); color: var(--muted-fg)"><span></span><span class="kick">18 Sep</span><span><strong style="font-weight: 500; color: var(--fg)">Tom Richter</strong> marked <strong style="font-weight: 500; color: var(--fg)">Prusa Orange #2</strong> as returned in Print Farm Friends</span><span class="tag mut">Returned</span></div>
+<div style="display: grid; grid-template-columns: 14px 90px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); color: var(--muted-fg)"><span></span><span class="kick">11 Jul</span><span><strong style="font-weight: 500; color: var(--fg)">Jonas Brandt</strong> cancelled their request for <strong style="font-weight: 500; color: var(--fg)">Graphite #7</strong></span><span class="tag mut">Cancelled</span></div>
+</div>
+<p class="kick" style="margin: 0">Only borrow activity creates notifications.</p>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? false;
+return { dark, themeClass: dark ? 'app dark' : 'app' };
+}
+}
+</script>
+</body>
+</html>
