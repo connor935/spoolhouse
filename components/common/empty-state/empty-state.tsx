@@ -36,7 +36,7 @@ function EmptyState({
     <div
       data-slot="empty-state"
       className={cn(
-        'flex flex-col items-center justify-center rounded-[6px] border border-dashed border-ink bg-card/60 text-center',
+        'border-ink bg-card/60 flex flex-col items-center justify-center rounded-[6px] border border-dashed text-center',
         onboarding ? 'gap-3.5 px-7 py-10' : 'gap-2.5 px-6 py-8',
         className
       )}
@@ -46,7 +46,7 @@ function EmptyState({
         (onboarding ? (
           <span
             aria-hidden="true"
-            className="grid size-12 place-items-center rounded-[7px] bg-accent text-accent-foreground [&_svg]:size-6 [&_svg]:stroke-[1.5]"
+            className="bg-accent text-accent-foreground grid size-12 place-items-center rounded-[7px] [&_svg]:size-6 [&_svg]:stroke-[1.5]"
           >
             {icon}
           </span>
@@ -59,14 +59,14 @@ function EmptyState({
           </span>
         ))}
       {onboarding ? (
-        <h2 className="m-0 display-h2 text-[34px]">{title}</h2>
+        <h2 className="display-h2 m-0 text-[34px]">{title}</h2>
       ) : (
         <p className="m-0 max-w-[300px]">{title}</p>
       )}
       {description && (
         <p
           className={cn(
-            'm-0 max-w-[300px] text-muted-foreground',
+            'text-muted-foreground m-0 max-w-[300px]',
             !onboarding && 'text-xs leading-[1.4]'
           )}
         >

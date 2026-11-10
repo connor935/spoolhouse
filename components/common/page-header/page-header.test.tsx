@@ -40,13 +40,14 @@ describe('PageHeader', () => {
   it('renders a breadcrumb: links for earlier crumbs, current page last', () => {
     render(<WithBreadcrumb />);
     const nav = screen.getByRole('navigation', { name: 'Breadcrumb' });
-    expect(within(nav).getByRole('link', { name: 'Inventory' })).toHaveAttribute(
-      'href',
-      '/inventory'
-    );
+    expect(
+      within(nav).getByRole('link', { name: 'Inventory' })
+    ).toHaveAttribute('href', '/inventory');
     const current = within(nav).getByText('Galaxy Black');
     expect(current).toHaveAttribute('aria-current', 'page');
-    expect(within(nav).queryByRole('link', { name: 'Galaxy Black' })).toBeNull();
+    expect(
+      within(nav).queryByRole('link', { name: 'Galaxy Black' })
+    ).toBeNull();
   });
 
   it('shows badges and the description line', () => {
@@ -63,6 +64,8 @@ describe('PageHeader', () => {
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
     ).toEqual(['Running low', 'Monthly usage']);
-    expect(screen.getByRole('region', { name: 'Key figures' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Key figures' })
+    ).toBeInTheDocument();
   });
 });

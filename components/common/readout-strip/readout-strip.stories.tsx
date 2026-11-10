@@ -49,7 +49,11 @@ export const Default: Story = {
 export const Compact: Story = {
   render: (args) => (
     <ReadoutStrip {...args}>
-      <Readout label="In stock" {...readoutParts(formatWeight(2160))} sub="3 spools" />
+      <Readout
+        label="In stock"
+        {...readoutParts(formatWeight(2160))}
+        sub="3 spools"
+      />
       <Readout label="Used · 12 months" {...readoutParts(formatWeight(3400))} />
       <Readout label="Runway" value="~7" unit="wk" sub="at 310 g / week" />
     </ReadoutStrip>
@@ -84,8 +88,20 @@ export const Tones: Story = {
   render: (args) => (
     <ReadoutStrip {...args}>
       <Readout label="Default" value="1.18" unit="kg" sub="−12 % vs. prev." />
-      <Readout label="Positive" value="1.18" unit="kg" sub="−12 % vs. prev." tone="positive" />
-      <Readout label="Negative" value="1.42" unit="kg" sub="+18 % vs. prev." tone="negative" />
+      <Readout
+        label="Positive"
+        value="1.18"
+        unit="kg"
+        sub="−12 % vs. prev."
+        tone="positive"
+      />
+      <Readout
+        label="Negative"
+        value="1.42"
+        unit="kg"
+        sub="+18 % vs. prev."
+        tone="negative"
+      />
     </ReadoutStrip>
   ),
 };

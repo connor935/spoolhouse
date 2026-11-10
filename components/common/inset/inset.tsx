@@ -9,7 +9,7 @@ function Inset({ className, ...props }: ComponentProps<'div'>) {
     <div
       data-slot="inset"
       className={cn(
-        'flex flex-col gap-3 rounded-[6px] border border-dashed border-ink bg-[color-mix(in_oklab,var(--muted)_35%,var(--card))] p-3.5',
+        'border-ink flex flex-col gap-3 rounded-[6px] border border-dashed bg-[color-mix(in_oklab,var(--muted)_35%,var(--card))] p-3.5',
         className
       )}
       {...props}

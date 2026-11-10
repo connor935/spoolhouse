@@ -45,9 +45,7 @@ export const WithoutIcon: Story = {
 /** Accent notice: `Note`, announced politely (role="status"). */
 export const NoteBox: Story = {
   name: 'Note',
-  render: () => (
-    <Note>Imported 3 manufacturers: esun, prusament, sunlu.</Note>
-  ),
+  render: () => <Note>Imported 3 manufacturers: esun, prusament, sunlu.</Note>,
 };
 
 export const Both: Story = {

@@ -29,6 +29,9 @@ describe('StatusBadge', () => {
 
   it('lets children override the label', () => {
     render(<CustomLabel />);
-    expect(screen.getByText('Imported')).toHaveAttribute('data-status', 'imported');
+    expect(screen.getByText('Imported')).toHaveAttribute(
+      'data-status',
+      'imported'
+    );
   });
 });

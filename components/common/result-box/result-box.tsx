@@ -10,7 +10,7 @@ function ResultBox({ className, ...props }: ComponentProps<'div'>) {
     <div
       data-slot="result-box"
       className={cn(
-        'flex items-center gap-4 rounded-[4px] border border-l-4 border-ink border-l-accent bg-card px-4 py-3.5',
+        'border-ink border-l-accent bg-card flex items-center gap-4 rounded-[4px] border border-l-4 px-4 py-3.5',
         className
       )}
       {...props}

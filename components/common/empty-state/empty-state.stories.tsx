@@ -1,5 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { BellIcon, ChartColumnIcon, FilterXIcon, LayersIcon, UsersIcon } from 'lucide-react';
+import {
+  BellIcon,
+  ChartColumnIcon,
+  FilterXIcon,
+  LayersIcon,
+  UsersIcon,
+} from 'lucide-react';
 import { fn } from 'storybook/test';
 
 import { Button } from '@/components/ui/button';
@@ -68,14 +74,21 @@ export const WithDescription: Story = {
 export const Gallery: Story = {
   render: () => (
     <div className="grid gap-4 sm:grid-cols-3">
-      <EmptyState {...Onboarding.args} className="row-span-2" title="Your shelf is empty" />
+      <EmptyState
+        {...Onboarding.args}
+        className="row-span-2"
+        title="Your shelf is empty"
+      />
       <EmptyState {...meta.args} />
       <EmptyState
         kicker="Statistics"
         icon={<ChartColumnIcon />}
         title="No usage yet. Re-weigh your spools now and then and this page fills up…"
       />
-      <EmptyState {...WithDescription.args} title="You're not in a group yet." />
+      <EmptyState
+        {...WithDescription.args}
+        title="You're not in a group yet."
+      />
       <EmptyState
         kicker="Notifications"
         icon={<BellIcon />}

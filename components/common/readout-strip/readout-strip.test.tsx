@@ -23,7 +23,9 @@ describe('readoutParts', () => {
 describe('ReadoutStrip', () => {
   it('is a labelled region holding the readouts', () => {
     render(<Default />);
-    expect(screen.getByRole('region', { name: 'Key figures' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Key figures' })
+    ).toBeInTheDocument();
     expect(screen.getByText('Used · 30 days')).toBeInTheDocument();
   });
 
@@ -43,7 +45,12 @@ describe('ReadoutStrip', () => {
 
   it('colours the sub-line by tone', () => {
     render(<Tones />);
-    expect(screen.getByText('+18 % vs. prev.')).toHaveAttribute('data-tone', 'negative');
-    expect(screen.getByText('+18 % vs. prev.').className).toContain('text-destructive');
+    expect(screen.getByText('+18 % vs. prev.')).toHaveAttribute(
+      'data-tone',
+      'negative'
+    );
+    expect(screen.getByText('+18 % vs. prev.').className).toContain(
+      'text-destructive'
+    );
   });
 });

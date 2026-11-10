@@ -26,7 +26,9 @@ describe('KeyValueRow', () => {
 
   it('stacks into a list with per-row actions', () => {
     render(<List />);
-    expect(screen.getByRole('button', { name: 'Verify Drying temp' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Verify Drying temp' })
+    ).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(4);
     expect(screen.getByText('Unverified')).toBeInTheDocument();
   });

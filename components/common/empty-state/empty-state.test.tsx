@@ -11,12 +11,18 @@ const { Default, Onboarding } = composeStories(stories);
 describe('EmptyState', () => {
   it('renders kicker, text and a working action', async () => {
     const onClick = fn();
-    render(<Default action={<Button onClick={onClick}>Clear filters</Button>} />);
+    render(
+      <Default action={<Button onClick={onClick}>Clear filters</Button>} />
+    );
     expect(screen.getByText('Inventory')).toBeInTheDocument();
-    expect(screen.getByText('No spools match these filters.')).toBeInTheDocument();
+    expect(
+      screen.getByText('No spools match these filters.')
+    ).toBeInTheDocument();
     // The plain variant is a message, not a heading.
     expect(screen.queryByRole('heading')).toBeNull();
-    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Clear filters' })
+    );
     expect(onClick).toHaveBeenCalledOnce();
   });
 

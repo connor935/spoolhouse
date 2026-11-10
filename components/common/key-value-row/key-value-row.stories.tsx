@@ -20,10 +20,20 @@ function Actions({ name, verify = false }: { name: string; verify?: boolean }) {
           <CheckIcon />
         </Button>
       )}
-      <Button variant="ghost" size="icon" aria-label={`Edit ${name}`} onClick={fn()}>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={`Edit ${name}`}
+        onClick={fn()}
+      >
         <PencilIcon />
       </Button>
-      <Button variant="ghost" size="icon" aria-label={`Delete ${name}`} onClick={fn()}>
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={`Delete ${name}`}
+        onClick={fn()}
+      >
         <Trash2Icon />
       </Button>
     </>
@@ -70,14 +80,20 @@ export const List: Story = {
       <KeyValueRow label="Diameter" action={<Actions name="Diameter" />}>
         <Measure value="1.75, 2.85" unit="mm" />
       </KeyValueRow>
-      <KeyValueRow label="Extruder temp" action={<Actions name="Extruder temp" />}>
+      <KeyValueRow
+        label="Extruder temp"
+        action={<Actions name="Extruder temp" />}
+      >
         <Measure value="210–230" unit="°C" />
       </KeyValueRow>
       <KeyValueRow
         label={
           <>
             Drying temp
-            <StatusBadge status="unverified" title="Added by Anna Weber — not yet verified" />
+            <StatusBadge
+              status="unverified"
+              title="Added by Anna Weber — not yet verified"
+            />
           </>
         }
         action={<Actions name="Drying temp" verify />}

@@ -3,7 +3,11 @@ import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { fn } from 'storybook/test';
 
-import { ReadoutStrip, Readout, readoutParts } from '@/components/common/readout-strip';
+import {
+  ReadoutStrip,
+  Readout,
+  readoutParts,
+} from '@/components/common/readout-strip';
 import { SectionHeader } from '@/components/common/section-header';
 import { StatusBadge } from '@/components/common/status-badge';
 import { Badge } from '@/components/ui/badge';
@@ -51,19 +55,20 @@ export const WithBreadcrumb: Story = {
   args: {
     index: '02',
     kicker: undefined,
-    breadcrumb: [{ label: 'Inventory', href: '/inventory' }, { label: 'Galaxy Black' }],
+    breadcrumb: [
+      { label: 'Inventory', href: '/inventory' },
+      { label: 'Galaxy Black' },
+    ],
     meta: undefined,
     title: 'Galaxy Black',
     leading: (
       <span
         aria-hidden="true"
-        className="size-16 shrink-0 rounded-full border-2 border-swatch-ring shadow-swatch max-sm:size-11"
+        className="border-swatch-ring shadow-swatch size-16 shrink-0 rounded-full border-2 max-sm:size-11"
         style={{ background: '#1F1F1F' }}
       />
     ),
-    badges: (
-      <Badge className="h-6 px-2 text-[13px]">PLA</Badge>
-    ),
+    badges: <Badge className="h-6 px-2 text-[13px]">PLA</Badge>,
     description: (
       <span className="flex flex-wrap items-center gap-2.5">
         <span className="kicker text-foreground">Prusament</span>
@@ -169,16 +174,19 @@ export const PageSkeleton: Story = {
             title="Running low"
             aside={<Link href="/inventory">Inventory →</Link>}
           />
-          <div className="h-40 rounded-[4px] border border-dashed border-border" />
+          <div className="border-border h-40 rounded-[4px] border border-dashed" />
         </section>
-        <section aria-labelledby="sec-usage" className="min-w-0 flex-[1_1_320px]">
+        <section
+          aria-labelledby="sec-usage"
+          className="min-w-0 flex-[1_1_320px]"
+        >
           <SectionHeader
             id="sec-usage"
             index="03"
             title="Monthly usage"
             aside={<span className="kicker">Last 12 months</span>}
           />
-          <div className="h-40 rounded-[4px] border border-dashed border-border" />
+          <div className="border-border h-40 rounded-[4px] border border-dashed" />
         </section>
       </div>
     </div>

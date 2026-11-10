@@ -3,11 +3,7 @@ import type { ComponentProps } from 'react';
 import { Badge } from '@/components/ui/badge';
 
 export type CatalogStatus =
-  | 'approved'
-  | 'pending'
-  | 'rejected'
-  | 'imported'
-  | 'unverified';
+  'approved' | 'pending' | 'rejected' | 'imported' | 'unverified';
 
 type BadgeVariant = NonNullable<ComponentProps<typeof Badge>['variant']>;
 

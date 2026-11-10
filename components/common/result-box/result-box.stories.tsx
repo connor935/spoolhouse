@@ -25,9 +25,7 @@ export const Default: Story = {
     children: (
       <>
         <span className="kicker">Calculated filament left</span>
-        <span className="ml-auto display-weight">
-          {formatWeight(742)}
-        </span>
+        <span className="display-weight ml-auto">{formatWeight(742)}</span>
       </>
     ),
   },
@@ -46,8 +44,8 @@ export const Progress: Story = {
           </span>
           <span className="kicker">esun ✓ · prusament · sunlu</span>
         </div>
-        <div className="relative h-3 bg-muted mask-segments">
-          <i className="absolute inset-y-0 left-0 w-1/2 bg-accent" />
+        <div className="bg-muted mask-segments relative h-3">
+          <i className="bg-accent absolute inset-y-0 left-0 w-1/2" />
         </div>
       </>
     ),

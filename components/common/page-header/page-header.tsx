@@ -49,7 +49,7 @@ function PageHeader({
       data-slot="page-header"
       className={cn(
         'flex flex-col gap-3',
-        rule && 'border-b-2 border-ink pb-5',
+        rule && 'border-ink border-b-2 pb-5',
         className
       )}
     >
@@ -72,11 +72,11 @@ function PageHeader({
           {leading}
           <div className="flex min-w-0 flex-col gap-2.5">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="m-0 display-h1 max-sm:text-[46px]">{title}</h1>
+              <h1 className="display-h1 m-0 max-sm:text-[46px]">{title}</h1>
               {badges}
             </div>
             {description && (
-              <div className="max-w-[720px] text-muted-foreground">
+              <div className="text-muted-foreground max-w-[720px]">
                 {description}
               </div>
             )}

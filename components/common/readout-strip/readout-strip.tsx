@@ -27,7 +27,7 @@ function ReadoutStrip({
       aria-label={label}
       data-slot="readout-strip"
       className={cn(
-        'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] border-b border-ink',
+        'border-ink grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] border-b',
         ruled && 'border-t-2',
         className
       )}
@@ -80,7 +80,7 @@ function Readout({
       {unit && (
         <small
           className={cn(
-            'ml-[3px] font-medium text-muted-foreground',
+            'text-muted-foreground ml-[3px] font-medium',
             size === 'big' ? 'text-base' : 'text-[15px]'
           )}
         >
@@ -126,7 +126,7 @@ function Readout({
       data-slot="readout"
       className={cn(
         cls,
-        'outline-none hover:bg-accent/5 focus-visible:ring-2 focus-visible:ring-ring'
+        'hover:bg-accent/5 focus-visible:ring-ring outline-none focus-visible:ring-2'
       )}
     >
       {body}

@@ -43,7 +43,7 @@ function MessageBox({
     >
       {icon}
       {/* The alert box is red; its message reads in the normal text colour. */}
-      <div className="min-w-0 flex-1 text-foreground">{children}</div>
+      <div className="text-foreground min-w-0 flex-1">{children}</div>
       {action && <div className="ml-auto shrink-0">{action}</div>}
     </div>
   );

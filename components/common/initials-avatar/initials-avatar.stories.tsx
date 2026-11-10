@@ -26,7 +26,7 @@ export const InRow: Story = {
           Felix <span className="kicker">you</span>
         </span>
       </div>
-      <div className="flex items-center gap-3 border-t border-border py-3">
+      <div className="border-border flex items-center gap-3 border-t py-3">
         <InitialsAvatar name="Lena Schulz" />
         <span className="flex-1">Lena Schulz</span>
         <span className="kicker">joined Mar 2026 · shares 9</span>
