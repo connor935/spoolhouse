@@ -1,22 +1,22 @@
 # Plan: Spoolhouse UI Redesign ("Redesign mit Sidebar")
 
 **Trunk branch**: `feature/redesign-spoolhouse-ui` (forked from `main` @ `3df187a`)
-**Design source**: `design/` (local only, gitignored — see "Worktrees" below)
+**Design source**: `.claude/design/` (committed on the trunk)
 **Complexity**: Large (≈ 50 screens / 26 light boards, ~75 existing components, new IA)
-**Status**: plan drafted 2026-11-10 — awaiting confirmation, no code written yet
+**Status**: confirmed 2026-11-10 — Phases 0–2 in progress on `redesign/foundation`
 
 ---
 
 ## 1. What the design is
 
-`design/README.md` (German) + `design/canvas.json` + 55 `*.dc.html` mockups.
+`.claude/design/README.md` (German) + `.claude/design/canvas.json` + 55 `*.dc.html` mockups.
 
 - `*.dc.html` = static HTML mockups (Design-Component format: `{{…}}` placeholders, `<sc-if>`,
   `<dc-import>`, a small `Component` class for tweaks like `dark`).
 - `*Dark.dc.html` are mostly wrappers that import the light file with `dark=true` → implement
   from the **light file + `.app.dark` tokens**.
 - **Teil 1** (Main, OverviewDark, Inventory, Statistics, Group, Sidebar, Mobile*) has CSS inline
-  in `<helmet>`; **Teil 2** uses the shared `design/spoolhouse.css` and the shared sidebar
+  in `<helmet>`; **Teil 2** uses the shared `.claude/design/spoolhouse.css` and the shared sidebar
   `Nav.dc.html`. `spoolhouse.css` is the canonical token + component reference.
 - Sample data (names, weights, `@example.org`) is fake.
 - To read a mockup quickly, strip `<style>/<script>/<svg>` and tags (a throwaway python
@@ -134,7 +134,7 @@ the work (Phase 7), not left stale.
 - Tests: vitest, pure-domain only (`lib/**/*.test.ts`). No component tests, no Storybook yet.
 - CI (`.github/workflows/deploy.yml` `check` job): `tsc --noEmit`, oxlint, `npm test`, `next build`
   on PRs.
-- **Both `.claude/` and `design/**` are gitignored** → a fresh worktree has neither (see §6).
+- `.claude/` (incl. `design/` and this plan) is committed on the trunk, so every worktree has it.
 
 ## 4. Guiding principles for the rebuild
 
@@ -334,17 +334,11 @@ git worktree add ../spoolhouse-wt/<slug> -b redesign/<slug> feature/redesign-spo
 
 **Gotchas (must be handled by the helper script):**
 
-1. **`design/` and `.claude/` are gitignored** → not present in a new worktree. Symlink them:
-   `ln -s /Users/connor/Code/spoolhouse/design ../spoolhouse-wt/<slug>/design` and the same for
-   `.claude` (so this plan and working notes are shared). Alternatively un-ignore `design/` —
-   decision pending (§8).
+1. `.claude/` (design + plan) is committed — nothing to symlink.
 2. **`node_modules`** per worktree: `npm ci` in each (don't symlink — lockfile may diverge).
 3. **`.env`** is gitignored: copy it.
 4. **Ports**: Next dev 3000 → `npm run dev -- -p 30NN`; Storybook 6006 → `-p 60NN`.
-5. **Local DB**: `with-local-db.mjs` reuses whatever serves `127.0.0.1:5433`, so by default all
-   worktrees **share the main checkout's PGlite DB**. Fine for pure UI lanes. A lane that adds a
-   **migration** must use its own DB: `DEV_DB_PORT=54NN DATABASE_PATH=data/pglite-<slug>` —
-   otherwise its migration lands in the shared DB and breaks the other checkouts.
+5. **Local DB**: worktrees share the main checkout's PGlite DB (port 5433). The user treats it as disposable, and the redesign adds no migrations unless a lane says so explicitly.
 6. **Merge hotspots** — single owner per file during a phase: `app/globals.css` (Phase 1 only;
    later token additions go through a tiny dedicated PR), `components/ui/*` (owned by its 3x
    lane), `package.json`/lockfile (rebase + `npm install`), CLAUDE.md (Phase 7 only; lanes leave
@@ -368,20 +362,21 @@ depends on 3B for the re-weigh input, 4D on 3B/3C — start with A, C, E); Phase
 | Domain math | `lib/filament.ts`, `lib/consumption.ts` | pure functions + `*.test.ts` (vitest) for any new derivation (activity feed shaping, duplicate detection, roll-ups) |
 | Theming | `app/globals.css`, `components/layout/theme-provider.tsx` | oklch tokens in `:root`/`.dark`, next-themes class strategy |
 
-## 8. Open decisions (need user input)
+## 8. Decisions (confirmed by user, 2026-11-10)
 
-1. **Scope of new backend features** shown in the design: recent-activity feed, review queue
-   with duplicate detection, keyboard shortcuts, group-stock pagination, nav counts.
-   Recommendation: nav counts + Overview roll-ups + activity feed in scope (cheap, read-only);
-   review queue + shortcuts as late Phase 6 items.
-2. **`design/` gitignored** — keep local + symlink into worktrees (current plan) or commit it so
-   every worktree/CI/reviewer has it?
-3. **New routes** `/inventory`, `/borrows`, `/materials/[id]` (+ review queue URL) — OK? Old
-   `/?tab=…` links: redirect `?tab=borrows` → `/borrows`, `?tab=<groupId>` → `/groups/<id>`?
-4. **Storybook in CI** — add `build-storybook` to the `check` job (recommended), and publish it
-   anywhere (e.g. as part of the deploy) or local only?
-5. Trunk → `main` cadence: one big merge at the end, or milestone merges (after Phase 5, after
-   each page lane)? Milestone merges keep `main` close but ship a half-redesigned UI.
+1. **Backend scope**: nav counts, Overview roll-ups and the recent-activity feed are in scope
+   (Phases 5/6A). Review queue (with duplicate detection) and keyboard shortcuts come late in
+   Phase 6.
+2. **Design files** live in `.claude/design/`, committed on the trunk.
+3. **New routes** `/inventory`, `/borrows`, `/materials/[id]` (+ review queue) approved; old
+   `/?tab=…` links get redirects.
+4. **One big merge** of `feature/redesign-spoolhouse-ui` → `main` at the very end. Sub-branches
+   `redesign/<slug>` merge into the trunk.
+5. **Component unit tests are required** alongside Storybook: Vitest + jsdom + Testing Library,
+   reusing stories via `composeStories` (portable stories) so a story is also a test fixture.
+   Storybook's browser-mode runner (`@storybook/addon-vitest` + Playwright) is not used, since
+   CI runs in a slim Node container without browsers.
+6. The user does no work on the old UI meanwhile; the local DB is disposable.
 
 ## 9. Risks
 
@@ -412,7 +407,7 @@ through the affected flows on `npm run dev` in light + dark + 390px.
 
 ## 11. Acceptance (whole redesign)
 
-- [ ] All boards in `design/canvas.json` implemented (light + dark + mobile where designed)
+- [ ] All boards in `.claude/design/canvas.json` implemented (light + dark + mobile where designed)
 - [ ] Every UI component has stories; Storybook builds in CI
 - [ ] No hardcoded colours; tokens match `spoolhouse.css`
 - [ ] All existing behaviours preserved (CLAUDE.md domain rules), no auth/ownership regressions
