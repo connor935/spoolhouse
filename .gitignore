@@ -21,3 +21,7 @@ data/
 .env
 .env.docker
 .claude-local/
+
+# Storybook build output
+storybook-static/
+*storybook.log

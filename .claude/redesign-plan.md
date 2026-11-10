@@ -3,7 +3,7 @@
 **Trunk branch**: `feature/redesign-spoolhouse-ui` (forked from `main` @ `3df187a`)
 **Design source**: `.claude/design/` (committed on the trunk)
 **Complexity**: Large (≈ 50 screens / 26 light boards, ~75 existing components, new IA)
-**Status**: confirmed 2026-11-10 — Phases 0–2 in progress on `redesign/foundation`
+**Status**: Phases 0–2 done on `redesign/foundation` (2026-11-10) — next: Phase 3 in parallel worktrees
 
 ---
 
@@ -413,3 +413,25 @@ through the affected flows on `npm run dev` in light + dark + 390px.
 - [ ] All existing behaviours preserved (CLAUDE.md domain rules), no auth/ownership regressions
 - [ ] Dead components removed, CLAUDE.md updated
 - [ ] Trunk merged to `main`, deployed, health check green
+
+## 12. Implementation log
+
+### Phases 0–2 (branch `redesign/foundation`)
+
+- **CI**: `check` job also runs for PRs into `feature/**`; added a `Build Storybook` step.
+- **Worktrees**: `scripts/worktree-new.sh <slug>` → `../spoolhouse-wt/<slug>` on
+  `redesign/<slug>` (npm ci, copies `.env`, prints per-lane dev/Storybook ports).
+- **Tokens**: existing oklch values already matched the design hex exactly. Added `--ink`,
+  `--swatch-ring`, `--scrim`, `--destructive-foreground` (+ `@theme` colours `ink`,
+  `swatch-ring`, `scrim`, `destructive-foreground`), shadows `shadow-pop/dialog/toast/swatch`.
+- **Fonts**: `lib/fonts.ts` (Geist, Geist Mono, Barlow Condensed 600 → `--font-display`);
+  `--font-heading` now = display (only `DialogTitle` used it).
+- **Utilities** in `globals.css`: `kicker`, `display-h1/h2/section/name/num/big/weight`, `fine`,
+  `tabular`, `mask-segments` (meter), `hatch-accent`, `ruler`.
+- **Storybook 10.6.6** + addons docs/a11y/themes; viewports `mobile` (390) / `desktop` (1440);
+  a11y parameter `test: 'error'`.
+- **Component tests**: Vitest projects `unit` + `components` (jsdom). Gotchas recorded in
+  CLAUDE.md ("Storybook & component tests"). Smoke stories + tests for the *current*
+  Button, Badge, Input, Dialog (16 tests) — Phase 3 rewrites them with the restyle.
+- Not done / deferred: `@storybook/addon-vitest` browser runner (needs Playwright in CI);
+  eslint-plugin-storybook.
