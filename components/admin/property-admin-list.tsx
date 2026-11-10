@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -289,49 +290,51 @@ function EditPropertyDialog({
             is permanent and can’t be changed.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-prop-name">Name</Label>
-            <Input
-              id="edit-prop-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-prop-unit">Unit</Label>
-            <Input
-              id="edit-prop-unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-prop-description">Description</Label>
-            <Input
-              id="edit-prop-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-prop-type">Value type</Label>
-            <SelectField
-              id="edit-prop-type"
-              items={VALUE_TYPE_ITEMS}
-              value={valueType}
-              onValueChange={setValueType}
-              ariaLabel="Value type"
-            />
-            <p className="text-muted-foreground text-xs">
-              {valueType === property.valueType
-                ? PROPERTY_VALUE_TYPE_HINTS[valueType]
-                : `Changing the type re-checks all ${property.valueCount} existing value${property.valueCount === 1 ? '' : 's'}; the change is refused if any no longer fit.`}
-            </p>
-          </div>
-          <DialogFooter className="mt-2">
+        <form onSubmit={handleSubmit} className="contents">
+          <DialogBody className="gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="edit-prop-name">Name</Label>
+              <Input
+                id="edit-prop-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="edit-prop-unit">Unit</Label>
+              <Input
+                id="edit-prop-unit"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="edit-prop-description">Description</Label>
+              <Input
+                id="edit-prop-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="edit-prop-type">Value type</Label>
+              <SelectField
+                id="edit-prop-type"
+                items={VALUE_TYPE_ITEMS}
+                value={valueType}
+                onValueChange={setValueType}
+                ariaLabel="Value type"
+              />
+              <p className="text-muted-foreground text-xs">
+                {valueType === property.valueType
+                  ? PROPERTY_VALUE_TYPE_HINTS[valueType]
+                  : `Changing the type re-checks all ${property.valueCount} existing value${property.valueCount === 1 ? '' : 's'}; the change is refused if any no longer fit.`}
+              </p>
+            </div>
+          </DialogBody>
+          <DialogFooter>
             <Button
               type="button"
               variant="ghost"

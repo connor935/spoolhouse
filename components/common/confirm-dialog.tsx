@@ -26,14 +26,14 @@ export function ConfirmDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-sm" showCloseButton={false}>
+        <DialogHeader variant="plain">
           <DialogTitle>{options?.title}</DialogTitle>
           {options?.description && (
             <DialogDescription>{options.description}</DialogDescription>
           )}
         </DialogHeader>
-        <DialogFooter className="mt-2">
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={onCancel}>
             {options?.cancelLabel ?? 'Cancel'}
           </Button>

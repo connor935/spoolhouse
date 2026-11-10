@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -77,38 +78,40 @@ export function EditMaterialDialog({
             {describeReviewStatus(isAdmin, material.status, 'material')}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <ManufacturerNameFields
-            idPrefix="edit-m"
-            manufacturer={manufacturer}
-            onManufacturerChange={setManufacturer}
-            name={name}
-            onNameChange={setName}
-            nameLabel="Material name"
-          />
-          <div className="flex items-end gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-m-type">Type</Label>
-              <SelectField
-                id="edit-m-type"
-                items={FILAMENT_TYPE_ITEMS}
-                value={filamentType}
-                onValueChange={setFilamentType}
-              />
+        <form onSubmit={handleSubmit} className="contents">
+          <DialogBody className="gap-4">
+            <ManufacturerNameFields
+              idPrefix="edit-m"
+              manufacturer={manufacturer}
+              onManufacturerChange={setManufacturer}
+              name={name}
+              onNameChange={setName}
+              nameLabel="Material name"
+            />
+            <div className="flex items-end gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-m-type">Type</Label>
+                <SelectField
+                  id="edit-m-type"
+                  items={FILAMENT_TYPE_ITEMS}
+                  value={filamentType}
+                  onValueChange={setFilamentType}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-m-color">Color</Label>
+                <input
+                  id="edit-m-color"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="border-input h-9 w-14 cursor-pointer rounded-md border bg-transparent p-1"
+                  aria-label="Material color"
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-m-color">Color</Label>
-              <input
-                id="edit-m-color"
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="border-input h-9 w-14 cursor-pointer rounded-md border bg-transparent p-1"
-                aria-label="Material color"
-              />
-            </div>
-          </div>
-          <DialogFooter className="mt-2">
+          </DialogBody>
+          <DialogFooter>
             <Button
               type="button"
               variant="ghost"

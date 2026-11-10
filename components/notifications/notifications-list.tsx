@@ -172,7 +172,7 @@ export function NotificationsList({
               )}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-2">
+          <DialogFooter>
             <Button
               type="button"
               variant="ghost"
