@@ -21,3 +21,5 @@ data/
 .env
 .env.docker
 .claude/
+
+design/**
