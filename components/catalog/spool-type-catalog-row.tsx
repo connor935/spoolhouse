@@ -1,6 +1,6 @@
 'use client';
 
-import { CatalogRow } from '@/components/catalog/catalog-row';
+import { LegacyCatalogRow } from '@/components/catalog/legacy-catalog-row';
 import { EditSpoolTypeDialog } from '@/components/catalog/edit-spool-type-dialog';
 import {
   approveSpoolType,
@@ -22,7 +22,7 @@ export function SpoolTypeCatalogRow({
   const spoolCount = 'spoolCount' in spoolType ? spoolType.spoolCount : 0;
 
   return (
-    <CatalogRow
+    <LegacyCatalogRow
       entity={spoolType}
       currentUserId={currentUserId}
       isAdmin={isAdmin}
