@@ -38,8 +38,8 @@ export type MaterialInventory = {
   totalLeftGrams: number;
 };
 
-const EMPTY_THRESHOLD_G = 5; // 5 g or less counts as empty
-const LOW_THRESHOLD_PCT = 15;
+export const EMPTY_THRESHOLD_G = 5; // 5 g or less counts as empty
+export const LOW_THRESHOLD_PCT = 15;
 
 // Filament left = measured total weight on the scale minus the empty spool weight.
 export function computeFilamentLeft(
