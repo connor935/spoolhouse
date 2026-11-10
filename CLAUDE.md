@@ -11,7 +11,10 @@ npm run dev          # start dev server (+ the local database, see below)
 npm run build        # production build
 npm run start        # serve production build (+ the local database)
 npm run db:serve     # local database only — for drizzle-kit studio / psql
-npm test             # vitest: unit tests for the pure domain logic (lib/**/*.test.ts)
+npm test             # vitest: unit (lib/**/*.test.ts, node) + components (components/**/*.test.tsx, jsdom)
+npm run test:watch   # vitest in watch mode
+npm run storybook    # Storybook on :6006 (component workbench, light/dark toggle, a11y panel)
+npm run build-storybook  # static Storybook build (CI runs it)
 npm run db:generate  # drizzle-kit: generate migration from schema changes
 npm run db:migrate   # drizzle-kit: apply migrations manually (usually unnecessary, see below)
 npm run db:studio    # drizzle-kit: local DB browser (needs the DB up: dev or db:serve)
@@ -19,6 +22,24 @@ npm run admin:create -- <email> <name>   # bootstrap/promote an admin account
 ```
 
 Package manager is **npm** (`package-lock.json`).
+
+## Storybook & component tests
+
+UI redesign in progress on `feature/redesign-spoolhouse-ui` — plan, decisions and design notes in
+`.claude/redesign-plan.md`, mockups in `.claude/design/`.
+
+- Storybook 10 (`@storybook/nextjs-vite`), config in `.storybook/`. Stories sit next to their
+  component (`button.stories.tsx`); theme toggle = `.dark` on `<html>` like next-themes; fonts
+  come from `lib/fonts.ts` (shared with `app/layout.tsx`).
+- **Every component gets stories + a unit test.** Tests reuse the stories as fixtures:
+  `composeStories` from **`@storybook/react`** (not `@storybook/nextjs-vite`, whose runtime needs
+  its Vite plugin), Testing Library + `@testing-library/jest-dom`, spies via `fn` from
+  `storybook/test` (`vi.fn()` has an incompatible Mock type for story args). Setup:
+  `.storybook/vitest.setup.ts` applies the same preview annotations as Storybook.
+- The Vitest `components` project deliberately does **not** use the Storybook Next.js Vite
+  plugin (its global `module-alias` hook breaks under Node's ESM loader); only `next/font/google`
+  is stubbed (`.storybook/mocks/next-font-google.ts`). Keep components presentational (data +
+  callbacks as props, no `app/actions/*` / `lib/db` imports) so they need no Next runtime mocks.
 
 ## Auth
 

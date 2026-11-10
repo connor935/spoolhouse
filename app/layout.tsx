@@ -1,15 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
 import { LiveRefresh } from '@/components/layout/live-refresh';
 import { ThemeProvider } from '@/components/layout/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { fontVariables } from '@/lib/fonts';
 import './globals.css';
-
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
   title: 'Spoolhouse — Filament Warehouse',
@@ -64,7 +58,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} bg-background`}
+      className={`${fontVariables} bg-background`}
       suppressHydrationWarning
     >
       <body className="font-sans antialiased">
