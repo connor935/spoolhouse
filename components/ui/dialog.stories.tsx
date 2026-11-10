@@ -28,7 +28,9 @@ const meta = {
           <DialogDescription>This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+          <DialogClose render={<Button variant="outline" />}>
+            Cancel
+          </DialogClose>
           <DialogClose
             render={<Button variant="destructive" />}
             onClick={onConfirm}
