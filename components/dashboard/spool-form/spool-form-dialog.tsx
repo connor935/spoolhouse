@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -189,7 +190,7 @@ export function SpoolFormDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editing ? 'Edit spool' : 'Add new spool'}
@@ -201,127 +202,128 @@ export function SpoolFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <MaterialField
-              value={selectedMaterial}
-              onChange={setSelectedMaterial}
-              isAdmin={isAdmin}
-            />
-
-            <SpoolTypeField
-              spoolTypes={spoolTypes}
-              value={selectedType}
-              onChange={setSelectedType}
-              defaultManufacturer={selectedMaterial?.manufacturer ?? ''}
-              isAdmin={isAdmin}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="fullFilamentWeight">
-                  Full filament weight (g)
-                </Label>
-                <Input
-                  id="fullFilamentWeight"
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={fullGrams}
-                  onChange={(e) => setFullGrams(e.target.value)}
-                />
-                <p className="text-muted-foreground text-xs">
-                  Filament on a new spool, e.g. 1000 g.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="measuredTotalWeight">
-                  Measured total weight (g)
-                </Label>
-                <Input
-                  id="measuredTotalWeight"
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={measuredGrams}
-                  onChange={(e) => {
-                    setMeasuredDirty(true);
-                    setMeasuredGrams(e.target.value);
-                  }}
-                />
-                <p className="text-muted-foreground text-xs">
-                  {editing || measuredDirty
-                    ? 'Put the whole spool on a scale and enter the value.'
-                    : 'Prefilled for a fresh spool (filament + empty spool) — adjust to your scale value.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="border-border bg-secondary/50 flex items-center justify-between rounded-md border px-4 py-3">
-              <span className="text-muted-foreground text-sm">
-                Calculated filament left
-              </span>
-              <span className="text-card-foreground font-mono text-lg font-semibold tabular-nums">
-                {previewLeft !== null ? formatWeight(previewLeft) : '—'}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="pricePaid">Price paid (€)</Label>
-                <Input
-                  id="pricePaid"
-                  inputMode="decimal"
-                  placeholder="optional"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="purchasedAt">Purchased</Label>
-                <Input
-                  id="purchasedAt"
-                  type="date"
-                  value={purchasedAt}
-                  onChange={(e) => setPurchasedAt(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  list="spool-locations"
-                  placeholder="e.g. Dry box 2"
-                  maxLength={100}
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
-                <datalist id="spool-locations">
-                  {locations.map((l) => (
-                    <option key={l} value={l} />
-                  ))}
-                </datalist>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="lastDried">Last dried</Label>
-                <Input
-                  id="lastDried"
-                  type="date"
-                  value={lastDried}
-                  onChange={(e) => setLastDried(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {editing && spool && (
-              <WeighingHistory
-                spoolId={spool.id}
-                emptyWeightGrams={spool.emptyWeightGrams}
-                onUndone={(grams) => setMeasuredGrams(String(grams))}
+          <form onSubmit={handleSubmit} className="contents">
+            <DialogBody className="gap-4">
+              <MaterialField
+                value={selectedMaterial}
+                onChange={setSelectedMaterial}
+                isAdmin={isAdmin}
               />
-            )}
 
-            <DialogFooter className="mt-2">
+              <SpoolTypeField
+                spoolTypes={spoolTypes}
+                value={selectedType}
+                onChange={setSelectedType}
+                defaultManufacturer={selectedMaterial?.manufacturer ?? ''}
+                isAdmin={isAdmin}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="fullFilamentWeight">
+                    Full filament weight (g)
+                  </Label>
+                  <Input
+                    id="fullFilamentWeight"
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={fullGrams}
+                    onChange={(e) => setFullGrams(e.target.value)}
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    Filament on a new spool, e.g. 1000 g.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="measuredTotalWeight">
+                    Measured total weight (g)
+                  </Label>
+                  <Input
+                    id="measuredTotalWeight"
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={measuredGrams}
+                    onChange={(e) => {
+                      setMeasuredDirty(true);
+                      setMeasuredGrams(e.target.value);
+                    }}
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    {editing || measuredDirty
+                      ? 'Put the whole spool on a scale and enter the value.'
+                      : 'Prefilled for a fresh spool (filament + empty spool) — adjust to your scale value.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-border bg-secondary/50 flex items-center justify-between rounded-md border px-4 py-3">
+                <span className="text-muted-foreground text-sm">
+                  Calculated filament left
+                </span>
+                <span className="text-card-foreground font-mono text-lg font-semibold tabular-nums">
+                  {previewLeft !== null ? formatWeight(previewLeft) : '—'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="pricePaid">Price paid (€)</Label>
+                  <Input
+                    id="pricePaid"
+                    inputMode="decimal"
+                    placeholder="optional"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="purchasedAt">Purchased</Label>
+                  <Input
+                    id="purchasedAt"
+                    type="date"
+                    value={purchasedAt}
+                    onChange={(e) => setPurchasedAt(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    list="spool-locations"
+                    placeholder="e.g. Dry box 2"
+                    maxLength={100}
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
+                  <datalist id="spool-locations">
+                    {locations.map((l) => (
+                      <option key={l} value={l} />
+                    ))}
+                  </datalist>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="lastDried">Last dried</Label>
+                  <Input
+                    id="lastDried"
+                    type="date"
+                    value={lastDried}
+                    onChange={(e) => setLastDried(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {editing && spool && (
+                <WeighingHistory
+                  spoolId={spool.id}
+                  emptyWeightGrams={spool.emptyWeightGrams}
+                  onUndone={(grams) => setMeasuredGrams(String(grams))}
+                />
+              )}
+            </DialogBody>
+            <DialogFooter>
               {editing && spool && (
                 <Button
                   type="button"

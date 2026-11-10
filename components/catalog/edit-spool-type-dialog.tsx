@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -77,27 +78,29 @@ export function EditSpoolTypeDialog({
             {describeReviewStatus(isAdmin, spoolType.status, 'spool type')}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <ManufacturerNameFields
-            idPrefix="edit-st"
-            manufacturer={manufacturer}
-            onManufacturerChange={setManufacturer}
-            name={name}
-            onNameChange={setName}
-            nameLabel="Spool name"
-          />
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="edit-st-grams">Empty spool weight (g)</Label>
-            <Input
-              id="edit-st-grams"
-              type="number"
-              step="1"
-              min="1"
-              value={grams}
-              onChange={(e) => setGrams(e.target.value)}
+        <form onSubmit={handleSubmit} className="contents">
+          <DialogBody className="gap-4">
+            <ManufacturerNameFields
+              idPrefix="edit-st"
+              manufacturer={manufacturer}
+              onManufacturerChange={setManufacturer}
+              name={name}
+              onNameChange={setName}
+              nameLabel="Spool name"
             />
-          </div>
-          <DialogFooter className="mt-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="edit-st-grams">Empty spool weight (g)</Label>
+              <Input
+                id="edit-st-grams"
+                type="number"
+                step="1"
+                min="1"
+                value={grams}
+                onChange={(e) => setGrams(e.target.value)}
+              />
+            </div>
+          </DialogBody>
+          <DialogFooter>
             <Button
               type="button"
               variant="ghost"

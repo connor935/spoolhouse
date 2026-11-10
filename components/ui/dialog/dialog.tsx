@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
+import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        'data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs',
+        'data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 bg-scrim fixed inset-0 isolate z-50 duration-100',
         className
       )}
       {...props}
@@ -39,6 +40,10 @@ function DialogOverlay({
   );
 }
 
+// Layout (.dlg): header with a 2px ink rule, padded body, muted footer.
+// Children are DialogHeader / DialogBody / DialogFooter; a <form> wrapping
+// body + footer should be `className="contents"` so they stay flex children
+// and the body is the part that scrolls.
 function DialogContent({
   className,
   children,
@@ -53,7 +58,9 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          'bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl p-4 text-sm ring-1 duration-100 outline-none sm:max-w-sm',
+          'bg-card text-card-foreground border-ink shadow-dialog data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[8px] border text-sm duration-100 outline-none sm:max-w-md',
+          // Keep a long title clear of the close button.
+          'has-[>[data-slot=dialog-close]]:[&_[data-slot=dialog-header]]:pr-14',
           className
         )}
         {...props}
@@ -65,7 +72,7 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="text-muted-foreground absolute top-4 right-4"
                 size="icon-sm"
               />
             }
@@ -79,16 +86,60 @@ function DialogContent({
   );
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
+const dialogHeaderVariants = cva('flex shrink-0 flex-col', {
+  variants: {
+    variant: {
+      // .dlg-h
+      ruled: 'border-ink gap-1.5 border-b-2 px-6 pt-5 pb-4',
+      // Short confirms (Patterns 02): no rule, the footer follows directly.
+      plain: 'gap-2 px-[22px] py-5',
+    },
+  },
+  defaultVariants: { variant: 'ruled' },
+});
+
+function DialogHeader({
+  className,
+  variant,
+  kicker,
+  children,
+  ...props
+}: React.ComponentProps<'div'> &
+  VariantProps<typeof dialogHeaderVariants> & {
+    /** Mono caption above the title, e.g. "Print Farm Friends · just now". */
+    kicker?: React.ReactNode;
+  }) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-2', className)}
+      className={cn(dialogHeaderVariants({ variant }), className)}
+      {...props}
+    >
+      {kicker && (
+        <p data-slot="dialog-kicker" className="kicker mb-0.5">
+          {kicker}
+        </p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+// .dlg-b
+function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn(
+        'flex min-h-0 flex-col gap-5 overflow-y-auto px-6 py-5',
+        className
+      )}
       {...props}
     />
   );
 }
 
+// .dlg-f
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -101,7 +152,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        'bg-muted/50 -mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t p-4 sm:flex-row sm:justify-end',
+        'flex shrink-0 flex-col-reverse gap-2 border-t bg-[color-mix(in_oklab,var(--color-muted)_45%,var(--color-card))] px-6 py-3.5 sm:flex-row sm:items-center sm:justify-end',
         className
       )}
       {...props}
@@ -120,10 +171,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn(
-        'font-heading text-base leading-none font-medium',
-        className
-      )}
+      className={cn('display-h2', className)}
       {...props}
     />
   );
@@ -147,6 +195,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

@@ -2,6 +2,7 @@
 
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -25,14 +26,16 @@ export function BorrowsDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Borrows</DialogTitle>
           <DialogDescription>
             Requests, lends and history across your groups.
           </DialogDescription>
         </DialogHeader>
-        <BorrowsPanel lends={lends} currentUserId={currentUserId} />
+        <DialogBody>
+          <BorrowsPanel lends={lends} currentUserId={currentUserId} />
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );
