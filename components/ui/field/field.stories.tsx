@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import type { ComponentProps } from 'react';
 import { fn } from 'storybook/test';
+import { Button } from '../button';
 import { Input, InputGroup, InputGroupAddon, InputGroupInput } from '../input';
 import {
   Select,
@@ -11,17 +12,11 @@ import {
 } from '../select';
 import { Field, FieldDescription, FieldError, FieldLabel } from './field';
 
-// The `.linkbtn` from the boards ("+ Request new"); the real one comes with
-// the Button restyle.
 function RequestNew({ onClick }: { onClick?: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="text-accent text-xs font-medium hover:underline"
-    >
+    <Button type="button" variant="link" onClick={onClick}>
       + Request new
-    </button>
+    </Button>
   );
 }
 

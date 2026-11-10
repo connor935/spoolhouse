@@ -60,7 +60,7 @@ function RadioGroupCard({
       aria-labelledby={`${id}-title`}
       aria-describedby={description ? `${id}-description` : undefined}
       className={cn(
-        'group/radio border-border bg-card focus-visible:ring-accent/22 data-checked:border-accent flex w-full cursor-pointer items-start gap-2.5 rounded-md border px-3.5 py-3 text-left text-sm transition-[border-color,box-shadow] outline-none focus-visible:ring-3 data-checked:shadow-[0_0_0_1px_var(--color-accent)] data-disabled:cursor-not-allowed data-disabled:opacity-50',
+        'group/radio border-border bg-card focus-visible:ring-accent/22 data-checked:border-accent flex w-full cursor-pointer items-start gap-2.5 rounded-[6px] border px-3.5 py-3 text-left text-sm transition-[border-color,box-shadow] outline-none focus-visible:ring-3 data-checked:shadow-[0_0_0_1px_var(--color-accent)] data-disabled:cursor-not-allowed data-disabled:opacity-50',
         className
       )}
       {...props}

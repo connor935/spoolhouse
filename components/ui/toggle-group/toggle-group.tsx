@@ -33,7 +33,7 @@ function ToggleGroup({
         onValueChange?.(next, details);
       }}
       className={cn(
-        'border-ink bg-card inline-flex w-fit items-stretch overflow-hidden rounded-md border',
+        'border-ink bg-card inline-flex w-fit items-stretch overflow-hidden rounded-[6px] border',
         className
       )}
       {...props}

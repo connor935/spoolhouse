@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 // SelectTrigger: 38px, card background, accent focus ring, destructive ring
 // when aria-invalid. `ink` swaps the light border for the ink one.
 const inputFrameVariants = cva(
-  'flex h-[38px] w-full min-w-0 items-center gap-2 rounded-md border bg-card px-2.5 text-sm text-foreground transition-[border-color,box-shadow] outline-none aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/18',
+  'flex h-[38px] w-full min-w-0 items-center gap-2 rounded-[6px] border bg-card px-2.5 text-sm text-foreground transition-[border-color,box-shadow] outline-none aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/18',
   {
     variants: {
       variant: {
