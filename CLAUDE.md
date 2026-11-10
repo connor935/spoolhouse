@@ -28,8 +28,8 @@ Package manager is **npm** (`package-lock.json`).
 UI redesign in progress on `feature/redesign-spoolhouse-ui` — plan, decisions and design notes in
 `.claude/redesign-plan.md`, mockups in `.claude/design/`.
 
-- Storybook 10 (`@storybook/nextjs-vite`), config in `.storybook/`. Stories sit next to their
-  component (`button.stories.tsx`); theme toggle = `.dark` on `<html>` like next-themes; fonts
+- Storybook 10 (`@storybook/nextjs-vite`), config only in `.storybook/` — components never live
+  there. Stories sit next to their component (see "Component folders"); theme toggle = `.dark` on `<html>` like next-themes; fonts
   come from `lib/fonts.ts` (shared with `app/layout.tsx`).
 - **Every component gets stories + a unit test.** Tests reuse the stories as fixtures:
   `composeStories` from **`@storybook/react`** (not `@storybook/nextjs-vite`, whose runtime needs
@@ -172,6 +172,22 @@ PageShell.**
 `components/` is grouped by feature, one level deep (plus `dashboard/spool-form/`). All folder and
 file names are kebab-case. **Put a new component in the folder of the surface that owns it; only
 promote to `common/` once a second feature imports it.**
+
+**One folder per component** (redesign convention; applied to `ui/` so far, every new or rebuilt
+component follows it, untouched legacy components move when they're rebuilt):
+
+```
+components/ui/button/
+  button.tsx          # the component
+  button.stories.tsx  # Storybook stories (also the test fixtures)
+  button.test.tsx     # unit tests via composeStories
+  index.ts            # export * from './button';  — keeps imports `@/components/ui/button`
+```
+
+Import other components through their folder (`@/components/ui/button` or `../button`), never a
+file inside another component's folder. The shadcn CLI writes flat files, so add primitives with
+**`scripts/ui-add.sh <name>…`** (runs `shadcn add`, then moves each new file into its folder and
+writes the barrel; it reports flat duplicates of existing components instead of overwriting).
 
 | Folder | Contents |
 |---|---|

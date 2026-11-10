@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
-import { Button } from './button';
+import { Button } from '../button';
 import {
   Dialog,
   DialogClose,

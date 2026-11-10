@@ -435,3 +435,12 @@ through the affected flows on `npm run dev` in light + dark + 390px.
   Button, Badge, Input, Dialog (16 tests) — Phase 3 rewrites them with the restyle.
 - Not done / deferred: `@storybook/addon-vitest` browser runner (needs Playwright in CI);
   eslint-plugin-storybook.
+
+### Folder-per-component layout (2026-11-10, same branch)
+
+- Every `components/ui/*` primitive moved to `components/ui/<name>/{<name>.tsx, .stories.tsx,
+  .test.tsx, index.ts}`; barrels keep all `@/components/ui/<name>` imports unchanged.
+- `scripts/ui-add.sh` wraps `shadcn add` for that layout — use it in Phase 3 (3A–3C).
+- Decided against moving UI into `.storybook/` (config-only folder; the app must not import from
+  tooling) and against a separate `packages/ui` (single app, not worth workspace overhead).
+- Feature components adopt the layout when they are rebuilt in Phases 4–6.
