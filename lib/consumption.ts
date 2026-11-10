@@ -109,3 +109,13 @@ export function formatDays(days: number): string {
   if (days < 730) return `${Math.round(days / 30)} months`;
   return 'over 2 years';
 }
+
+// Compact runway for table cells: "5 d", "3 wk", "7 mo", "1 yr", "> 1 yr".
+export function formatRunway(days: number): string {
+  if (days < 1) return '< 1 d';
+  if (days < 14) return `${Math.round(days)} d`;
+  if (days < 90) return `${Math.round(days / 7)} wk`;
+  if (days < 330) return `${Math.round(days / 30)} mo`;
+  if (days < 395) return '1 yr';
+  return '> 1 yr';
+}

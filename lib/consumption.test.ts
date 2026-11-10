@@ -3,6 +3,7 @@ import {
   dailyRate,
   forecastDays,
   formatDays,
+  formatRunway,
   monthlyUsage,
   usageEvents,
 } from '@/lib/consumption';
@@ -79,5 +80,17 @@ describe('formatDays', () => {
     expect(formatDays(20)).toBe('3 weeks');
     expect(formatDays(100)).toBe('3 months');
     expect(formatDays(1000)).toBe('over 2 years');
+  });
+});
+
+describe('formatRunway', () => {
+  it('abbreviates for table cells', () => {
+    expect(formatRunway(0.4)).toBe('< 1 d');
+    expect(formatRunway(5)).toBe('5 d');
+    expect(formatRunway(21)).toBe('3 wk');
+    expect(formatRunway(70)).toBe('10 wk');
+    expect(formatRunway(220)).toBe('7 mo');
+    expect(formatRunway(360)).toBe('1 yr');
+    expect(formatRunway(400)).toBe('> 1 yr');
   });
 });
