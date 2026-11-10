@@ -53,9 +53,7 @@ export function SpoolCard({
               Empty
             </Badge>
           ) : spool.isLow ? (
-            <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive">
-              Low
-            </Badge>
+            <Badge variant="destructive">Low</Badge>
           ) : null}
           {spool.needsDrying && spool.lentToName == null && (
             <button

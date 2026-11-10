@@ -5,7 +5,8 @@ import { fn } from 'storybook/test';
 import { describe, expect, it } from 'vitest';
 import * as stories from './button.stories';
 
-const { Default, Disabled, IconOnly, AllVariants } = composeStories(stories);
+const { Default, Disabled, IconOnly, WithShortcut, AllVariants } =
+  composeStories(stories);
 
 describe('Button', () => {
   it('renders its label as an accessible button', () => {
@@ -36,12 +37,28 @@ describe('Button', () => {
     ).toBeInTheDocument();
   });
 
-  it('marks the rendered element with data-slot="button"', () => {
+  it('keeps a shortcut hint out of the accessible name', () => {
+    render(<WithShortcut />);
+    const button = screen.getByRole('button', { name: 'Add spool' });
+    expect(button).toHaveAttribute('aria-keyshortcuts', 'N');
+    expect(button.querySelector('kbd')).toHaveTextContent('N');
+  });
+
+  it('renders every variant with its own classes and data-slot="button"', () => {
     render(<AllVariants />);
     const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(6);
+    expect(buttons).toHaveLength(8);
     for (const button of buttons) {
       expect(button).toHaveAttribute('data-slot', 'button');
     }
+    const classNames = buttons.map((button) => button.className);
+    expect(new Set(classNames).size).toBe(classNames.length);
+  });
+
+  it('strips the box size from link buttons', () => {
+    render(<Default variant="link" />);
+    const button = screen.getByRole('button', { name: 'Add spool' });
+    expect(button).toHaveClass('h-auto', 'p-0');
+    expect(button).not.toHaveClass('h-9');
   });
 });

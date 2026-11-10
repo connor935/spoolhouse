@@ -4,21 +4,31 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 
+// Design language: `.tag` in .claude/design/spoolhouse.css. Clickable tags
+// ("Dry?") render as a <button> or <a> via `render` and pick up a pointer + hover.
+const tag = {
+  default: 'border-ink text-foreground',
+  muted: 'border-border text-muted-foreground',
+};
+
 const badgeVariants = cva(
-  'group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!',
+  'group/badge inline-flex h-[18px] w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-[3px] border bg-transparent px-[5px] font-mono text-[10.5px] leading-none font-semibold tracking-[0.06em] whitespace-nowrap uppercase transition-[opacity,background-color] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-45 aria-invalid:border-destructive [a&]:cursor-pointer [a&]:hover:opacity-80 [button&]:cursor-pointer [button&]:hover:opacity-80 [&>svg]:pointer-events-none [&>svg]:size-3!',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
-        secondary:
-          'bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80',
+        default: tag.default,
+        muted: tag.muted,
+        accent: 'border-accent text-accent',
+        'accent-solid': 'border-accent bg-accent text-accent-foreground',
         destructive:
-          'bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20',
-        outline:
-          'border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground',
-        ghost:
-          'hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'border-destructive bg-destructive text-destructive-foreground',
+        'destructive-outline': 'border-destructive text-destructive',
+        inverted: 'border-foreground bg-foreground text-background',
+        // Legacy names, kept so existing callers render as tags.
+        outline: tag.default,
+        secondary: tag.muted,
+        ghost: 'border-transparent text-muted-foreground',
+        link: 'border-transparent text-accent underline-offset-4 [a&]:hover:underline',
       },
     },
     defaultVariants: {
