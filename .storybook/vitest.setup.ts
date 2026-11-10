@@ -8,6 +8,22 @@ import * as preview from './preview';
 // same decorators/parameters as Storybook itself.
 setProjectAnnotations([preview]);
 
+// jsdom has no matchMedia. Default to "no query matches" (desktop, light,
+// motion allowed); a test that needs mobile spies on window.matchMedia.
+if (!window.matchMedia) {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}
+
 afterEach(() => {
   cleanup();
 });
