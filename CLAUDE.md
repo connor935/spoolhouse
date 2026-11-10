@@ -195,6 +195,7 @@ writes the barrel; it reports flat duplicates of existing components instead of 
 | `common/` | Cross-cutting widgets used by 2+ features: `confirm-dialog`, `search-input`, `select-field`, `manufacturer-name-fields`, `request-submit-button` |
 | `layout/` | App chrome mounted by layouts/pages: `page-shell`, `app-header`, `user-menu`, `theme-provider`, `live-refresh` |
 | `dashboard/` | The `/` surface: `warehouse-dashboard`, `material-card`, `spool-card`, `material-dialog`, `inventory-filter`, `borrows-dialog`/`borrows-panel`, + `spool-form/` (add/edit-spool dialog, fields, pickers, weighing history) |
+| `inventory/` | Redesign inventory atoms (replace `dashboard/` cards in 06a): `swatch`, `meter`, `weight-display`, `spool-tile`, `material-block`, `reweigh-form` + `reweigh-popover`/`reweigh-sheet`; fixtures in `stories/fixtures/inventory.ts` |
 | `catalog/` | `/materials` + `/spool-types` (+ their admin twins): generic `catalog`/`catalog-row` and the material/spool-type list, row, edit-dialog and request-form pairs |
 | `materials/` | Material-property UI shared by catalog **and** dashboard: `material-properties-section`, `material-property-filter` |
 | `groups/` | `/groups` + `/groups/[id]` + group stock: create/join forms, `group-stock`, sharing settings, owner tools |
