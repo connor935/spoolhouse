@@ -1,14 +1,14 @@
+import { redirect } from 'next/navigation';
 import { getInventory } from '@/app/actions/filaments';
-import { getMyGroups } from '@/app/actions/groups';
 import { getActiveLendsForOwner, getMyLends } from '@/app/actions/lends';
-import { getPropertyDefinitions } from '@/app/actions/properties';
 import { getUsableSpoolTypes } from '@/app/actions/spool-types';
-import { WarehouseDashboard } from '@/components/dashboard/warehouse-dashboard';
+import { OverviewPage } from '@/components/overview/overview-page';
 import { requireUser } from '@/lib/auth-session';
 import { groupInventory } from '@/lib/filament';
-import { getPropertiesForMaterials } from '@/lib/material-properties';
-import { parseConstraints } from '@/lib/property-filter';
-import { getSharedFilaments } from '@/lib/sharing';
+import { legacyDashboardRedirect } from '@/lib/inventory-params';
+import { getNavCounts } from '@/lib/nav-counts';
+import { getRecentActivity } from '@/lib/recent-activity';
+import { getOverviewUsage } from '@/lib/usage-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,63 +18,37 @@ export default async function Page({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await requireUser();
-  const params = await searchParams;
-  const str = (v: string | string[] | undefined) =>
-    typeof v === 'string' ? v : '';
-  const minLeftParsed = Number.parseInt(str(params.minLeft), 10);
-  const initialTab = str(params.tab) || 'stock';
-  const statusParam = str(params.status);
-  const status = (
-    ['empty', 'all'].includes(statusParam) ? statusParam : 'in-stock'
-  ) as 'in-stock' | 'empty' | 'all';
-  const initialFilters = {
-    q: str(params.q),
-    status,
-    filamentType: str(params.type) || null,
-    minLeftGrams: Number.isNaN(minLeftParsed) ? null : minLeftParsed,
-    hideLent: str(params.hideLent) === '1',
-    propertyConstraints: parseConstraints(str(params.props)),
-  };
-  const [
+  // Links from the old tabbed dashboard (`/?tab=…&q=…`) moved to their pages.
+  const legacy = legacyDashboardRedirect(await searchParams);
+  if (legacy) redirect(legacy);
+
+  const now = new Date();
+  const [rows, activeLends, lends, spoolTypes, usage, activity, counts] =
+    await Promise.all([
+      getInventory(),
+      getActiveLendsForOwner(),
+      getMyLends(),
+      getUsableSpoolTypes(),
+      getOverviewUsage(user.id, now),
+      getRecentActivity(user.id),
+      getNavCounts(),
+    ]);
+  const inventory = groupInventory(
     rows,
-    spoolTypes,
-    activeLends,
-    myGroups,
-    myLends,
-    propertyDefinitions,
-  ] = await Promise.all([
-    getInventory(),
-    getUsableSpoolTypes(),
-    getActiveLendsForOwner(),
-    getMyGroups(),
-    getMyLends(),
-    getPropertyDefinitions(),
-  ]);
-  const groups = await Promise.all(
-    myGroups.map(async ({ group }) => ({
-      id: group.id,
-      name: group.name,
-      stock: await getSharedFilaments(group.id),
-    }))
+    new Map(activeLends.map((l) => [l.spoolId, l.borrowerName]))
   );
-  const lentToBySpoolId = new Map(
-    activeLends.map((l) => [l.spoolId, l.borrowerName])
-  );
-  const inventory = groupInventory(rows, lentToBySpoolId);
-  const propertiesByMaterialId = await getPropertiesForMaterials(
-    inventory.map((m) => m.material.id)
-  );
+
   return (
-    <WarehouseDashboard
+    <OverviewPage
+      userId={user.id}
+      isAdmin={user.role === 'admin'}
+      now={now}
       inventory={inventory}
+      usage={usage}
+      activity={activity}
+      lends={lends}
+      groups={counts.groups}
       spoolTypes={spoolTypes}
-      groups={groups}
-      myLends={myLends}
-      user={{ id: user.id, name: user.name, isAdmin: user.role === 'admin' }}
-      initialTab={initialTab}
-      initialFilters={initialFilters}
-      propertiesByMaterialId={propertiesByMaterialId}
-      propertyDefinitions={propertyDefinitions}
     />
   );
 }

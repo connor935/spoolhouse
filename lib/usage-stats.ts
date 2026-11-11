@@ -13,6 +13,7 @@ import {
   type UsageEvent,
 } from '@/lib/consumption';
 import { pricePerGramCents, type MaterialInventory } from '@/lib/filament';
+import { usageDelta, type UsageDelta } from '@/lib/overview';
 
 // Usage and cost figures from the weighing history of the user's own spools
 // (weighings by a borrower count too: it is the spool that empties). Read
@@ -66,7 +67,29 @@ export type MaterialUsageHistory = MaterialUsage & {
   monthly: { month: string; grams: number; costCents: number }[];
 };
 
-// One material's usage for its detail page: the dialog figures plus the
+// Per material: recent usage and pace, for the inventory's run-out forecasts.
+export async function getMaterialUsage(
+  userId: string,
+  now = new Date()
+): Promise<Record<string, MaterialUsage>> {
+  const { events, meta, trackedSince } = await loadUsage(userId);
+  if (!trackedSince) return {};
+  const byMaterial = groupEvents(
+    events,
+    (e) => meta.get(e.spoolId)!.materialId
+  );
+  const since30 = new Date(now.getTime() - 30 * DAY_MS);
+  const result: Record<string, MaterialUsage> = {};
+  for (const [materialId, list] of byMaterial) {
+    result[materialId] = {
+      usedLast30Grams: sumGrams(eventsSince(list, since30)),
+      gramsPerDay: dailyRate(list, now, trackedSince),
+    };
+  }
+  return result;
+}
+
+// One material's usage for its detail page: recent figures plus the
 // 12-month chart, from the user's own spools of it.
 export async function getMaterialUsageHistory(
   userId: string,
@@ -91,6 +114,45 @@ export async function getMaterialUsageHistory(
       grams: m.value,
       costCents: cost12[i].value,
     })),
+  };
+}
+
+export type OverviewUsage = {
+  delta: UsageDelta;
+  /** Last 12 months, oldest first (UsageBarChart data). */
+  monthly: { month: string; grams: number; costCents: number }[];
+  /** Pace per material, for the "Running low" forecast. */
+  gramsPerDayByMaterial: Record<string, number>;
+};
+
+// Overview: the 30-day readout with its delta, the compact monthly chart and
+// the per-material pace — one read of the weighing history for all three.
+export async function getOverviewUsage(
+  userId: string,
+  now = new Date()
+): Promise<OverviewUsage> {
+  const { events, meta, trackedSince } = await loadUsage(userId);
+  const cost = (e: UsageEvent) =>
+    e.grams * (meta.get(e.spoolId)?.perGramCents ?? 0);
+  const grams12 = monthlyUsage(events, 12, now);
+  const cost12 = monthlyUsage(events, 12, now, cost);
+  const gramsPerDayByMaterial: Record<string, number> = {};
+  if (trackedSince) {
+    const byMaterial = groupEvents(
+      events,
+      (e) => meta.get(e.spoolId)!.materialId
+    );
+    for (const [materialId, list] of byMaterial)
+      gramsPerDayByMaterial[materialId] = dailyRate(list, now, trackedSince);
+  }
+  return {
+    delta: usageDelta(events, now),
+    monthly: grams12.map((m, i) => ({
+      month: m.month,
+      grams: m.value,
+      costCents: cost12[i].value,
+    })),
+    gramsPerDayByMaterial,
   };
 }
 

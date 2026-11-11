@@ -66,6 +66,12 @@ export default async function MaterialPage({
       inventory.flatMap((m) => m.spools.flatMap((s) => s.location ?? []))
     ),
   ].sort((a, b) => a.localeCompare(b));
+  // Kept off SpoolView, as on /inventory: the spool editor shows it read-only.
+  const tagUidBySpoolId = Object.fromEntries(
+    rows.flatMap(({ spool }) =>
+      spool.materialId === id && spool.tagUid ? [[spool.id, spool.tagUid]] : []
+    )
+  );
   const from = typeof query.from === 'string' ? query.from : '';
 
   return (
@@ -82,6 +88,7 @@ export default async function MaterialPage({
       groupStock={groupStock}
       spoolTypes={spoolTypes}
       locations={locations}
+      tagUidBySpoolId={tagUidBySpoolId}
     />
   );
 }

@@ -18,9 +18,9 @@ import {
 import { EditMaterialDialog } from '@/components/catalog/edit-material-dialog';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import type { Crumb } from '@/components/common/page-header';
-import { SpoolFormDialog } from '@/components/dashboard/spool-form/spool-form-dialog';
 import { ReweighPopover } from '@/components/inventory/reweigh-popover';
 import { ReweighSheet } from '@/components/inventory/reweigh-sheet';
+import { SpoolEditor } from '@/components/inventory/spool-editor';
 import { spoolNumber } from '@/components/inventory/spool-tile';
 import { materialGroupStockKey } from '@/components/materials/material-group-stock-table';
 import { useAsyncAction, useKeyedAsyncAction } from '@/hooks/use-async-action';
@@ -49,6 +49,8 @@ type MaterialDetailContainerProps = {
   /** For the add/edit spool dialog. */
   spoolTypes: SpoolType[];
   locations: string[];
+  /** NFC tag per spool id, shown read-only in the spool editor. */
+  tagUidBySpoolId: Record<string, string>;
 };
 
 type Reweigh = { spoolId: string; number: number; anchor: HTMLElement };
@@ -70,6 +72,7 @@ function MaterialDetailContainer({
   groupStock,
   spoolTypes,
   locations,
+  tagUidBySpoolId,
 }: MaterialDetailContainerProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -169,6 +172,11 @@ function MaterialDetailContainer({
       onSuccess: () => router.push('/admin/materials'),
     });
   }
+
+  // Spools arrive oldest first, which is what numbers them (as on the tiles).
+  const editedNumber = spoolForm.spool
+    ? spools.findIndex((s) => s.id === spoolForm.spool!.id) + 1 || null
+    : null;
 
   const reweighTitle = reweigh
     ? `Re-weigh ${spoolNumber(reweigh.number)} ${material.name}`
@@ -276,15 +284,20 @@ function MaterialDetailContainer({
           />
         ))}
 
-      <SpoolFormDialog
+      <SpoolEditor
         key={`${spoolForm.spool?.id ?? 'create'}-${spoolForm.instance}`}
         open={spoolForm.open}
         onOpenChange={(open) => setSpoolForm((f) => ({ ...f, open }))}
         spool={spoolForm.spool}
+        number={editedNumber}
+        tagUid={
+          spoolForm.spool ? (tagUidBySpoolId[spoolForm.spool.id] ?? null) : null
+        }
         initialMaterial={material}
         spoolTypes={spoolTypes}
         locations={locations}
         isAdmin={viewer.isAdmin}
+        addKicker="06 — Materials / New spool"
       />
 
       {editOpen && (
