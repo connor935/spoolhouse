@@ -34,20 +34,15 @@ script runs husky, which points `core.hooksPath` at `.husky/_`. Check with
 `git config core.hooksPath` (must print `.husky/_`); if it doesn't, run `npm run prepare`.
 Do this in every fresh clone **and every git worktree's** first install.
 
-- **pre-commit** (`.husky/pre-commit`): `lint-staged` (config in `package.json`) runs
-  `oxlint --fix` + `prettier --write` on the staged files and re-stages the fixes, then
-  `npm test` (Vitest, a few seconds).
-- **pre-push** (`.husky/pre-push`): runs the Playwright suite (`npm run test:e2e`, ~1–2 min,
-  needs `npx playwright install chromium` once) when the pushed commits touch app code
-  (`app/`, `components/`, `lib/`, `e2e/`, `scripts/`, configs, dependencies); docs/notes-only
-  pushes skip it.
+- **pre-commit**: oxlint --fix + Prettier on the staged files (lint-staged, fixes re-staged),
+  then `npm test`. **pre-push**: Playwright (`npm run test:e2e`, ~1–2 min) when the pushed
+  commits touch app code; docs-only pushes skip it.
 - **Never bypass them** (`--no-verify`, `HUSKY=0`, unsetting `core.hooksPath`). A failing hook
-  means: fix the cause, then commit/push again. CI repeats the checks (`format:check` included)
-  as a backstop; only CI sets `HUSKY=0` (Docker builds have no `.git`, so husky skips itself).
-- Hooks run in a non-interactive shell: if git can't find `node`/`npx` (fnm/nvm), put the
-  PATH setup in `~/.config/husky/init.sh`, which husky sources before every hook.
-- `.git-blame-ignore-revs` lists the one-off repo-wide formatting commit; enable it with
-  `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
+  means: fix the cause, then commit/push again. CI repeats the checks as a backstop; only CI
+  sets `HUSKY=0` (Docker builds have no `.git`, so husky skips itself).
+- Full details — hook table, troubleshooting (`~/.config/husky/init.sh` for fnm/nvm PATH),
+  scripts, PR checklist — live in **[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)**; keep it
+  in sync when hooks or scripts change.
 
 ## Storybook & component tests
 
