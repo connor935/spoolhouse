@@ -21,9 +21,11 @@
     "admin:create": "tsx scripts/create-admin.ts",
     "db:import": "tsx scripts/import-spoolmandb.ts",
     "token:create": "tsx scripts/create-api-token.ts",
-    "format": "prettier '*/**/*.{js,ts,mjs,cjs,json,tsx}' --write",
+    "format": "prettier . --write",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "format:check": "prettier . --check",
+    "prepare": "husky"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -68,7 +70,9 @@
     "@vitejs/plugin-react": "6.3.0",
     "drizzle-kit": "^0.31.11",
     "eslint": "^10.14.0",
+    "husky": "^9.1.7",
     "jsdom": "31.0.0",
+    "lint-staged": "^17.6.0",
     "oxlint": "^1.90.0",
     "postcss": "^8.5",
     "prettier": "^3.9.10",
@@ -85,5 +89,12 @@
       "esbuild": "^0.25.12"
     },
     "minimatch@>=7 <11.0.1": "^11.0.5"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,ts,tsx}": [
+      "oxlint --fix --ignore-path .gitignore",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml}": "prettier --write"
   }
 }

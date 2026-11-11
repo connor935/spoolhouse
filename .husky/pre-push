@@ -1,0 +1,25 @@
+# Runs the Playwright e2e suite (production build + throwaway DB, ~1-2 min)
+# when the commits being pushed touch app code. Docs/notes-only pushes skip it.
+# Never bypass with --no-verify: fix what fails and push again.
+
+zero=0000000000000000000000000000000000000000
+app_paths='^(app|components|lib|e2e|hooks|public|scripts)/|^(proxy|instrumentation)\.ts$|^(package(-lock)?\.json|next\.config\.mjs|playwright\.config\.ts|postcss\.config\.mjs|tsconfig\.json)$'
+
+changed=''
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Branch deletion: nothing to test.
+  [ "$local_sha" = "$zero" ] && continue
+  # Commits not on any remote yet (works for new and existing branches).
+  for commit in $(git rev-list "$local_sha" --not --remotes); do
+    changed="$changed
+$(git diff-tree --no-commit-id --name-only -r --root "$commit")"
+  done
+done
+
+if ! printf '%s\n' "$changed" | grep -Eq "$app_paths"; then
+  echo "pre-push: no app changes in the pushed commits, skipping Playwright."
+  exit 0
+fi
+
+echo "pre-push: app changes found, running the Playwright e2e suite..."
+npm run test:e2e

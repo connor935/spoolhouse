@@ -28,8 +28,13 @@ export function useAsyncAction() {
   const [pending, setPending] = useState(false);
 
   const run = useCallback(
-    async <T,>(fn: () => Promise<T>, opts: RunOptions<T> = {}) => {
-      const { success, refresh = true, resetOnSuccess = true, onSuccess } = opts;
+    async <T>(fn: () => Promise<T>, opts: RunOptions<T> = {}) => {
+      const {
+        success,
+        refresh = true,
+        resetOnSuccess = true,
+        onSuccess,
+      } = opts;
       setPending(true);
       try {
         const result = await fn();
@@ -57,7 +62,7 @@ export function useKeyedAsyncAction<K = string>() {
   const [pendingKey, setPendingKey] = useState<K | null>(null);
 
   const run = useCallback(
-    async <T,>(key: K, fn: () => Promise<T>, opts: RunOptions<T> = {}) => {
+    async <T>(key: K, fn: () => Promise<T>, opts: RunOptions<T> = {}) => {
       const { success, refresh = true, onSuccess } = opts;
       setPendingKey(key);
       try {

@@ -33,14 +33,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # HUSKY=0: CI needs no local git hooks; it runs the same checks below.
       - name: Install dependencies
         run: npm ci
+        env:
+          HUSKY: '0'
 
       - name: Typecheck
         run: npx tsc --noEmit
 
       - name: Lint
         run: npx oxlint . --ignore-path .gitignore
+
+      # Backstop for the pre-commit hook, which --no-verify can skip.
+      - name: Formatting
+        run: npm run format:check
 
       - name: Test
         run: npm test
