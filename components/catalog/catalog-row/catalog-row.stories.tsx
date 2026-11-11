@@ -278,7 +278,9 @@ export const BoardCatalogMaterials: Story = {
             </Button>
           )}
           <span className="kicker ml-auto">
-            <span className="text-foreground">{fmt(catalogCounts.matching)}</span>{' '}
+            <span className="text-foreground">
+              {fmt(catalogCounts.matching)}
+            </span>{' '}
             of {fmt(catalogCounts.total)}
           </span>
         </div>
@@ -362,7 +364,9 @@ export const BoardAdminTable: Story = {
   decorators: [],
   render: function Render() {
     const [status, setStatus] = React.useState(['all']);
-    const pending = adminMaterialRows.filter((r) => r.material.status === 'pending');
+    const pending = adminMaterialRows.filter(
+      (r) => r.material.status === 'pending'
+    );
     const rejected = adminMaterialRows.filter(
       (r) => r.material.status === 'rejected'
     );
@@ -396,49 +400,49 @@ export const BoardAdminTable: Story = {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map(({ material: m, submittedBy, submittedAgo, spoolCount }) => (
-              <TableRow key={m.id}>
-                <TableCell>
-                  <span className="flex items-center gap-2.5">
-                    <Swatch color={m.color} decorative />
-                    <span>
-                      <span className="text-muted-foreground">
-                        {m.manufacturer} ·
-                      </span>{' '}
-                      <span className="font-medium">{m.name}</span>
+            {rows.map(
+              ({ material: m, submittedBy, submittedAgo, spoolCount }) => (
+                <TableRow key={m.id}>
+                  <TableCell>
+                    <span className="flex items-center gap-2.5">
+                      <Swatch color={m.color} decorative />
+                      <span>
+                        <span className="text-muted-foreground">
+                          {m.manufacturer} ·
+                        </span>{' '}
+                        <span className="font-medium">{m.name}</span>
+                      </span>
                     </span>
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Badge>{m.filamentType}</Badge>
-                </TableCell>
-                <TableCell>
-                  <StatusBadge
-                    status={
-                      m.status as 'approved' | 'pending' | 'rejected'
-                    }
-                  />
-                </TableCell>
-                <TableCell>
-                  <span className="flex flex-col gap-0.5">
-                    <span>{submittedBy ?? 'Imported'}</span>
-                    <span className="kicker">{submittedAgo}</span>
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <CatalogRowActions
-                    status={m.status}
-                    name={m.name}
-                    {...adminCallbacks}
-                    deleteBlockedReason={
-                      spoolCount > 0
-                        ? `In use by ${spoolCount} ${spoolCount === 1 ? 'spool' : 'spools'}`
-                        : undefined
-                    }
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell>
+                    <Badge>{m.filamentType}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge
+                      status={m.status as 'approved' | 'pending' | 'rejected'}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <span className="flex flex-col gap-0.5">
+                      <span>{submittedBy ?? 'Imported'}</span>
+                      <span className="kicker">{submittedAgo}</span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <CatalogRowActions
+                      status={m.status}
+                      name={m.name}
+                      {...adminCallbacks}
+                      deleteBlockedReason={
+                        spoolCount > 0
+                          ? `In use by ${spoolCount} ${spoolCount === 1 ? 'spool' : 'spools'}`
+                          : undefined
+                      }
+                    />
+                  </TableCell>
+                </TableRow>
+              )
+            )}
           </TableBody>
         </Table>
       </div>

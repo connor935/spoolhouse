@@ -57,7 +57,9 @@ function DuplicateCandidateRow({
   const name = (
     <>
       {/* The space sits outside the span so it survives in the link's name. */}
-      <span className="text-muted-foreground">{material.manufacturer} ·</span>{' '}
+      <span className="text-muted-foreground">
+        {material.manufacturer} ·
+      </span>{' '}
       {material.name}
     </>
   );

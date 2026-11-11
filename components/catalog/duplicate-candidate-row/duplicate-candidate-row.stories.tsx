@@ -29,7 +29,9 @@ export const CloseColor: Story = {
 
 export const Similar: Story = { args: { spoolCount: undefined, ...similar } };
 
-export const AsLink: Story = { args: { href: '#materials/dup-galaxy-blue-petg' } };
+export const AsLink: Story = {
+  args: { href: '#materials/dup-galaxy-blue-petg' },
+};
 
 /** ReviewQueue board: the "Possible duplicates" list. */
 export const List: Story = {

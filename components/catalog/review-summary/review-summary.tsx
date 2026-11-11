@@ -47,9 +47,7 @@ function ReviewSummary({
 }: ReviewSummaryProps) {
   const hex = material.color?.toUpperCase() ?? null;
   const label = (text: string) => <span className="kicker">{text}</span>;
-  const aside = (text: string) => (
-    <span className="kicker ml-1.5">{text}</span>
-  );
+  const aside = (text: string) => <span className="kicker ml-1.5">{text}</span>;
 
   return (
     <div
@@ -83,7 +81,9 @@ function ReviewSummary({
               : 'new manufacturer'
           )}
         </KeyValueRow>
-        <KeyValueRow label={label('Material name')}>{material.name}</KeyValueRow>
+        <KeyValueRow label={label('Material name')}>
+          {material.name}
+        </KeyValueRow>
         <KeyValueRow label={label('Type')}>
           <Badge>{material.filamentType}</Badge>
         </KeyValueRow>

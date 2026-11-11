@@ -41,7 +41,12 @@ export const NewManufacturer: Story = {
 };
 
 export const Imported: Story = {
-  args: { submitter: null, submittedAgo: '3 d ago', spoolCount: 4, spoolOwners: [] },
+  args: {
+    submitter: null,
+    submittedAgo: '3 d ago',
+    spoolCount: 4,
+    spoolOwners: [],
+  },
 };
 
 export const NoColour: Story = {
