@@ -1,7 +1,10 @@
 'use server';
 
+import { asc, count, eq, or } from 'drizzle-orm';
+import { db } from '@/lib/db';
+import { requireUser } from '@/lib/auth-session';
 import { spoolTypes, spools, type SpoolType } from '@/lib/db/schema';
-import { createCatalogActions } from '@/lib/catalog';
+import { createCatalogActions, type AdminCatalogRow } from '@/lib/catalog';
 import { parseOrThrow, spoolTypeSchema } from '@/lib/schemas';
 
 type SpoolTypeInput = {
@@ -32,9 +35,27 @@ export async function getUsableSpoolTypes() {
   return actions.getUsable();
 }
 
-// Catalog view: approved for everyone + the user's own non-approved submissions.
-export async function getSpoolTypeCatalog() {
-  return actions.getUsable();
+// Catalog view: approved for everyone + the user's own non-approved
+// submissions, with how many spools (anyone's) use each — "In use · 9".
+export async function getSpoolTypeCatalog(): Promise<SpoolTypeWithUsage[]> {
+  const user = await requireUser();
+  const rows = await db
+    .select({ spoolType: spoolTypes, spoolCount: count(spools.id) })
+    .from(spoolTypes)
+    .leftJoin(spools, eq(spools.spoolTypeId, spoolTypes.id))
+    .where(
+      or(
+        eq(spoolTypes.status, 'approved'),
+        eq(spoolTypes.submittedById, user.id)
+      )
+    )
+    .groupBy(spoolTypes.id)
+    .orderBy(
+      asc(spoolTypes.manufacturer),
+      asc(spoolTypes.name),
+      asc(spoolTypes.id)
+    );
+  return rows.map((r) => ({ ...r.spoolType, spoolCount: r.spoolCount }));
 }
 
 // Any user can request a new spool type; it lands as `pending` and is
@@ -63,10 +84,10 @@ export async function rejectSpoolType(id: string) {
 
 // --- Edit & delete (I.3) ---
 
-// Full catalog for the admin management list, incl. how many spools
-// reference each spool type (governs whether it can be deleted).
-export async function getAllSpoolTypesForAdmin(): Promise<
-  SpoolTypeWithUsage[]
+// /admin/spool-types: every row, pending first, with submitter name and the
+// spool count behind the delete guard. Unpaged — the catalog stays small.
+export async function getSpoolTypesForAdmin(): Promise<
+  AdminCatalogRow<SpoolType>[]
 > {
   return actions.getAllForAdmin();
 }

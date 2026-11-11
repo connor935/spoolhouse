@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as stories from './review-summary.stories';
 
-const { Pending, NewManufacturer, Imported, NoColour } =
+const { Pending, NewManufacturer, Imported, NoColour, SpoolType } =
   composeStories(stories);
 
 describe('ReviewSummary', () => {
@@ -48,5 +48,13 @@ describe('ReviewSummary', () => {
     expect(
       screen.getByText('Sunlu', { selector: '.kicker' })
     ).toBeInTheDocument();
+  });
+
+  it('reviews a spool type without colour', () => {
+    render(<SpoolType />);
+    expect(screen.getByText('Spool type name')).toBeInTheDocument();
+    expect(screen.getByText('Empty spool')).toBeInTheDocument();
+    expect(screen.getByText('existing · 3 spool types')).toBeInTheDocument();
+    expect(screen.queryByText('Color')).toBeNull();
   });
 });

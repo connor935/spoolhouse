@@ -54,6 +54,15 @@ export const WithRequest: Story = {
   args: { requestedBy: { 'spool-gb-3': 'Anna' } },
 };
 
+/** Long requester names truncate on the shelf. */
+export const LongRequester: Story = {
+  args: {
+    requestedBy: {
+      'spool-gb-3': 'Maximiliane Alexandra von Hohenzollern-Sigmaringen',
+    },
+  },
+};
+
 /** MobileInventory board: collapsible card with compact rows. */
 export const Card: Story = {
   args: { layout: 'card' },
@@ -65,6 +74,17 @@ export const Card: Story = {
     ),
   ],
   globals: { viewport: { value: 'mobile' } },
+};
+
+/** Long requester names truncate in the compact card rows. */
+export const CardLongRequester: Story = {
+  ...Card,
+  args: {
+    layout: 'card',
+    requestedBy: {
+      'spool-gb-3': 'Maximiliane Alexandra von Hohenzollern-Sigmaringen',
+    },
+  },
 };
 
 export const CardCollapsed: Story = {

@@ -99,15 +99,6 @@ test.describe('as a member', () => {
     await page.goto('/admin/users');
     await expect(page).toHaveURL('/');
   });
-
-  test('a link to a page not built yet lands on the dashboard', async ({
-    page,
-  }) => {
-    for (const path of ['/inventory']) {
-      await page.goto(path);
-      await expect(page).toHaveURL('/');
-    }
-  });
 });
 
 test.describe('as an admin', () => {

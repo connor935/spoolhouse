@@ -1,7 +1,8 @@
 import 'server-only';
 
 import { db } from '@/lib/db';
-import { spools } from '@/lib/db/schema';
+import { spools, user } from '@/lib/db/schema';
+import { pendingFirst } from '@/lib/catalog-status';
 import { requireAdmin, requireUser } from '@/lib/auth-session';
 import { and, asc, count, eq, ne, or } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -17,6 +18,13 @@ type CatalogRow = {
   id: string;
   status: string;
   submittedById: string | null;
+};
+
+export type AdminCatalogRow<TRow> = {
+  row: TRow;
+  /** null for imported rows. */
+  submitterName: string | null;
+  spoolCount: number;
 };
 
 type CatalogConfig<TInput> = {
@@ -126,17 +134,33 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     revalidateCatalog();
   }
 
-  // Full catalog for the admin management list, incl. how many spools
-  // reference each row (governs whether it can be deleted).
-  async function getAllForAdmin(): Promise<(TRow & { spoolCount: number })[]> {
+  // Full catalog for the admin table, pending first, with the submitter's
+  // name and how many spools reference each row (governs whether it can be
+  // deleted). Only for the small spool-type catalog: materials are paged in
+  // SQL (searchMaterialsForAdmin).
+  async function getAllForAdmin(): Promise<AdminCatalogRow<TRow>[]> {
     await requireAdmin();
     const rows = await db
-      .select({ row: table, spoolCount: count(spools.id) })
+      .select({
+        row: table,
+        submitterName: user.name,
+        spoolCount: count(spools.id),
+      })
       .from(table)
       .leftJoin(spools, eq(spoolFkColumn, table.id))
-      .groupBy(table.id)
-      .orderBy(asc(table.manufacturer), asc(table.name));
-    return rows.map((r) => ({ ...(r.row as TRow), spoolCount: r.spoolCount }));
+      .leftJoin(user, eq(table.submittedById, user.id))
+      .groupBy(table.id, user.name)
+      .orderBy(
+        pendingFirst(table.status),
+        asc(table.manufacturer),
+        asc(table.name),
+        asc(table.id)
+      );
+    return rows.map((r) => ({
+      row: r.row as TRow,
+      submitterName: r.submitterName,
+      spoolCount: r.spoolCount,
+    }));
   }
 
   // Admin can edit any row, anytime, without changing its status. The

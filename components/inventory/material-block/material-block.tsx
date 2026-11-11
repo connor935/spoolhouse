@@ -19,6 +19,7 @@ import {
   SpoolStatusTags,
   SpoolTile,
   spoolNumber,
+  TextBadge,
 } from '../spool-tile';
 import { Swatch } from '../swatch';
 import { WeightDisplay } from '../weight-display';
@@ -234,15 +235,20 @@ function SpoolRow({
   const label = spoolNumber(number);
   const content = (
     <>
-      <span className="flex items-center gap-2">
-        <span className="text-muted-foreground w-[26px] font-mono text-xs">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="text-muted-foreground w-[26px] shrink-0 font-mono text-xs">
           {label}
         </span>
         <WeightDisplay
           grams={spool.filamentLeftGrams}
-          className="min-w-[58px] font-mono text-sm font-semibold"
+          className="min-w-[58px] shrink-0 font-mono text-sm font-semibold"
         />
-        {spool.location && <Badge variant="inverted">{spool.location}</Badge>}
+        {spool.location && (
+          // Capped rather than shrinking first, so a long tag can't squeeze it.
+          <TextBadge variant="inverted" className="max-w-[40%] shrink-0">
+            {spool.location}
+          </TextBadge>
+        )}
         <SpoolStatusTags spool={spool} requestedByName={requestedByName} />
       </span>
       <Meter

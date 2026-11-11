@@ -6,6 +6,7 @@ import {
   formatWeight,
   groupInventory,
   lendUsageGrams,
+  materialStockSummary,
   needsDrying,
   parsePriceCents,
   toSpoolView,
@@ -225,5 +226,52 @@ describe('lendUsageGrams', () => {
         currentWeightGrams: 900,
       })
     ).toBeNull();
+  });
+});
+
+describe('materialStockSummary', () => {
+  const st = spoolType(200);
+  const view = (over: Partial<Spool>) => toSpoolView(spool(over), st);
+
+  it('adds up left grams, value and the average price per kg of stocked spools', () => {
+    const summary = materialStockSummary([
+      // 742 g left of a 1 kg spool bought for €19.99
+      view({ id: 'a', measuredTotalWeightGrams: 942, pricePaidCents: 1999 }),
+      // 418 g left, €24.00
+      view({ id: 'b', measuredTotalWeightGrams: 618, pricePaidCents: 2400 }),
+      // 1000 g left, unpriced
+      view({ id: 'c', measuredTotalWeightGrams: 1200 }),
+    ]);
+    expect(summary.leftGrams).toBe(2160);
+    expect(summary.stockedCount).toBe(3);
+    expect(summary.pricedCount).toBe(2);
+    expect(summary.valueCents).toBeCloseTo(742 * 1.999 + 418 * 2.4, 6);
+    // (19.99 + 24.00) € over 2 kg nominal
+    expect(summary.avgPricePerKgCents).toBeCloseTo(2199.5, 6);
+  });
+
+  it('leaves empty spools out of the stocked and priced counts', () => {
+    const summary = materialStockSummary([
+      view({ id: 'a', measuredTotalWeightGrams: 600, pricePaidCents: 2000 }),
+      view({
+        id: 'empty',
+        measuredTotalWeightGrams: 203,
+        pricePaidCents: 2000,
+      }),
+    ]);
+    expect(summary.stockedCount).toBe(1);
+    expect(summary.pricedCount).toBe(1);
+    expect(summary.leftGrams).toBe(403);
+  });
+
+  it('reports no value or average without a priced spool', () => {
+    expect(materialStockSummary([view({})])).toEqual({
+      leftGrams: 1000,
+      stockedCount: 1,
+      pricedCount: 0,
+      valueCents: null,
+      avgPricePerKgCents: null,
+    });
+    expect(materialStockSummary([]).leftGrams).toBe(0);
   });
 });

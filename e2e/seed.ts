@@ -14,6 +14,7 @@ import {
   notifications,
   spools,
   spoolTypes,
+  spoolWeighings,
   user,
 } from '../lib/db/schema';
 import { isPortOpen, withLocalDb } from '../scripts/local-db.mjs';
@@ -106,7 +107,7 @@ async function seed() {
     fullFilamentWeightGrams: 1000,
     measuredTotalWeightGrams: 250 + left,
   });
-  const [memberSpool] = await db
+  const seededSpools = await db
     .insert(spools)
     .values([
       spool(memberId, black.id, 800),
@@ -114,7 +115,16 @@ async function seed() {
       spool(memberId, white.id, 0),
       spool(adminId, black.id, 600),
     ])
-    .returning({ id: spools.id });
+    .returning({ id: spools.id, grams: spools.measuredTotalWeightGrams });
+  const [memberSpool] = seededSpools;
+  // One baseline weighing per spool, like migration 0010 backfilled.
+  await db.insert(spoolWeighings).values(
+    seededSpools.map((s) => ({
+      spoolId: s.id,
+      grams: s.grams,
+      measuredAt: new Date(Date.now() - 2 * 86_400_000),
+    }))
+  );
 
   // The social spec's pair: the lender owns two spools, the borrower one.
   const lenderId = await createUser(users.lender, 'user');

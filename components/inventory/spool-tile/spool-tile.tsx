@@ -31,6 +31,28 @@ type SpoolStatusTagsProps = {
   onMarkDried?: () => void;
 };
 
+/**
+ * A badge carrying user text (a name, a location): shrinks with its row and
+ * ends in an ellipsis instead of overflowing the tile; the title has it all.
+ */
+function TextBadge({
+  children,
+  className,
+  ...props
+}: Omit<React.ComponentProps<typeof Badge>, 'children'> & {
+  children: string;
+}) {
+  return (
+    <Badge
+      title={children}
+      className={cn('max-w-full min-w-0 shrink', className)}
+      {...props}
+    >
+      <span className="min-w-0 truncate">{children}</span>
+    </Badge>
+  );
+}
+
 /** The status tags of one spool, shared by tiles and the compact mobile rows. */
 function SpoolStatusTags({
   spool,
@@ -78,30 +100,30 @@ function SpoolStatusTags({
   }
   if (spool.lentToName) {
     tags.push(
-      <Badge key="lent" variant="accent">
-        Lent · {spool.lentToName}
-      </Badge>
+      <TextBadge key="lent" variant="accent">
+        {`Lent · ${spool.lentToName}`}
+      </TextBadge>
     );
   }
   if (requestedByName) {
     tags.push(
-      <Badge key="req" variant="muted">
-        Req · {requestedByName}
-      </Badge>
+      <TextBadge key="req" variant="muted">
+        {`Req · ${requestedByName}`}
+      </TextBadge>
     );
   }
   if (borrowedFromName) {
     tags.push(
-      <Badge key="borrowed" variant="default">
-        Borrowed · {borrowedFromName}
-      </Badge>
+      <TextBadge key="borrowed" variant="default">
+        {`Borrowed · ${borrowedFromName}`}
+      </TextBadge>
     );
   }
   if (tags.length === 0) return null;
   return (
     <span
       data-slot="spool-status-tags"
-      className="flex flex-wrap justify-end gap-1"
+      className="flex min-w-0 flex-wrap justify-end gap-1"
     >
       {tags}
     </span>
@@ -175,17 +197,19 @@ function SpoolTile({
         />
       )}
       <div className="flex h-6 items-center gap-1.5">
-        <span className="text-muted-foreground font-mono text-xs font-medium">
+        <span className="text-muted-foreground shrink-0 font-mono text-xs font-medium">
           {label}
         </span>
-        {spool.location && <Badge variant="inverted">{spool.location}</Badge>}
+        {spool.location && (
+          <TextBadge variant="inverted">{spool.location}</TextBadge>
+        )}
         {onEdit && (
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label={`Edit spool ${label}`}
             onClick={onEdit}
-            className="relative z-10 ml-auto"
+            className="relative z-10 ml-auto shrink-0"
           >
             <PencilIcon />
           </Button>
@@ -195,8 +219,9 @@ function SpoolTile({
         id={`${id}-summary`}
         className="flex items-center justify-between gap-1.5"
       >
-        <WeightDisplay grams={spool.filamentLeftGrams} />
-        <span className="relative z-10">
+        <WeightDisplay grams={spool.filamentLeftGrams} className="shrink-0" />
+        {/* Above the tile button for "Dry?"; static badges let clicks through. */}
+        <span className="pointer-events-none relative z-10 min-w-0 [&_button]:pointer-events-auto">
           <SpoolStatusTags
             spool={spool}
             requestedByName={requestedByName}
@@ -247,4 +272,4 @@ function AddSpoolTile({
   );
 }
 
-export { AddSpoolTile, SpoolStatusTags, SpoolTile, spoolNumber };
+export { AddSpoolTile, SpoolStatusTags, SpoolTile, spoolNumber, TextBadge };

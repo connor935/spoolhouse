@@ -350,39 +350,44 @@ export const adminMaterialRows: AdminMaterialEntry[] = [
 /** ReviewQueue board: the pending entry and its possible duplicates. */
 export const reviewEntry = adminMaterialRows[0];
 
-export const duplicateCandidates = [
-  {
-    material: material('dup-galaxy-blue-petg', {
-      manufacturer: 'Sunlu',
-      name: 'Galaxy Blue',
-      filamentType: 'PETG',
-      color: '#23407A',
-    }),
-    reason: 'same-name' as const,
-    deltaE: null,
-    spoolCount: 4,
-  },
-  {
-    material: material('dup-galaxy-dark-blue', {
-      manufacturer: 'Sunlu',
-      name: 'Galaxy Dark Blue',
-      filamentType: 'PLA',
-      color: '#26407C',
-    }),
-    reason: 'close-color' as const,
-    deltaE: 1.8,
-  },
-  {
-    material: material('dup-sparkle-blue', {
-      manufacturer: 'Sunlu',
-      name: 'Sparkle Blue',
-      filamentType: 'PLA',
-      color: '#2B3F8C',
-    }),
-    reason: 'similar' as const,
-    deltaE: 6.4,
-  },
-];
+export const duplicateCandidates = (
+  [
+    {
+      material: material('dup-galaxy-blue-petg', {
+        manufacturer: 'Sunlu',
+        name: 'Galaxy Blue',
+        filamentType: 'PETG',
+        color: '#23407A',
+      }),
+      reason: 'same-name' as const,
+      deltaE: null,
+      spoolCount: 4,
+    },
+    {
+      material: material('dup-galaxy-dark-blue', {
+        manufacturer: 'Sunlu',
+        name: 'Galaxy Dark Blue',
+        filamentType: 'PLA',
+        color: '#26407C',
+      }),
+      reason: 'close-color' as const,
+      deltaE: 1.8,
+    },
+    {
+      material: material('dup-sparkle-blue', {
+        manufacturer: 'Sunlu',
+        name: 'Sparkle Blue',
+        filamentType: 'PLA',
+        color: '#2B3F8C',
+      }),
+      reason: 'similar' as const,
+      deltaE: 6.4,
+    },
+  ] as const
+).map(({ material: m, ...rest }) => ({
+  ...rest,
+  entry: { ...m, detail: m.filamentType },
+}));
 
 function property(
   id: string,
