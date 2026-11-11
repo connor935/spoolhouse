@@ -31,7 +31,7 @@ function capitalize(s: string) {
 // badges, edit button, admin approve/reject (pending) + delete — driven by
 // the specific catalog's server actions, copy and meta slot (color swatch /
 // filament-type badge for materials, empty-weight text for spool types).
-export function CatalogRow<T extends CatalogRowEntity>({
+export function LegacyCatalogRow<T extends CatalogRowEntity>({
   entity,
   currentUserId,
   isAdmin = false,

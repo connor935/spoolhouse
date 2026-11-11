@@ -1,7 +1,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { CatalogRow } from '@/components/catalog/catalog-row';
+import { LegacyCatalogRow } from '@/components/catalog/legacy-catalog-row';
 import { EditMaterialDialog } from '@/components/catalog/edit-material-dialog';
 import { MaterialPropertiesSection } from '@/components/materials/material-properties-section';
 import {
@@ -30,7 +30,7 @@ export function MaterialCatalogRow({
   const spoolCount = 'spoolCount' in material ? material.spoolCount : 0;
 
   return (
-    <CatalogRow
+    <LegacyCatalogRow
       entity={material}
       currentUserId={currentUserId}
       isAdmin={isAdmin}
