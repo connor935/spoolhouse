@@ -13,6 +13,8 @@ npm run start        # serve production build (+ the local database)
 npm run db:serve     # local database only — for drizzle-kit studio / psql
 npm test             # vitest: unit (lib/**/*.test.ts, node) + components (components/**/*.test.tsx, jsdom)
 npm run test:watch   # vitest in watch mode
+npm run test:e2e     # Playwright (e2e/): builds, seeds a throwaway PGlite (data/pglite-e2e, port 5434), serves on :3100; E2E_SKIP_BUILD=1 reuses the last build. Needs `npx playwright install chromium` once
+npm run test:e2e:ui  # same, in Playwright's UI mode
 npm run storybook    # Storybook on :6006 (component workbench, light/dark toggle, a11y panel)
 npm run build-storybook  # static Storybook build (CI runs it)
 npm run db:generate  # drizzle-kit: generate migration from schema changes

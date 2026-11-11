@@ -20,7 +20,9 @@
     "admin:create": "tsx scripts/create-admin.ts",
     "db:import": "tsx scripts/import-spoolmandb.ts",
     "token:create": "tsx scripts/create-api-token.ts",
-    "format": "prettier '*/**/*.{js,ts,mjs,cjs,json,tsx}' --write"
+    "format": "prettier '*/**/*.{js,ts,mjs,cjs,json,tsx}' --write",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -46,6 +48,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.14",
     "@electric-sql/pglite-socket": "^0.2.17",
+    "@playwright/test": "1.65.0",
     "@storybook/addon-a11y": "10.6.6",
     "@storybook/addon-docs": "10.6.6",
     "@storybook/addon-themes": "10.6.6",
