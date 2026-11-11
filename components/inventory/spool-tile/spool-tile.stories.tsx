@@ -81,3 +81,31 @@ export const AllStates: Story = {
     </div>
   ),
 };
+
+const LONG_NAME = 'Maximiliane Alexandra von Hohenzollern-Sigmaringen';
+
+/** Long names and locations truncate inside the tile instead of overflowing. */
+export const LongNames: Story = {
+  render: (args) => (
+    <div className="flex flex-wrap gap-2.5">
+      <SpoolTile
+        {...args}
+        spool={{ ...spools.inUse, location: 'Dry box on the top shelf left' }}
+        number={1}
+        requestedByName={LONG_NAME}
+      />
+      <SpoolTile
+        {...args}
+        spool={{ ...spools.lent, lentToName: LONG_NAME }}
+        number={2}
+      />
+      <SpoolTile
+        {...args}
+        spool={spools.inUse}
+        number={4}
+        borrowedFromName={LONG_NAME}
+        onEdit={undefined}
+      />
+    </div>
+  ),
+};

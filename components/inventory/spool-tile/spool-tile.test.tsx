@@ -18,6 +18,7 @@ const {
   WithDetails,
   Static,
   AddTile,
+  LongNames,
 } = composeStories(stories);
 
 function tile() {
@@ -49,6 +50,24 @@ describe('SpoolTile', () => {
   ])('renders the %s tag', (_, Story, text) => {
     render(<Story />);
     expect(screen.getByText(text)).toBeInTheDocument();
+  });
+
+  it('truncates long names and locations, keeping the full text as title', () => {
+    render(<LongNames />);
+    const name = 'Maximiliane Alexandra von Hohenzollern-Sigmaringen';
+    for (const text of [
+      `Req · ${name}`,
+      `Lent · ${name}`,
+      `Borrowed · ${name}`,
+      'Dry box on the top shelf left',
+    ]) {
+      const label = screen.getByText(text);
+      expect(label).toHaveClass('truncate');
+      expect(label.closest('[data-slot="badge"]')).toHaveAttribute(
+        'title',
+        text
+      );
+    }
   });
 
   it('uses the low tone on the meter for low and empty spools', () => {
