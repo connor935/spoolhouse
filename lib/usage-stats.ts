@@ -61,26 +61,37 @@ export type MaterialUsage = {
   gramsPerDay: number;
 };
 
-// Per material: recent usage and pace, for the dashboard's material dialog.
-export async function getMaterialUsage(
+export type MaterialUsageHistory = MaterialUsage & {
+  /** Last 12 months, oldest first, current month last. */
+  monthly: { month: string; grams: number; costCents: number }[];
+};
+
+// One material's usage for its detail page: the dialog figures plus the
+// 12-month chart, from the user's own spools of it.
+export async function getMaterialUsageHistory(
   userId: string,
+  materialId: string,
   now = new Date()
-): Promise<Record<string, MaterialUsage>> {
+): Promise<MaterialUsageHistory> {
   const { events, meta, trackedSince } = await loadUsage(userId);
-  if (!trackedSince) return {};
-  const byMaterial = groupEvents(
-    events,
-    (e) => meta.get(e.spoolId)!.materialId
+  const list = events.filter(
+    (e) => meta.get(e.spoolId)!.materialId === materialId
   );
-  const since30 = new Date(now.getTime() - 30 * DAY_MS);
-  const result: Record<string, MaterialUsage> = {};
-  for (const [materialId, list] of byMaterial) {
-    result[materialId] = {
-      usedLast30Grams: sumGrams(eventsSince(list, since30)),
-      gramsPerDay: dailyRate(list, now, trackedSince),
-    };
-  }
-  return result;
+  const cost = (e: UsageEvent) =>
+    e.grams * (meta.get(e.spoolId)?.perGramCents ?? 0);
+  const grams12 = monthlyUsage(list, 12, now);
+  const cost12 = monthlyUsage(list, 12, now, cost);
+  return {
+    usedLast30Grams: sumGrams(
+      eventsSince(list, new Date(now.getTime() - 30 * DAY_MS))
+    ),
+    gramsPerDay: trackedSince ? dailyRate(list, now, trackedSince) : 0,
+    monthly: grams12.map((m, i) => ({
+      month: m.month,
+      grams: m.value,
+      costCents: cost12[i].value,
+    })),
+  };
 }
 
 function groupEvents(

@@ -1,6 +1,16 @@
 import 'server-only';
 
-import { and, eq, exists, gte, lte, or, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  eq,
+  exists,
+  gte,
+  inArray,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { materialProperties, materials } from '@/lib/db/schema';
 import {
@@ -18,6 +28,8 @@ export type MaterialQuery = {
   q?: string;
   manufacturer?: string | null;
   filamentType?: string | null;
+  /** Any of these types (the catalog's multi-select chips). Empty = all. */
+  filamentTypes?: string[];
   constraints?: PropertyConstraint[];
   // Catalog/admin only: exact review status. Undefined = no status restriction
   // beyond `visibleTo`.
@@ -73,6 +85,8 @@ export function materialWhere(query: MaterialQuery): SQL | undefined {
     conditions.push(eq(materials.manufacturer, query.manufacturer));
   if (query.filamentType)
     conditions.push(eq(materials.filamentType, query.filamentType));
+  if (query.filamentTypes?.length)
+    conditions.push(inArray(materials.filamentType, query.filamentTypes));
   if (query.status) conditions.push(eq(materials.status, query.status));
   if (query.visibleTo)
     conditions.push(
