@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * State of a sequential import run, one manufacturer per server action (see
- * components/admin/import-manufacturers.tsx). `index` is the slug in flight,
+ * components/admin/import-view/import-container.tsx). `index` is the slug in flight,
  * or the one that failed; the run stops there, so everything before it was
  * imported and everything after it skipped.
  */

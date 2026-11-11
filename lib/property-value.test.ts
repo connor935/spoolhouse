@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   normalizePropertyValue,
+  typeChangeRefusal,
   type PropertyValueType,
 } from '@/lib/property-value';
 
@@ -57,5 +58,26 @@ describe('normalizePropertyValue bounds', () => {
     const result = normalizePropertyValue(type, input);
     expect(result.ok).toBe(true);
     if (result.ok) expect([result.min, result.max]).toEqual([min, max]);
+  });
+});
+
+describe('typeChangeRefusal', () => {
+  it('allows a change every existing value fits', () => {
+    expect(typeChangeRefusal('range', ['210', '200–220'])).toBeNull();
+    expect(typeChangeRefusal('integer', [])).toBeNull();
+  });
+
+  it('counts the values that do not fit and quotes up to three', () => {
+    expect(
+      typeChangeRefusal('integer', ['220', '1.5', 'hot', '2.5', '7.1'])
+    ).toBe(
+      '4 existing values do not fit "integer" (e.g. "1.5", "hot", "2.5"). Fix them first, or choose another type.'
+    );
+  });
+
+  it('speaks of a single value in the singular', () => {
+    expect(typeChangeRefusal('number', ['fast'])).toBe(
+      '1 existing value does not fit "number" (e.g. "fast"). Fix it first, or choose another type.'
+    );
   });
 });
