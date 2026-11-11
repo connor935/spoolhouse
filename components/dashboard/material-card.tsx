@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import {
   formatWeight,
@@ -12,14 +13,12 @@ export function MaterialCard({
   inventory,
   visibleSpoolIds,
   onEditSpool,
-  onOpenMaterialDialog,
   dryingTemp,
 }: {
   inventory: MaterialInventory;
   // Tab filtering: only these spools are listed (indices stay material-wide)
   visibleSpoolIds: Set<string>;
   onEditSpool: (s: SpoolView) => void;
-  onOpenMaterialDialog: (material: MaterialInventory) => void;
   dryingTemp?: string | null;
 }) {
   const { material, spools, totalLeftGrams } = inventory;
@@ -27,18 +26,10 @@ export function MaterialCard({
 
   return (
     <div className="border-border bg-card hover:border-accent/40 flex flex-col rounded-lg border transition-colors">
-      {/* Only the header opens the material dialog — spool rows below stay
-          independently interactive (their edit buttons must not bubble here). */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => onOpenMaterialDialog(inventory)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onOpenMaterialDialog(inventory);
-          }
-        }}
+      {/* Only the header links to the material page — spool rows below stay
+          independently interactive. */}
+      <Link
+        href={`/materials/${material.id}?from=inventory`}
         className="hover:bg-secondary/40 focus-visible:ring-ring flex cursor-pointer items-start justify-between gap-3 rounded-t-lg p-5 pb-3 outline-none focus-visible:ring-2"
       >
         <div className="flex flex-1 items-start gap-3">
@@ -74,7 +65,7 @@ export function MaterialCard({
             </div>
           </div>
         </div>
-      </div>
+      </Link>
 
       <ul className="divide-border border-border divide-y border-t">
         {spools.map((s, i) =>

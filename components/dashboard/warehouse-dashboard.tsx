@@ -22,12 +22,10 @@ import {
 } from '@/lib/inventory-filter';
 import type { MaterialInventory, SpoolView } from '@/lib/filament';
 import type { MyLend } from '@/app/actions/lends';
-import type { Material, Property, SpoolType } from '@/lib/db/schema';
+import type { Property, SpoolType } from '@/lib/db/schema';
 import type { MaterialPropertyView } from '@/lib/material-properties';
 import type { SharedSpool } from '@/lib/sharing';
-import type { MaterialUsage } from '@/lib/usage-stats';
 import Link from 'next/link';
-import { MaterialDialog } from './material-dialog';
 
 // Top-level tabs: your own stock, or one per group. Status (in-stock/empty/all)
 // and borrows are no longer tabs — status is a filter, borrows is a modal.
@@ -45,7 +43,6 @@ export function WarehouseDashboard({
   initialFilters,
   propertiesByMaterialId,
   propertyDefinitions,
-  materialUsage,
 }: {
   inventory: MaterialInventory[];
   spoolTypes: SpoolType[];
@@ -56,7 +53,6 @@ export function WarehouseDashboard({
   initialFilters: InventoryFilters;
   propertiesByMaterialId: Record<string, MaterialPropertyView[]>;
   propertyDefinitions: Property[];
-  materialUsage: Record<string, MaterialUsage>;
 }) {
   const validTabs = new Set<string>([
     'stock',
@@ -68,11 +64,6 @@ export function WarehouseDashboard({
   const [filters, setFilters] = useState<InventoryFilters>(initialFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [borrowsOpen, setBorrowsOpen] = useState(false);
-  const [openMaterialDialog, setOpenMaterialDialog] = useState(false);
-  // Store the id, not the object: after router.refresh() the inventory array
-  // is rebuilt, so deriving the material (and its properties) from the fresh
-  // data keeps an open dialog in sync with just-saved property edits.
-  const [dialogMaterialId, setDialogMaterialId] = useState<string | null>(null);
 
   useUrlSyncedFilters(tab, filters);
   const [formOpen, setFormOpen] = useState(false);
@@ -141,16 +132,6 @@ export function WarehouseDashboard({
     setFormInstance((i) => i + 1);
     setFormOpen(true);
   }
-
-  function openMaterialDetails(m: MaterialInventory) {
-    setDialogMaterialId(m.material.id);
-    setOpenMaterialDialog(true);
-  }
-
-  // Derived from the current inventory so it reflects fresh data after a
-  // router.refresh() (e.g. a just-saved property value).
-  const dialogMaterial =
-    inventory.find((m) => m.material.id === dialogMaterialId) ?? null;
 
   // Borrows + Add spool. Rendered twice: pinned to the tabs row on desktop
   // (`full={false}`, natural width) and as a full-width row under the filter on
@@ -315,7 +296,6 @@ export function WarehouseDashboard({
                 inventory={m}
                 visibleSpoolIds={visibleIds}
                 onEditSpool={openEdit}
-                onOpenMaterialDialog={openMaterialDetails}
                 dryingTemp={
                   propertiesByMaterialId[m.material.id]?.find(
                     (p) => p.key === 'drying_temp'
@@ -336,22 +316,6 @@ export function WarehouseDashboard({
         spoolTypes={spoolTypes}
         locations={locations}
         isAdmin={user.isAdmin}
-      />
-
-      <MaterialDialog
-        open={openMaterialDialog}
-        onOpenChange={setOpenMaterialDialog}
-        inventoryMaterial={dialogMaterial}
-        propertyValues={
-          dialogMaterialId
-            ? (propertiesByMaterialId[dialogMaterialId] ?? [])
-            : []
-        }
-        propertyDefinitions={propertyDefinitions}
-        usage={dialogMaterialId ? materialUsage[dialogMaterialId] : undefined}
-        isAdmin={user.isAdmin}
-        onAddSpool={openCreate}
-        onEditSpool={openEdit}
       />
 
       <BorrowsDialog
