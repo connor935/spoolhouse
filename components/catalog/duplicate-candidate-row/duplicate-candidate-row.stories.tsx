@@ -38,7 +38,7 @@ export const List: Story = {
   render: () => (
     <div>
       {duplicateCandidates.map((c) => (
-        <DuplicateCandidateRow key={c.material.id} {...c} />
+        <DuplicateCandidateRow key={c.entry.id} {...c} />
       ))}
       <p className="text-muted-foreground mt-2.5 text-xs leading-snug">
         If it&apos;s a duplicate, reject it — the submitter can still use their
