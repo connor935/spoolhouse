@@ -196,7 +196,8 @@ function SpoolTile({
         className="flex items-center justify-between gap-1.5"
       >
         <WeightDisplay grams={spool.filamentLeftGrams} />
-        <span className="relative z-10">
+        {/* Above the tile button for "Dry?"; static badges let clicks through. */}
+        <span className="pointer-events-none relative z-10 [&_button]:pointer-events-auto">
           <SpoolStatusTags
             spool={spool}
             requestedByName={requestedByName}

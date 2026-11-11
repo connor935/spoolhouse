@@ -8,7 +8,7 @@ import { RequestSubmitButton } from '@/components/common/request-submit-button';
 import { Plus, X } from 'lucide-react';
 import { requestSpoolType } from '@/app/actions/spool-types';
 import { requestEntityToast } from '@/lib/request-entity-toast';
-import { SpoolTypePicker } from '@/components/dashboard/spool-form/spool-type-picker';
+import { SpoolTypePicker } from './spool-type-picker';
 import type { SpoolType } from '@/lib/db/schema';
 import { toast } from 'sonner';
 
