@@ -27,7 +27,6 @@ import type { MaterialPropertyView } from '@/lib/material-properties';
 import type { SharedSpool } from '@/lib/sharing';
 import type { MaterialUsage } from '@/lib/usage-stats';
 import Link from 'next/link';
-import { AppHeader } from '@/components/layout/app-header';
 import { MaterialDialog } from './material-dialog';
 
 // Top-level tabs: your own stock, or one per group. Status (in-stock/empty/all)
@@ -41,7 +40,6 @@ export function WarehouseDashboard({
   spoolTypes,
   groups,
   myLends,
-  unreadCount,
   user,
   initialTab,
   initialFilters,
@@ -53,7 +51,6 @@ export function WarehouseDashboard({
   spoolTypes: SpoolType[];
   groups: DashboardGroup[];
   myLends: MyLend[];
-  unreadCount: number;
   user: { id: string; name: string; isAdmin: boolean };
   initialTab: string;
   initialFilters: InventoryFilters;
@@ -204,9 +201,10 @@ export function WarehouseDashboard({
   );
 
   return (
-    <div className="min-h-screen">
-      <AppHeader user={user} unreadCount={unreadCount} />
-      <main className="mx-auto flex max-w-7xl flex-col gap-4 p-4 md:gap-6 md:p-6">
+    <div>
+      {/* The shell has no page title chrome; 06a replaces this page. */}
+      <h1 className="sr-only">Dashboard</h1>
+      <div className="flex flex-col gap-4 md:gap-6">
         {groups.length > 0 && (
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 overflow-x-auto overflow-y-hidden">
@@ -327,7 +325,7 @@ export function WarehouseDashboard({
             ))}
           </section>
         )}
-      </main>
+      </div>
 
       <SpoolFormDialog
         key={`${editingSpool ? `edit-${editingSpool.id}` : 'create'}-${formInstance}`}

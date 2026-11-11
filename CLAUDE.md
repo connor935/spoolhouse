@@ -162,10 +162,11 @@ and marks all read on open (which also prunes read notifications older than 90 d
 joins the lend's current status, and clicking such a row opens an approve/decline dialog
 (`components/notifications/notifications-list.tsx`). No polling — counts refresh per page load.
 
-**Sub-page layout**: every page except the dashboard and `/groups/join/[code]` renders inside
-`components/layout/page-shell.tsx` (`max-w-3xl` container, back-link, title). The notification bell
-lives in `components/layout/app-header.tsx`. **Never hand-roll a `<main>` wrapper on sub-pages — use
-PageShell.**
+**Sub-page layout**: every signed-in page lives under `app/(app)/`, whose layout renders the sidebar
+shell (`components/layout/app-shell`, nav model + badge counts in `lib/nav.ts` / `lib/nav-counts.ts`,
+the shell owns the one `<main>`); auth pages live under `app/(auth)/`, `/groups/join/[code]` stays
+standalone. Not-yet-redesigned pages wrap their content in `PageShell` (now only a `PageHeader`
+adapter). **Never hand-roll a `<main>` wrapper inside the shell.**
 
 ### Component folders
 

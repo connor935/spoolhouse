@@ -38,8 +38,7 @@ export default async function GroupPage({
     <PageShell
       title={detail.group.name}
       description={`${detail.members.length} member${detail.members.length === 1 ? '' : 's'} — browse this group's stock on the dashboard`}
-      backHref="/groups"
-      backLabel="Back to groups"
+      breadcrumb={[{ label: 'Groups', href: '/groups' }]}
     >
       <p className="text-muted-foreground mt-4 text-sm">
         Shared spools and borrow requests moved to the{' '}

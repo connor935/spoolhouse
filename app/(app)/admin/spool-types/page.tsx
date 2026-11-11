@@ -15,9 +15,9 @@ export default async function AdminSpoolTypesPage() {
       title="Manage spool types"
       description={
         <>
-          Search the full catalog, approve/reject submissions, edit or delete any
-          entry. Use the status filter (or “Review pending”) to see the queue. The
-          read-only view is on{' '}
+          Search the full catalog, approve/reject submissions, edit or delete
+          any entry. Use the status filter (or “Review pending”) to see the
+          queue. The read-only view is on{' '}
           <Link href="/spool-types" className="hover:text-foreground underline">
             the catalog page
           </Link>
