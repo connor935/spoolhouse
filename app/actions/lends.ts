@@ -12,8 +12,10 @@ import {
 import { requireUser } from '@/lib/auth-session';
 import { isUniqueViolation } from '@/lib/db/errors';
 import { emitSpoolChange } from '@/lib/events';
+import { toSpoolView } from '@/lib/filament';
 import { createNotification, type NotificationType } from '@/lib/notifications';
 import { getMembership, getSharedFilaments } from '@/lib/sharing';
+import { getSpoolNumbers } from '@/lib/spool-numbers';
 import { and, desc, eq, inArray, or } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { revalidatePath } from 'next/cache';
@@ -243,12 +245,18 @@ export async function getActiveLendsForOwner() {
 }
 
 // Every lend the current user is involved in (as owner or borrower),
-// across all groups, newest first — feeds the dashboard "Borrows" tab.
+// across all groups, newest first — feeds /borrows and the dashboard tab.
+// `spoolView` is what the borrower's re-weigh form needs; the raw spool row
+// (tag uid etc.) is not passed on.
 export async function getMyLends() {
   const authUser = await requireUser();
-  return db
+  const rows = await db
     .select({
       lend: lends,
+      spool: spools,
+      spoolType: spoolTypes,
+      materialFilamentType: materials.filamentType,
+      materialColor: materials.color,
       materialName: materials.name,
       materialManufacturer: materials.manufacturer,
       measuredTotalWeightGrams: spools.measuredTotalWeightGrams,
@@ -271,6 +279,26 @@ export async function getMyLends() {
       or(eq(spools.userId, authUser.id), eq(lends.borrowerId, authUser.id))
     )
     .orderBy(desc(lends.requestedAt));
+  const numbers = await getSpoolNumbers(rows.map((r) => r.lend.filamentId));
+  return rows.map(({ spool, spoolType, materialFilamentType, ...row }) => {
+    const view = toSpoolView(spool, spoolType, materialFilamentType);
+    return {
+      ...row,
+      spoolNumber: numbers.get(spool.id) ?? null,
+      // A borrower (or a past/declined requester) sees the weights, not
+      // where the owner keeps the spool or when they bought/dried it.
+      spoolView:
+        row.ownerId === authUser.id
+          ? view
+          : {
+              ...view,
+              location: null,
+              purchasedAt: null,
+              lastDriedAt: null,
+              needsDrying: false,
+            },
+    };
+  });
 }
 
 export type MyLend = Awaited<ReturnType<typeof getMyLends>>[number];

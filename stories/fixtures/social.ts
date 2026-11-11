@@ -337,6 +337,7 @@ export const stock = {
       lendId: 'lend-s2',
       borrowerId: people.jonas.id,
       borrowerName: people.jonas.name,
+      since: new Date('2026-10-12T10:00:00Z'),
     },
   }),
   /** Anna's spool, free to request. */
@@ -359,7 +360,12 @@ export const stock = {
   }),
   /** Mia's spool, with you. */
   withYou: shared(spools.low, people.mia, {
-    lentTo: { lendId: 'lend-s5', borrowerId: ME.id, borrowerName: ME.name },
+    lentTo: {
+      lendId: 'lend-s5',
+      borrowerId: ME.id,
+      borrowerName: ME.name,
+      since: new Date('2026-11-07T10:00:00Z'),
+    },
   }),
   /** Tom's spool, with Lena. */
   lentToOther: shared(spools.inUse, people.tom, {
@@ -367,6 +373,7 @@ export const stock = {
       lendId: 'lend-s6',
       borrowerId: people.lena.id,
       borrowerName: people.lena.name,
+      since: new Date('2026-10-30T10:00:00Z'),
     },
   }),
 } satisfies Record<string, SharedSpool>;

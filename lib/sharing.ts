@@ -20,7 +20,13 @@ export type SharedSpool = SpoolView & {
   material: Material;
   ownerId: string;
   ownerName: string;
-  lentTo: { lendId: string; borrowerId: string; borrowerName: string } | null;
+  lentTo: {
+    lendId: string;
+    borrowerId: string;
+    borrowerName: string;
+    // When the owner approved the lend
+    since: Date | null;
+  } | null;
   // Outstanding (not yet approved/declined) borrow request, if any
   pendingRequest: {
     lendId: string;
@@ -144,6 +150,7 @@ export async function getSharedFilaments(
             lendId: activeLend.lend.id,
             borrowerId: activeLend.lend.borrowerId,
             borrowerName: activeLend.borrowerName,
+            since: activeLend.lend.respondedAt,
           }
         : null,
       pendingRequest: requestedLend

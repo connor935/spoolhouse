@@ -121,7 +121,12 @@ describe('groupStockState', () => {
   it('puts an active lend before a pending request', () => {
     const both = {
       ...stock.available,
-      lentTo: { lendId: 'a', borrowerId: 'x', borrowerName: 'Xena' },
+      lentTo: {
+        lendId: 'a',
+        borrowerId: 'x',
+        borrowerName: 'Xena',
+        since: null,
+      },
       pendingRequest: { lendId: 'b', borrowerId: ME.id, borrowerName: ME.name },
     };
     expect(groupStockState(both, ME.id)).toEqual({

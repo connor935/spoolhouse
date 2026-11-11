@@ -1,5 +1,6 @@
 import { spoolNumber } from '@/components/inventory/spool-tile';
 import { Swatch } from '@/components/inventory/swatch';
+import { shortDate } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 
 /** The lent spool as the borrow surfaces show it: "#03 Prusa Orange". */
@@ -16,29 +17,6 @@ function lendSpoolName(spool: LendSpool): string {
   return spool.number
     ? `${spoolNumber(spool.number)} ${spool.materialName}`
     : spool.materialName;
-}
-
-// Fixed table rather than Intl: newer ICU data spells September "Sept" in
-// en-GB, and server and browser may ship different versions.
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-/** "12 Oct" (UTC): lend periods on the Borrows board never show the year. */
-function shortDate(date: Date): string {
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  return `${day} ${MONTHS[date.getUTCMonth()]}`;
 }
 
 /** Swatch + spool name; the swatch is decorative, the name carries it. */
