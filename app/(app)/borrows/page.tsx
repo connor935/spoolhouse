@@ -1,7 +1,11 @@
-import { redirect } from 'next/navigation';
+import { getMyLends } from '@/app/actions/lends';
+import { BorrowsContainer } from '@/components/borrows/borrows-view';
+import { requireUser } from '@/lib/auth-session';
 
-// Placeholder until the Borrows page lands (redesign task 06c): the sidebar
-// already links here, borrows still open as a dialog on the dashboard.
-export default function BorrowsPage() {
-  redirect('/');
+export const dynamic = 'force-dynamic';
+
+export default async function BorrowsPage() {
+  const user = await requireUser();
+  const lends = await getMyLends();
+  return <BorrowsContainer lends={lends} userId={user.id} now={new Date()} />;
 }
