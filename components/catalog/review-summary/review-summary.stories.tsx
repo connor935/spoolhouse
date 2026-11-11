@@ -9,8 +9,11 @@ const meta = {
   title: 'Design/ReviewSummary',
   component: ReviewSummary,
   args: {
-    material: reviewEntry.material,
-    manufacturerMaterialCount: 142,
+    entry: {
+      ...reviewEntry.material,
+      tag: reviewEntry.material.filamentType,
+    },
+    manufacturerEntryCount: 142,
     submitter: { name: 'Anna Weber', trusted: false },
     submittedAgo: '2 h ago',
     spoolCount: 1,
@@ -33,7 +36,7 @@ export const Pending: Story = {};
 
 export const NewManufacturer: Story = {
   args: {
-    manufacturerMaterialCount: 0,
+    manufacturerEntryCount: 0,
     submitter: { name: 'Jonas Becker', trusted: true },
     spoolCount: 0,
     spoolOwners: [],
@@ -50,7 +53,26 @@ export const Imported: Story = {
 };
 
 export const NoColour: Story = {
-  args: { material: { ...reviewEntry.material, color: null } },
+  args: {
+    entry: { ...reviewEntry.material, tag: 'PLA', color: null },
+  },
+};
+
+/** A spool-type request: no swatch, the empty weight as its tag. */
+export const SpoolType: Story = {
+  args: {
+    entry: {
+      manufacturer: 'Polymaker',
+      name: 'Cardboard 3 kg',
+      status: 'pending',
+      tag: '520 g',
+    },
+    noun: 'spool type',
+    tagLabel: 'Empty spool',
+    manufacturerEntryCount: 3,
+    spoolCount: 0,
+    spoolOwners: [],
+  },
 };
 
 /**
@@ -82,7 +104,7 @@ export const Queue: Story = {
       <aside className="min-w-0 flex-[2_1_360px]">
         <h2 className="display-section mb-4">Possible duplicates</h2>
         {duplicateCandidates.map((c) => (
-          <DuplicateCandidateRow key={c.material.id} {...c} />
+          <DuplicateCandidateRow key={c.entry.id} {...c} />
         ))}
       </aside>
     </div>

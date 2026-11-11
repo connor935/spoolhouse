@@ -18,7 +18,7 @@ function KeyValueRow({ label, children, action, className }: KeyValueRowProps) {
     <div
       data-slot="key-value-row"
       className={cn(
-        'border-border grid grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3.5 border-t py-2.5 first:border-t-0',
+        'border-border grid grid-cols-[minmax(140px,220px)_minmax(0,1fr)_auto] items-center gap-3.5 border-t py-2.5 first:border-t-0 max-sm:grid-cols-[minmax(88px,112px)_minmax(0,1fr)_auto] max-sm:gap-2.5',
         className
       )}
     >

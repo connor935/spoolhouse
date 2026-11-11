@@ -1,25 +1,23 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { toast } from 'sonner';
+
+import { updateSpoolType } from '@/app/actions/spool-types';
+import { SpoolTypeEntryForm } from '@/components/catalog/spool-type-entry-form';
+import { StatusBadge } from '@/components/common/status-badge';
 import {
   Dialog,
   DialogBody,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ManufacturerNameFields } from '@/components/common/manufacturer-name-fields';
-import { updateSpoolType } from '@/app/actions/spool-types';
-import { describeReviewStatus } from '@/lib/describe-review-status';
 import type { SpoolType } from '@/lib/db/schema';
-import { toast } from 'sonner';
 
+// Edit dialog for a spool type; same status rules as EditMaterialDialog,
+// enforced by updateSpoolType.
 export function EditSpoolTypeDialog({
   spoolType,
   open,
@@ -32,87 +30,54 @@ export function EditSpoolTypeDialog({
   isAdmin?: boolean;
 }) {
   const router = useRouter();
-  const [manufacturer, setManufacturer] = useState(spoolType.manufacturer);
-  const [name, setName] = useState(spoolType.name);
-  const [grams, setGrams] = useState(String(spoolType.emptyWeightGrams));
   const [saving, setSaving] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const emptyWeightGrams = Number.parseInt(grams, 10);
-    if (!manufacturer.trim() || !name.trim()) {
-      toast.error('Manufacturer and name are required');
-      return;
-    }
-    if (Number.isNaN(emptyWeightGrams) || emptyWeightGrams <= 0) {
-      toast.error('Empty spool weight must be greater than 0 g');
-      return;
-    }
-    setSaving(true);
-    try {
-      await updateSpoolType(spoolType.id, {
-        manufacturer: manufacturer.trim(),
-        name: name.trim(),
-        emptyWeightGrams,
-      });
-      toast.success(
-        !isAdmin && spoolType.status === 'rejected'
-          ? 'Resubmitted for review'
-          : 'Spool type updated'
-      );
-      onOpenChange(false);
-      router.refresh();
-    } catch {
-      toast.error('Could not update spool type');
-    } finally {
-      setSaving(false);
-    }
-  }
+  const resubmits = !isAdmin && spoolType.status === 'rejected';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Edit spool type</DialogTitle>
-          <DialogDescription>
-            {describeReviewStatus(isAdmin, spoolType.status, 'spool type')}
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[460px]">
+        <DialogHeader
+          kicker={
+            <span className="flex items-center gap-2">
+              {spoolType.manufacturer} / {spoolType.name}
+              {spoolType.status !== 'approved' && (
+                <StatusBadge
+                  status={
+                    spoolType.status === 'rejected' ? 'rejected' : 'pending'
+                  }
+                />
+              )}
+            </span>
+          }
+        >
+          <DialogTitle className="text-[30px]">Edit spool type</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="contents">
-          <DialogBody className="gap-4">
-            <ManufacturerNameFields
-              idPrefix="edit-st"
-              manufacturer={manufacturer}
-              onManufacturerChange={setManufacturer}
-              name={name}
-              onNameChange={setName}
-              nameLabel="Spool name"
-            />
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-st-grams">Empty spool weight (g)</Label>
-              <Input
-                id="edit-st-grams"
-                type="number"
-                step="1"
-                min="1"
-                value={grams}
-                onChange={(e) => setGrams(e.target.value)}
-              />
-            </div>
-          </DialogBody>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving...' : 'Save changes'}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogBody>
+          <SpoolTypeEntryForm
+            mode="edit"
+            autoApprove={isAdmin}
+            isAdmin={isAdmin}
+            status={spoolType.status}
+            defaultValues={spoolType}
+            pending={saving}
+            onCancel={() => onOpenChange(false)}
+            onSubmit={async (values) => {
+              setSaving(true);
+              try {
+                await updateSpoolType(spoolType.id, values);
+                toast.success(
+                  resubmits ? 'Resubmitted for review' : 'Spool type updated'
+                );
+                onOpenChange(false);
+                router.refresh();
+              } catch {
+                toast.error('Could not update the spool type');
+              } finally {
+                setSaving(false);
+              }
+            }}
+          />
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

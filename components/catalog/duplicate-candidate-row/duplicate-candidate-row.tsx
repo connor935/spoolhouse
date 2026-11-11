@@ -2,10 +2,9 @@ import type { ComponentProps } from 'react';
 
 import { Swatch } from '@/components/inventory/swatch';
 import { Badge } from '@/components/ui/badge';
-import type { Material } from '@/lib/db/schema';
 import { cn } from '@/lib/utils';
 
-export type DuplicateReason = 'same-name' | 'close-color' | 'similar';
+import type { DuplicateReason } from '@/lib/catalog-duplicates';
 
 const REASONS: Record<
   DuplicateReason,
@@ -17,10 +16,15 @@ const REASONS: Record<
 };
 
 type DuplicateCandidateRowProps = Omit<ComponentProps<'div'>, 'children'> & {
-  material: Pick<
-    Material,
-    'manufacturer' | 'name' | 'color' | 'filamentType' | 'status'
-  >;
+  entry: {
+    manufacturer: string;
+    name: string;
+    status: string;
+    /** First meta item: filament type, or a spool type's empty weight. */
+    detail: string;
+    /** Material colour; `undefined` (spool types) drops the swatch. */
+    color?: string | null;
+  };
   /** Why it looks like the entry under review. */
   reason: DuplicateReason;
   /** Colour distance to the entry under review (CIE ΔE); shown with one decimal. */
@@ -36,7 +40,7 @@ type DuplicateCandidateRowProps = Omit<ComponentProps<'div'>, 'children'> & {
  * swatch, manufacturer · name, a meta line and the reason tag.
  */
 function DuplicateCandidateRow({
-  material,
+  entry,
   reason,
   deltaE,
   spoolCount,
@@ -46,8 +50,8 @@ function DuplicateCandidateRow({
 }: DuplicateCandidateRowProps) {
   const { label, variant } = REASONS[reason];
   const meta = [
-    material.filamentType,
-    material.status,
+    entry.detail,
+    entry.status,
     spoolCount !== undefined &&
       `${spoolCount} ${spoolCount === 1 ? 'spool' : 'spools'}`,
     deltaE != null && `ΔE ${deltaE.toFixed(1)}`,
@@ -57,10 +61,8 @@ function DuplicateCandidateRow({
   const name = (
     <>
       {/* The space sits outside the span so it survives in the link's name. */}
-      <span className="text-muted-foreground">
-        {material.manufacturer} ·
-      </span>{' '}
-      {material.name}
+      <span className="text-muted-foreground">{entry.manufacturer} ·</span>{' '}
+      {entry.name}
     </>
   );
   return (
@@ -73,7 +75,7 @@ function DuplicateCandidateRow({
       )}
       {...props}
     >
-      <Swatch color={material.color} decorative />
+      {entry.color !== undefined && <Swatch color={entry.color} decorative />}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         {href ? (
           <a

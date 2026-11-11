@@ -1,14 +1,24 @@
 'use server';
 
-import { asc, count, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, isNotNull } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { materials, spools, type Material } from '@/lib/db/schema';
+import { materials, spools, user, type Material } from '@/lib/db/schema';
 import { requireAdmin, requireUser } from '@/lib/auth-session';
 import { createCatalogActions } from '@/lib/catalog';
+import {
+  countByStatus,
+  pendingFirst,
+  type CatalogStatusCounts,
+} from '@/lib/catalog-status';
 import { deleteMaterialPropertiesFor } from '@/lib/material-properties';
 import { materialWhere } from '@/lib/material-search';
 import type { PropertyConstraint } from '@/lib/property-filter';
-import { materialSchema, parseOrThrow } from '@/lib/schemas';
+import {
+  adminMaterialQuerySchema,
+  materialCatalogQuerySchema,
+  materialSchema,
+  parseOrThrow,
+} from '@/lib/schemas';
 
 type MaterialInput = {
   manufacturer: string;
@@ -20,8 +30,6 @@ type MaterialInput = {
 function validateMaterialInput(input: MaterialInput) {
   return parseOrThrow(materialSchema, input);
 }
-
-export type MaterialWithUsage = Material & { spoolCount: number };
 
 const actions = createCatalogActions<Material, MaterialInput>({
   table: materials,
@@ -53,6 +61,7 @@ export type MaterialSearchInput = {
   q?: string;
   manufacturer?: string | null;
   filamentType?: string | null;
+  filamentTypes?: string[];
   constraints?: PropertyConstraint[];
   status?: string | null;
   limit?: number;
@@ -70,52 +79,135 @@ export async function searchMaterials(
   return runMaterialSearch({ ...input, visibleTo: user.id });
 }
 
-// Admin twin: every row regardless of status/submitter, plus the spool count
-// that governs whether a row can be deleted, and the counts the catalog header
-// and "Review pending" shortcut need.
-export async function searchMaterialsForAdmin(
-  input: MaterialSearchInput = {}
-): Promise<{
-  materials: MaterialWithUsage[];
+export type AdminMaterialRow = {
+  material: Material;
+  /** null for imported rows. */
+  submitterName: string | null;
+  /** Spools on it across all users — governs whether it can be deleted. */
+  spoolCount: number;
+};
+
+// Admin twin for /admin/materials: every row regardless of submitter, pending
+// first (the review backlog leads the table), with the submitter's name, the
+// spool count behind the delete guard, and the status counts the filter shows.
+export async function searchMaterialsForAdmin(rawInput: unknown): Promise<{
+  rows: AdminMaterialRow[];
   total: number;
   grandTotal: number;
-  pendingCount: number;
+  statusCounts: CatalogStatusCounts;
 }> {
   await requireAdmin();
+  const input = parseOrThrow(adminMaterialQuerySchema, rawInput);
   const where = materialWhere(input);
-  const limit = Math.min(input.limit ?? 150, MAX_SEARCH_LIMIT);
-  const [
-    rows,
-    [{ value: total }],
-    [{ value: grandTotal }],
-    [{ value: pendingCount }],
-  ] = await Promise.all([
+  const [rows, [{ value: total }], byStatus] = await Promise.all([
     db
-      .select({ material: materials, spoolCount: count(spools.id) })
+      .select({
+        material: materials,
+        submitterName: user.name,
+        spoolCount: count(spools.id),
+      })
       .from(materials)
       .leftJoin(spools, eq(spools.materialId, materials.id))
+      .leftJoin(user, eq(materials.submittedById, user.id))
       .where(where)
-      .groupBy(materials.id)
+      .groupBy(materials.id, user.name)
       .orderBy(
+        pendingFirst(materials.status),
         asc(materials.manufacturer),
         asc(materials.name),
         asc(materials.id)
       )
-      .limit(limit)
-      .offset(input.offset ?? 0),
+      .limit(input.limit)
+      .offset(input.offset),
     db.select({ value: count() }).from(materials).where(where),
-    db.select({ value: count() }).from(materials),
     db
-      .select({ value: count() })
+      .select({ status: materials.status, value: count() })
       .from(materials)
-      .where(eq(materials.status, 'pending')),
+      .groupBy(materials.status),
   ]);
+  const statusCounts = countByStatus(byStatus);
   return {
-    materials: rows.map((r) => ({ ...r.material, spoolCount: r.spoolCount })),
+    rows,
     total,
-    grandTotal,
-    pendingCount,
+    grandTotal:
+      statusCounts.approved + statusCounts.pending + statusCounts.rejected,
+    statusCounts,
   };
+}
+
+export type MaterialCatalogEntry = {
+  material: Material;
+  /** The viewer's spools of it ("In your stock · 3"). */
+  stockCount: number;
+};
+
+// One page of the /materials catalog, with the viewer's stock count for just
+// those rows. Also the "Load more" call, so the first page and later ones
+// share one shape.
+export async function searchMaterialCatalog(rawInput: unknown = {}): Promise<{
+  entries: MaterialCatalogEntry[];
+  total: number;
+  /** Matches per manufacturer on this page, for the group headers. */
+  manufacturerTotals: Record<string, number>;
+}> {
+  const user = await requireUser();
+  const input = parseOrThrow(materialCatalogQuerySchema, rawInput);
+  const query = { ...input, visibleTo: user.id };
+  const { materials: rows, total } = await runMaterialSearch(query);
+  if (rows.length === 0) return { entries: [], total, manufacturerTotals: {} };
+
+  const manufacturers = [...new Set(rows.map((m) => m.manufacturer))];
+  const [counts, totals] = await Promise.all([
+    db
+      .select({ materialId: spools.materialId, value: count() })
+      .from(spools)
+      .where(
+        and(
+          eq(spools.userId, user.id),
+          inArray(
+            spools.materialId,
+            rows.map((m) => m.id)
+          )
+        )
+      )
+      .groupBy(spools.materialId),
+    db
+      .select({ manufacturer: materials.manufacturer, value: count() })
+      .from(materials)
+      .where(
+        and(
+          materialWhere(query),
+          inArray(materials.manufacturer, manufacturers)
+        )
+      )
+      .groupBy(materials.manufacturer),
+  ]);
+  const byId = new Map(counts.map((c) => [c.materialId, c.value]));
+  return {
+    entries: rows.map((material) => ({
+      material,
+      stockCount: byId.get(material.id) ?? 0,
+    })),
+    total,
+    manufacturerTotals: Object.fromEntries(
+      totals.map((t) => [t.manufacturer, t.value])
+    ),
+  };
+}
+
+// Colours of the viewer's most recently added spools' materials, offered as
+// one-click swatches in the request form.
+export async function getRecentMaterialColors(limit = 4): Promise<string[]> {
+  const user = await requireUser();
+  const rows = await db
+    .select({ color: materials.color, createdAt: spools.createdAt })
+    .from(spools)
+    .innerJoin(materials, eq(spools.materialId, materials.id))
+    .where(and(eq(spools.userId, user.id), isNotNull(materials.color)))
+    .orderBy(desc(spools.createdAt))
+    .limit(50);
+  const colors = [...new Set(rows.map((r) => r.color!.toUpperCase()))];
+  return colors.slice(0, limit);
 }
 
 // Size of the catalog the current user can see, for the "x of y" readout.
@@ -195,12 +287,6 @@ export async function rejectMaterial(id: string) {
 }
 
 // --- Edit & delete (I.3) ---
-
-// Full catalog for the admin management list, incl. how many spools
-// reference each material (governs whether it can be deleted).
-export async function getAllMaterialsForAdmin(): Promise<MaterialWithUsage[]> {
-  return actions.getAllForAdmin();
-}
 
 // Admin can edit any material, anytime, without changing its status.
 // The submitter can edit their own material while it's pending or rejected

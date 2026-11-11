@@ -181,7 +181,9 @@ export function InventoryPage({
         onSelectSpool={selectSpool}
         onEditSpool={openEditor}
         onMarkDried={dried}
-        onOpenMaterial={(material) => router.push(`/materials/${material.id}`)}
+        onOpenMaterial={(material) =>
+          router.push(`/materials/${material.id}?from=inventory`)
+        }
         tileRef={(id, el) => {
           if (el) tiles.current.set(id, el);
           else tiles.current.delete(id);
