@@ -32,7 +32,11 @@ export function SelectField<T extends string>({
       value={value}
       onValueChange={(v) => v && onValueChange(v as T)}
     >
-      <SelectTrigger id={id} className={triggerClassName} aria-label={ariaLabel}>
+      <SelectTrigger
+        id={id}
+        className={triggerClassName}
+        aria-label={ariaLabel}
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

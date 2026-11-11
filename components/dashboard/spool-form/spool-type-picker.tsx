@@ -45,7 +45,9 @@ export function SpoolTypePicker({
       if (q === '') {
         // Default: the material's manufacturer, if it has any spool types.
         if (mfr) {
-          const byMfr = items.filter((t) => t.manufacturer.toLowerCase() === mfr);
+          const byMfr = items.filter(
+            (t) => t.manufacturer.toLowerCase() === mfr
+          );
           if (byMfr.length > 0) return byMfr;
         }
         return items;

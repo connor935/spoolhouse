@@ -45,16 +45,16 @@ widened to exempt all of `/api/` — API routes do their own (authoritative) aut
 
 All under `/api/v1`, JSON in/out, errors as `{"error":{"code","message"}}`.
 
-| Method & path | Purpose |
-|---|---|
-| `GET /api/v1/me` | Token check; returns id, name, email, role |
-| `GET /api/v1/spool-types` | Spool types usable by the token owner (approved + own pending) |
-| `GET /api/v1/filaments` | All own filaments as `FilamentView` + timestamps |
-| `POST /api/v1/filaments` | Create (201); same fields/validation as the UI form |
-| `GET /api/v1/filaments/:id` | Single filament (404 if not owned) |
-| `PATCH /api/v1/filaments/:id` | Partial update of the input fields |
+| Method & path                      | Purpose                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------- |
+| `GET /api/v1/me`                   | Token check; returns id, name, email, role                                    |
+| `GET /api/v1/spool-types`          | Spool types usable by the token owner (approved + own pending)                |
+| `GET /api/v1/filaments`            | All own filaments as `FilamentView` + timestamps                              |
+| `POST /api/v1/filaments`           | Create (201); same fields/validation as the UI form                           |
+| `GET /api/v1/filaments/:id`        | Single filament (404 if not owned)                                            |
+| `PATCH /api/v1/filaments/:id`      | Partial update of the input fields                                            |
 | `PUT /api/v1/filaments/:id/weight` | Re-weigh: `{"measuredTotalWeightGrams": n}` — the core scale-integration call |
-| `DELETE /api/v1/filaments/:id` | Delete (204) |
+| `DELETE /api/v1/filaments/:id`     | Delete (204)                                                                  |
 
 Ownership enforced in SQL (`WHERE userId = owner.id`), never from client ids — same rule as
 server actions. Spool-type usability check is extracted from `app/actions/filaments.ts` into

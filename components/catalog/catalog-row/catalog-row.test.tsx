@@ -153,13 +153,17 @@ describe('catalog boards', () => {
   it('groups the desktop catalog by manufacturer under the toolbar', async () => {
     render(<BoardCatalogMaterials />);
     for (const name of ['Bambu Lab', 'Prusament', 'Sunlu']) {
-      expect(screen.getByRole('heading', { level: 2, name })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { level: 2, name })
+      ).toBeInTheDocument();
     }
     expect(
       screen.getByText('Showing first 150 of 1,204 — refine your search.')
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Remove filter Density 1.2–1.3 g/cm³' })
+      screen.getByRole('button', {
+        name: 'Remove filter Density 1.2–1.3 g/cm³',
+      })
     ).toBeInTheDocument();
 
     await userEvent.click(
@@ -183,7 +187,9 @@ describe('catalog boards', () => {
     expect(
       screen.getAllByRole('columnheader').map((th) => th.textContent)
     ).toEqual(['Material', 'Type', 'Status', 'Submitted', 'Actions']);
-    expect(screen.getAllByRole('button', { name: /^Approve / })).toHaveLength(4);
+    expect(screen.getAllByRole('button', { name: /^Approve / })).toHaveLength(
+      4
+    );
     expect(
       screen.getByRole('button', { name: 'Delete Galaxy Black' })
     ).toBeDisabled();

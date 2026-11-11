@@ -65,7 +65,9 @@ export function GroupStock({
             <div className="flex items-start gap-3">
               <span
                 className="border-border mt-0.5 h-7 w-7 shrink-0 rounded-full border shadow-inner"
-                style={{ backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR }}
+                style={{
+                  backgroundColor: material.color ?? DEFAULT_MATERIAL_COLOR,
+                }}
                 aria-hidden
               />
               <div className="min-w-0">

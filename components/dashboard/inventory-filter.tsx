@@ -148,7 +148,9 @@ export function InventoryFilterPanel({
         <SelectField
           items={statusItems}
           value={value.status}
-          onValueChange={(v) => onChange({ ...value, status: v as StockStatus })}
+          onValueChange={(v) =>
+            onChange({ ...value, status: v as StockStatus })
+          }
           triggerClassName="h-9 w-full"
           ariaLabel="Filter by stock status"
         />

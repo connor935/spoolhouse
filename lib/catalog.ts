@@ -64,9 +64,7 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     return db
       .select()
       .from(table)
-      .where(
-        or(eq(table.status, 'approved'), eq(table.submittedById, user.id))
-      )
+      .where(or(eq(table.status, 'approved'), eq(table.submittedById, user.id)))
       .orderBy(asc(table.manufacturer), asc(table.name)) as Promise<TRow[]>;
   }
 
@@ -119,7 +117,11 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     const admin = await requireAdmin();
     await db
       .update(table)
-      .set({ status: 'rejected', reviewedById: admin.id, updatedAt: new Date() })
+      .set({
+        status: 'rejected',
+        reviewedById: admin.id,
+        updatedAt: new Date(),
+      })
       .where(and(eq(table.id, id), ne(table.status, 'approved')));
     revalidateCatalog();
   }
@@ -148,7 +150,8 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     const row = existing as unknown as TRow;
 
     const isAdmin = user.role === 'admin';
-    const isOwnEditable = row.submittedById === user.id && row.status !== 'approved';
+    const isOwnEditable =
+      row.submittedById === user.id && row.status !== 'approved';
     if (!isAdmin && !isOwnEditable) throw new Error(notAuthorizedMessage);
 
     const values = validate(input);

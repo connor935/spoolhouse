@@ -31,31 +31,31 @@ spools already carries returns `409 {"error":{"code":"tag_conflict",…}}`.
 
 ## Endpoints
 
-| Method & path | Purpose |
-|---|---|
-| `GET /api/v1/me` | Token check; returns id, name, email, role |
-| `GET /api/v1/materials` | Materials usable by the owner (approved + own pending), each with read-only datasheet `properties` — paginated, supports `?q` |
-| `GET /api/v1/spool-types` | Spool types usable by the owner |
-| `GET /api/v1/spools` | All own spools (computed amounts + material + tagUid) |
-| `POST /api/v1/spools` | Create a spool from `materialId` + `spoolTypeId` + weights |
-| `GET /api/v1/spools/:id` | One spool |
-| `PATCH /api/v1/spools/:id` | Partial update (materialId, spoolTypeId, weights, tagUid, details — see below) |
-| `DELETE /api/v1/spools/:id` | Delete (204) |
-| `PUT /api/v1/spools/:id/weight` | Re-weigh by id: `{"measuredTotalWeightGrams": n}` |
-| `GET /api/v1/spools/:id/weighings` | Weighing history, newest first (`?limit`, default 100, max 500) |
-| `POST /api/v1/spools/weigh` | **Register-or-refresh by NFC tag** — the scale/reader call |
+| Method & path                      | Purpose                                                                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/me`                   | Token check; returns id, name, email, role                                                                                    |
+| `GET /api/v1/materials`            | Materials usable by the owner (approved + own pending), each with read-only datasheet `properties` — paginated, supports `?q` |
+| `GET /api/v1/spool-types`          | Spool types usable by the owner                                                                                               |
+| `GET /api/v1/spools`               | All own spools (computed amounts + material + tagUid)                                                                         |
+| `POST /api/v1/spools`              | Create a spool from `materialId` + `spoolTypeId` + weights                                                                    |
+| `GET /api/v1/spools/:id`           | One spool                                                                                                                     |
+| `PATCH /api/v1/spools/:id`         | Partial update (materialId, spoolTypeId, weights, tagUid, details — see below)                                                |
+| `DELETE /api/v1/spools/:id`        | Delete (204)                                                                                                                  |
+| `PUT /api/v1/spools/:id/weight`    | Re-weigh by id: `{"measuredTotalWeightGrams": n}`                                                                             |
+| `GET /api/v1/spools/:id/weighings` | Weighing history, newest first (`?limit`, default 100, max 500)                                                               |
+| `POST /api/v1/spools/weigh`        | **Register-or-refresh by NFC tag** — the scale/reader call                                                                    |
 
 ### Spool details and weighing history
 
 Besides the weights, a spool carries optional details, accepted by `POST`/`PATCH` and
 returned on every spool (`null` clears one on `PATCH`):
 
-| Field | Meaning |
-|---|---|
+| Field            | Meaning                                    |
+| ---------------- | ------------------------------------------ |
 | `pricePaidCents` | Purchase price in euro cents (integer ≥ 0) |
-| `purchasedAt` | Purchase date, `YYYY-MM-DD` |
-| `location` | Free-text storage place, ≤ 100 chars |
-| `lastDriedAt` | ISO date-time of the last drying |
+| `purchasedAt`    | Purchase date, `YYYY-MM-DD`                |
+| `location`       | Free-text storage place, ≤ 100 chars       |
+| `lastDriedAt`    | ISO date-time of the last drying           |
 
 Responses also carry `needsDrying` (read-only): a hygroscopic type (Nylon/PVA after 14
 days, TPU/PC 30, PETG 60) not dried since then — or since the spool was created.
@@ -73,11 +73,11 @@ community-editable in the app; `verified` is `false` until an admin reviews one.
 The catalog can hold tens of thousands of materials (see the SpoolmanDB import), so the
 response is one page and carries the match count:
 
-| Param | Default | Meaning |
-|---|---|---|
-| `q` | — | Free-text search. Every whitespace-separated token must appear in the manufacturer, name or filament type, so `?q=polymaker+petg+red` narrows across all three. |
-| `limit` | 100 | Rows to return, capped at 500. |
-| `offset` | 0 | Rows to skip. |
+| Param    | Default | Meaning                                                                                                                                                         |
+| -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `q`      | —       | Free-text search. Every whitespace-separated token must appear in the manufacturer, name or filament type, so `?q=polymaker+petg+red` narrows across all three. |
+| `limit`  | 100     | Rows to return, capped at 500.                                                                                                                                  |
+| `offset` | 0       | Rows to skip.                                                                                                                                                   |
 
 ```sh
 curl -H "Authorization: Bearer $TOKEN" \
@@ -95,8 +95,20 @@ curl -H "Authorization: Bearer $TOKEN" \
       "color": "#1c1c2e",
       "status": "approved",
       "properties": [
-        { "key": "density", "name": "Density", "unit": "g/cm³", "value": "1.24", "verified": true },
-        { "key": "extruder_temp", "name": "Extruder temp", "unit": "°C", "value": "215", "verified": true }
+        {
+          "key": "density",
+          "name": "Density",
+          "unit": "g/cm³",
+          "value": "1.24",
+          "verified": true
+        },
+        {
+          "key": "extruder_temp",
+          "name": "Extruder temp",
+          "unit": "°C",
+          "value": "215",
+          "verified": true
+        }
       ]
     }
   ],
