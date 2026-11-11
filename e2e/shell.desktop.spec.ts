@@ -100,13 +100,11 @@ test.describe('as a member', () => {
     await expect(page).toHaveURL('/');
   });
 
-  test('links to pages not built yet land on the dashboard', async ({
+  test('links to pages not built yet land on the overview', async ({
     page,
   }) => {
-    for (const path of ['/inventory', '/borrows']) {
-      await page.goto(path);
-      await expect(page).toHaveURL('/');
-    }
+    await page.goto('/borrows');
+    await expect(page).toHaveURL('/');
   });
 });
 
