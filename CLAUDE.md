@@ -129,8 +129,9 @@ One password file is shared with the postgres container's initdb script, so it i
 duplicated. The deploy workflow's pre-start `scripts/migrate.mjs` step uses the same
 resolution.
 
-**CI/CD** (`.github/workflows/deploy.yml`): a `check` job (typecheck, oxlint, and on PRs a
-full `next build`) gates everything; only pushes to `main` build and deploy. The `deploy` job
+**CI/CD** (`.github/workflows/deploy.yml`): a `check` job (typecheck, oxlint, `format:check`,
+`npm test`, Storybook build, and on PRs a full `next build`; `npm ci` with `HUSKY=0`) repeats
+the local git hooks (see "Git hooks") and gates everything; only pushes to `main` build and deploy. The `deploy` job
 only starts the Deploy workflow in the private `server` repo (`gh workflow run`,
 `DEPLOY_DISPATCH_TOKEN` in the `production` environment) and waits for it — SSH key, host,
 user and paths live only there, never in this public repo. Images are
@@ -146,7 +147,7 @@ violate it in the same migration (see `drizzle/0007_constraints_and_fk_indexes.s
 ## Tech stack
 
 - **Next.js 16.2.6** (App Router) with **React 19**, server components + server actions
-- **TypeScript** (strict, path alias `@/*` → repo root) — `next build` type-checks, and CI (`check` job) runs `tsc --noEmit` + `oxlint` + `npm test` before anything is built or deployed
+- **TypeScript** (strict, path alias `@/*` → repo root) — `next build` type-checks, and CI (`check` job) runs `tsc --noEmit` + `oxlint` + `format:check` + `npm test` before anything is built or deployed; locally the husky hooks run oxlint, Prettier and the tests on every commit
 - **Tailwind CSS v4** — CSS-first config in `app/globals.css` (`@theme inline`, oklch tokens); there is no `tailwind.config.*`
 - **shadcn/ui** (style `base-nova`) built on **Base UI** (`@base-ui/react`), not Radix — primitives live in `components/ui/`
 - **Drizzle ORM + node-postgres** for data access (PostgreSQL; PGlite locally, migrations via drizzle-kit)
