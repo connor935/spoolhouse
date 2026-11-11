@@ -1,7 +1,6 @@
 import { getInventory } from '@/app/actions/filaments';
 import { getMyGroups } from '@/app/actions/groups';
 import { getActiveLendsForOwner, getMyLends } from '@/app/actions/lends';
-import { getUnreadCount } from '@/app/actions/notifications';
 import { getPropertyDefinitions } from '@/app/actions/properties';
 import { getUsableSpoolTypes } from '@/app/actions/spool-types';
 import { WarehouseDashboard } from '@/components/dashboard/warehouse-dashboard';
@@ -42,7 +41,6 @@ export default async function Page({
     spoolTypes,
     activeLends,
     myGroups,
-    unreadCount,
     myLends,
     propertyDefinitions,
     materialUsage,
@@ -51,7 +49,6 @@ export default async function Page({
     getUsableSpoolTypes(),
     getActiveLendsForOwner(),
     getMyGroups(),
-    getUnreadCount(),
     getMyLends(),
     getPropertyDefinitions(),
     getMaterialUsage(user.id),
@@ -76,7 +73,6 @@ export default async function Page({
       spoolTypes={spoolTypes}
       groups={groups}
       myLends={myLends}
-      unreadCount={unreadCount}
       user={{ id: user.id, name: user.name, isAdmin: user.role === 'admin' }}
       initialTab={initialTab}
       initialFilters={initialFilters}
