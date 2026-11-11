@@ -27,3 +27,7 @@ storybook-static/
 *storybook.log
 
 **/*.tmp
+# Playwright E2E (sessions, results, report)
+e2e/.auth/
+test-results/
+playwright-report/
