@@ -6,6 +6,10 @@ export const E2E_PASSWORD = 'e2e-password-not-secret';
 export const users = {
   admin: { email: 'e2e-admin@example.org', name: 'Ada Admin' },
   member: { email: 'e2e-member@example.org', name: 'Max Member' },
+  // In no group at seed time: social.desktop.spec.ts builds its own group
+  // with them, so the counts below stay what the shell specs expect.
+  lender: { email: 'e2e-lender@example.org', name: 'Lea Lender' },
+  borrower: { email: 'e2e-borrower@example.org', name: 'Ben Borrower' },
 } as const;
 
 export const GROUP_NAME = 'E2E Makers';

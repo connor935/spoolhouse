@@ -99,13 +99,6 @@ test.describe('as a member', () => {
     await page.goto('/admin/users');
     await expect(page).toHaveURL('/');
   });
-
-  test('links to pages not built yet land on the overview', async ({
-    page,
-  }) => {
-    await page.goto('/borrows');
-    await expect(page).toHaveURL('/');
-  });
 });
 
 test.describe('as an admin', () => {

@@ -32,8 +32,7 @@ test.describe('as a member', () => {
     await page.goto('/?tab=group-abc');
     await expect(page).toHaveURL(/\/groups(\/abc)?$/);
     await page.goto('/?tab=borrows');
-    // /borrows itself is still a placeholder that lands on the overview.
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/borrows');
   });
 
   test('inventory filters live in the URL', async ({ page }) => {

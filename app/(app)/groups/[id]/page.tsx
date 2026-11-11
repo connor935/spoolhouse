@@ -1,82 +1,76 @@
-import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
-import { getGroupDetail } from '@/app/actions/groups';
+import { redirect } from 'next/navigation';
 import { getInventory } from '@/app/actions/filaments';
-import { GroupSharingSettings } from '@/components/groups/group-sharing-settings';
-import { GroupOwnerTools } from '@/components/groups/group-owner-tools';
-import { PageShell } from '@/components/layout/page-shell';
+import { getGroupDetail } from '@/app/actions/groups';
+import { GroupDetailContainer } from '@/components/groups/group-detail';
+import type { ShareMode } from '@/components/groups/share-mode-picker';
 import { requireUser } from '@/lib/auth-session';
-import type { Material } from '@/lib/db/schema';
+import { groupInventory } from '@/lib/filament';
+import { getSharedFilaments } from '@/lib/sharing';
+import { getSpoolNumbers } from '@/lib/spool-numbers';
 
 export const dynamic = 'force-dynamic';
 
-// Group management only — the group's stock lives on the dashboard (one tab
-// per group) and lend handling on the dashboard "Borrows" tab.
 export default async function GroupPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
-  const { id } = await params;
-  const groupId = id;
-  if (!groupId) notFound();
+  const user = await requireUser();
+  const [{ id }, query] = await Promise.all([params, searchParams]);
 
-  const detail = await getGroupDetail(groupId);
+  // Membership check first: null for non-members and unknown ids.
+  const detail = await getGroupDetail(id);
   if (!detail) redirect('/groups');
 
-  // Distinct materials the user has spools of — sharing is material-level
-  const inventoryRows = await getInventory();
-  const ownMaterials = [
-    ...new Map<string, Material>(
-      inventoryRows.map((r) => [r.material.id, r.material])
-    ).values(),
-  ];
-  const isOwner = detail.myMembership.role === 'owner';
+  const [stock, rows] = await Promise.all([
+    getSharedFilaments(id),
+    getInventory(),
+  ]);
+  const spoolNumbers = await getSpoolNumbers(stock.map((s) => s.id));
+
+  // Sharing is material-level: every material you have spools of, with how
+  // many of them (non-empty) would be visible.
+  const ownMaterials = groupInventory(rows).map(({ material, spools }) => ({
+    id: material.id,
+    name: material.name,
+    manufacturer: material.manufacturer,
+    filamentType: material.filamentType,
+    color: material.color,
+    spoolCount: spools.filter((s) => !s.isEmpty).length,
+  }));
 
   return (
-    <PageShell
-      title={detail.group.name}
-      description={`${detail.members.length} member${detail.members.length === 1 ? '' : 's'} — browse this group's stock on the dashboard`}
-      breadcrumb={[{ label: 'Groups', href: '/groups' }]}
-    >
-      <p className="text-muted-foreground mt-4 text-sm">
-        Shared spools and borrow requests moved to the{' '}
-        <Link
-          href="/"
-          className="hover:text-foreground underline underline-offset-4"
-        >
-          dashboard
-        </Link>{' '}
-        (group tab & Borrows tab). This page manages membership and sharing.
-      </p>
-
-      <section className="border-border bg-card mt-6 rounded-lg border p-6">
-        <h2 className="font-semibold">My sharing</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Control which of your materials (all their spools) are visible to this
-          group.
-        </p>
-        <div className="mt-4">
-          <GroupSharingSettings
-            groupId={groupId}
-            initialShareMode={
-              detail.myMembership.shareMode as 'all' | 'whitelist' | 'blacklist'
-            }
-            initialOverrideIds={detail.myOverrideMaterialIds}
-            ownMaterials={ownMaterials}
-          />
-        </div>
-      </section>
-
-      {isOwner && (
-        <section className="border-border bg-card mt-8 rounded-lg border p-6">
-          <h2 className="font-semibold">Owner tools</h2>
-          <div className="mt-4">
-            <GroupOwnerTools group={detail.group} members={detail.members} />
-          </div>
-        </section>
-      )}
-    </PageShell>
+    <GroupDetailContainer
+      group={{
+        id: detail.group.id,
+        name: detail.group.name,
+        inviteCode: detail.group.inviteCode,
+      }}
+      members={detail.members
+        .map(({ member, name }) => ({
+          id: member.userId,
+          name,
+          role: member.role as 'owner' | 'member',
+          joinedAt: member.joinedAt,
+        }))
+        .sort(
+          (a, b) =>
+            Number(b.role === 'owner') - Number(a.role === 'owner') ||
+            a.joinedAt.getTime() - b.joinedAt.getTime()
+        )}
+      stock={stock}
+      spoolNumbers={Object.fromEntries(spoolNumbers)}
+      currentUserId={user.id}
+      share={{
+        mode: detail.myMembership.shareMode as ShareMode,
+        overrideIds: detail.myOverrideMaterialIds,
+      }}
+      ownMaterials={ownMaterials}
+      activeLendCount={detail.activeLendCount}
+      activeLendsByUserId={detail.activeLendsByUserId}
+      view={query.view === 'settings' ? 'settings' : 'stock'}
+    />
   );
 }

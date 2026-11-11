@@ -126,6 +126,17 @@ async function seed() {
     }))
   );
 
+  // The social spec's pair: the lender owns two spools, the borrower one.
+  const lenderId = await createUser(users.lender, 'user');
+  const borrowerId = await createUser(users.borrower, 'user');
+  await db
+    .insert(spools)
+    .values([
+      spool(lenderId, black.id, 700),
+      spool(lenderId, white.id, 500),
+      spool(borrowerId, white.id, 300),
+    ]);
+
   // A group with both, sharing everything; the admin asked to borrow one of
   // the member's spools.
   const [group] = await db
