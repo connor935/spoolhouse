@@ -88,4 +88,48 @@ describe('ReviewQueue', () => {
     render(<Busy />);
     expect(screen.getByRole('button', { name: 'Approve' })).toBeDisabled();
   });
+
+  it('decides with R, E and A', async () => {
+    const onApprove = fn();
+    const onReject = fn();
+    const onEdit = fn();
+    render(
+      <Default onApprove={onApprove} onReject={onReject} onEdit={onEdit} />
+    );
+    expect(screen.getByRole('button', { name: 'Reject' })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'R'
+    );
+    expect(screen.getByRole('link', { name: 'Skip' })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'J'
+    );
+    await userEvent.keyboard('r');
+    expect(onReject).toHaveBeenCalledOnce();
+    await userEvent.keyboard('e');
+    expect(onEdit).toHaveBeenCalledOnce();
+    await userEvent.keyboard('a');
+    expect(onApprove).toHaveBeenCalledOnce();
+    await userEvent.keyboard('{Shift>}A{/Shift}');
+    expect(onApprove).toHaveBeenCalledOnce();
+  });
+
+  it('skips with J through the link', async () => {
+    render(<Default />);
+    const skip = screen.getByRole('link', { name: 'Skip' });
+    const clicked = fn();
+    skip.addEventListener('click', (e) => {
+      e.preventDefault();
+      clicked();
+    });
+    await userEvent.keyboard('j');
+    expect(clicked).toHaveBeenCalledOnce();
+  });
+
+  it('ignores the shortcuts while a decision runs', async () => {
+    const onApprove = fn();
+    render(<Busy onApprove={onApprove} />);
+    await userEvent.keyboard('a');
+    expect(onApprove).not.toHaveBeenCalled();
+  });
 });

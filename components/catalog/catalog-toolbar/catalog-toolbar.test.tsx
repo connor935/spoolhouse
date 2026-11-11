@@ -56,4 +56,22 @@ describe('CatalogToolbar', () => {
     ).toBeVisible();
     expect(screen.queryByText('1,204')).toBeNull();
   });
+
+  it('focuses the search with / and selects what is there', async () => {
+    const onQueryChange = fn();
+    render(<Default query="galaxy" onQueryChange={onQueryChange} />);
+    const search = screen.getByRole('searchbox');
+    expect(search).toHaveAttribute('aria-keyshortcuts', '/');
+    await userEvent.keyboard('/');
+    expect(search).toHaveFocus();
+    expect(onQueryChange).not.toHaveBeenCalled();
+    expect((search as HTMLInputElement).selectionStart).toBe(0);
+    expect((search as HTMLInputElement).selectionEnd).toBe(6);
+  });
+
+  it('leaves / alone on phones', async () => {
+    render(<Mobile />);
+    await userEvent.keyboard('/');
+    expect(screen.getByRole('searchbox')).not.toHaveFocus();
+  });
 });

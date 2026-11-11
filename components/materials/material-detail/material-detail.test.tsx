@@ -117,4 +117,15 @@ describe('MaterialDetail', () => {
       4
     );
   });
+
+  it('adds a spool with N', async () => {
+    const onAddSpool = fn();
+    render(<Member onAddSpool={onAddSpool} />);
+    expect(screen.getByRole('button', { name: 'Add spool' })).toHaveAttribute(
+      'aria-keyshortcuts',
+      'N'
+    );
+    await userEvent.keyboard('n');
+    expect(onAddSpool).toHaveBeenCalledOnce();
+  });
 });

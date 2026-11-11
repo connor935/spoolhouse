@@ -11,7 +11,9 @@ import { FilterSheet } from '@/components/common/filter-sheet';
 import { PageHeader } from '@/components/common/page-header';
 import { SearchInput } from '@/components/common/search-input';
 import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useHotkeys } from '@/hooks/use-hotkeys';
 import type { Material } from '@/lib/db/schema';
 import {
   formatWeight,
@@ -119,10 +121,16 @@ function InventoryView({
     properties,
   };
 
+  useHotkeys({ n: () => onAddSpool(null) });
   const addButton = (
-    <Button variant="accent" onClick={() => onAddSpool(null)}>
+    <Button
+      variant="accent"
+      onClick={() => onAddSpool(null)}
+      aria-keyshortcuts="N"
+    >
       <PlusIcon aria-hidden />
       Add spool
+      {!mobile && <Kbd aria-hidden>N</Kbd>}
     </Button>
   );
 
@@ -242,6 +250,7 @@ function InventoryView({
               onChange={(q) => onQueryChange({ ...query, q })}
               placeholder="Search material, manufacturer or location…"
               ariaLabel="Search inventory"
+              shortcut={!mobile}
               className="min-w-48"
             />
             <FiltersButton

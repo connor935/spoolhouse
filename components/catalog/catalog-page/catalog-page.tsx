@@ -12,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { useHotkeys } from '@/hooks/use-hotkeys';
 
 type CatalogPageProps = {
   /** Sidebar section number: "06" materials, "07" spool types. */
@@ -54,11 +55,13 @@ function CatalogPage({
   compact = false,
   children,
 }: CatalogPageProps) {
+  useHotkeys({ r: () => onRequestOpenChange(true) });
   const requestButton = (
     <Button
       variant="accent"
       className={compact ? 'h-11 w-full' : undefined}
       onClick={() => onRequestOpenChange(true)}
+      aria-keyshortcuts="R"
     >
       <PlusIcon />
       {requestLabel}

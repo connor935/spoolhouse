@@ -1,6 +1,8 @@
+'use client';
+
 import { CheckCheckIcon } from 'lucide-react';
 import Link from 'next/link';
-import type * as React from 'react';
+import * as React from 'react';
 
 import { EmptyState } from '@/components/common/empty-state';
 import { PageHeader, type Crumb } from '@/components/common/page-header';
@@ -8,6 +10,7 @@ import { SectionHeader } from '@/components/common/section-header';
 import { Swatch } from '@/components/inventory/swatch';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
+import { useHotkeys } from '@/hooks/use-hotkeys';
 
 import { DuplicateCandidateRow } from '../duplicate-candidate-row';
 import { ReviewSummary } from '../review-summary';
@@ -69,6 +72,20 @@ function ReviewQueue({
   onEdit,
   busy = false,
 }: ReviewQueueProps) {
+  const skipRef = React.useRef<HTMLAnchorElement>(null);
+  const decide = (action: () => void) => () => {
+    if (!busy) action();
+  };
+  useHotkeys(
+    {
+      r: decide(onReject),
+      e: decide(onEdit),
+      a: decide(onApprove),
+      // Through the link, so it stays a client-side navigation.
+      j: () => skipRef.current?.click(),
+    },
+    summary !== undefined
+  );
   const header = (
     <PageHeader
       breadcrumb={breadcrumb}
@@ -119,6 +136,7 @@ function ReviewQueue({
               size="lg"
               disabled={busy}
               onClick={onReject}
+              aria-keyshortcuts="R"
             >
               Reject <Kbd aria-hidden>R</Kbd>
             </Button>
@@ -127,13 +145,16 @@ function ReviewQueue({
               size="lg"
               disabled={busy}
               onClick={onEdit}
+              aria-keyshortcuts="E"
             >
               Edit <Kbd aria-hidden>E</Kbd>
             </Button>
             <span className="flex-1" />
             {skipHref && (
               <Link
+                ref={skipRef}
                 href={skipHref}
+                aria-keyshortcuts="J"
                 className={buttonVariants({ variant: 'ghost' })}
               >
                 Skip <Kbd aria-hidden>J</Kbd>
@@ -144,6 +165,7 @@ function ReviewQueue({
               className="min-w-[180px] max-sm:flex-1"
               disabled={busy}
               onClick={onApprove}
+              aria-keyshortcuts="A"
             >
               Approve <Kbd aria-hidden>A</Kbd>
             </Button>

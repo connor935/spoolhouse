@@ -21,6 +21,7 @@ import { UsageBarChart } from '@/components/stats/usage-bar-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
+import { useHotkeys } from '@/hooks/use-hotkeys';
 import { forecastDays, formatDays, formatRunway } from '@/lib/consumption';
 import type { Material } from '@/lib/db/schema';
 import {
@@ -95,6 +96,7 @@ function MaterialDetail({
   onDelete,
   reviewPending,
 }: MaterialDetailProps) {
+  useHotkeys({ n: () => onAddSpool?.() }, onAddSpool !== undefined);
   const tiles = React.useRef(new Map<string, HTMLDivElement>());
   const { status } = material;
   const canEdit = isAdmin || (own && status !== 'approved');
@@ -188,7 +190,11 @@ function MaterialDetail({
                   </Button>
                 )}
                 {onAddSpool && (
-                  <Button variant="accent" onClick={onAddSpool}>
+                  <Button
+                    variant="accent"
+                    onClick={onAddSpool}
+                    aria-keyshortcuts="N"
+                  >
                     <PlusIcon />
                     Add spool
                     <Kbd aria-hidden>N</Kbd>

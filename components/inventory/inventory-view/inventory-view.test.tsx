@@ -155,4 +155,35 @@ describe('InventoryView', () => {
       await screen.findByRole('dialog', { name: 'Filters' })
     ).toBeVisible();
   });
+
+  it('adds a spool with N, focuses the search with /', async () => {
+    const onAddSpool = fn();
+    render(<Default onAddSpool={onAddSpool} />);
+    const search = screen.getByRole('searchbox', { name: 'Search inventory' });
+    expect(search).toHaveAttribute('aria-keyshortcuts', '/');
+    await userEvent.keyboard('n');
+    expect(onAddSpool).toHaveBeenCalledWith(null);
+    await userEvent.keyboard('/');
+    expect(search).toHaveFocus();
+    expect(search).toHaveValue('');
+  });
+
+  it('never fires a shortcut while typing in the search', async () => {
+    const onAddSpool = fn();
+    const onQueryChange = fn();
+    render(<Default onAddSpool={onAddSpool} onQueryChange={onQueryChange} />);
+    await userEvent.type(
+      screen.getByRole('searchbox', { name: 'Search inventory' }),
+      'n'
+    );
+    expect(onAddSpool).not.toHaveBeenCalled();
+    expect(onQueryChange).toHaveBeenCalled();
+  });
+
+  it('has no search shortcut on phones', () => {
+    render(<Mobile />);
+    expect(
+      screen.getByRole('searchbox', { name: 'Search inventory' })
+    ).not.toHaveAttribute('aria-keyshortcuts');
+  });
 });

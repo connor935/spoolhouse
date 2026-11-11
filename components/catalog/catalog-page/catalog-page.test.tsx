@@ -45,4 +45,22 @@ describe('CatalogPage', () => {
       screen.getByRole('button', { name: 'Request material' })
     ).toBeInTheDocument();
   });
+
+  it('opens the request panel with R', async () => {
+    const onRequestOpenChange = fn();
+    render(<Default onRequestOpenChange={onRequestOpenChange} />);
+    expect(
+      screen.getByRole('button', { name: 'Request material' })
+    ).toHaveAttribute('aria-keyshortcuts', 'R');
+    await userEvent.keyboard('r');
+    expect(onRequestOpenChange).toHaveBeenCalledWith(true);
+  });
+
+  it('ignores R inside the open panel', async () => {
+    const onRequestOpenChange = fn();
+    render(<RequestOpen onRequestOpenChange={onRequestOpenChange} />);
+    screen.getByRole('dialog').focus();
+    await userEvent.keyboard('r');
+    expect(onRequestOpenChange).not.toHaveBeenCalledWith(true);
+  });
 });
