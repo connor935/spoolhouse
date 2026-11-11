@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { monthYear, relativeTime, shortDate } from '@/lib/dates';
+import { fullDate, monthYear, relativeTime, shortDate } from '@/lib/dates';
 
 describe('monthYear', () => {
   it('formats month + year in UTC', () => {
@@ -17,6 +17,13 @@ describe('shortDate', () => {
   it('formats day + month in UTC without the year', () => {
     expect(shortDate(new Date('2026-09-02T23:30:00Z'))).toBe('02 Sep');
     expect(shortDate(new Date('2026-12-31T00:00:00Z'))).toBe('31 Dec');
+  });
+});
+
+describe('fullDate', () => {
+  it('formats day, month and year in UTC', () => {
+    expect(fullDate(new Date('2026-11-10T23:30:00Z'))).toBe('10 Nov 2026');
+    expect(fullDate(new Date('2026-01-02T00:00:00Z'))).toBe('02 Jan 2026');
   });
 });
 
