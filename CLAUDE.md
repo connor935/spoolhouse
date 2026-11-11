@@ -21,9 +21,33 @@ npm run db:generate  # drizzle-kit: generate migration from schema changes
 npm run db:migrate   # drizzle-kit: apply migrations manually (usually unnecessary, see below)
 npm run db:studio    # drizzle-kit: local DB browser (needs the DB up: dev or db:serve)
 npm run admin:create -- <email> <name>   # bootstrap/promote an admin account
+npm run format       # Prettier over the repo (.prettierrc, .prettierignore)
+npm run format:check # what CI runs
 ```
 
 Package manager is **npm** (`package-lock.json`).
+
+## Git hooks (mandatory)
+
+**Setup step for everyone, humans and Claude sessions alike: `npm install`** — its `prepare`
+script runs husky, which points `core.hooksPath` at `.husky/_`. Check with
+`git config core.hooksPath` (must print `.husky/_`); if it doesn't, run `npm run prepare`.
+Do this in every fresh clone **and every git worktree's** first install.
+
+- **pre-commit** (`.husky/pre-commit`): `lint-staged` (config in `package.json`) runs
+  `oxlint --fix` + `prettier --write` on the staged files and re-stages the fixes, then
+  `npm test` (Vitest, a few seconds).
+- **pre-push** (`.husky/pre-push`): runs the Playwright suite (`npm run test:e2e`, ~1–2 min,
+  needs `npx playwright install chromium` once) when the pushed commits touch app code
+  (`app/`, `components/`, `lib/`, `e2e/`, `scripts/`, configs, dependencies); docs/notes-only
+  pushes skip it.
+- **Never bypass them** (`--no-verify`, `HUSKY=0`, unsetting `core.hooksPath`). A failing hook
+  means: fix the cause, then commit/push again. CI repeats the checks (`format:check` included)
+  as a backstop; only CI sets `HUSKY=0` (Docker builds have no `.git`, so husky skips itself).
+- Hooks run in a non-interactive shell: if git can't find `node`/`npx` (fnm/nvm), put the
+  PATH setup in `~/.config/husky/init.sh`, which husky sources before every hook.
+- `.git-blame-ignore-revs` lists the one-off repo-wide formatting commit; enable it with
+  `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
 
 ## Storybook & component tests
 
@@ -192,66 +216,66 @@ file inside another component's folder. The shadcn CLI writes flat files, so add
 **`scripts/ui-add.sh <name>…`** (runs `shadcn add`, then moves each new file into its folder and
 writes the barrel; it reports flat duplicates of existing components instead of overwriting).
 
-| Folder | Contents |
-|---|---|
-| `ui/` | shadcn/Base-UI primitives — never hand-edit for feature needs |
-| `common/` | Cross-cutting widgets used by 2+ features: `confirm-dialog`, `search-input`, `select-field`, `manufacturer-name-fields`, `request-submit-button` |
-| `layout/` | App chrome mounted by layouts/pages: `page-shell`, `app-header`, `user-menu`, `theme-provider`, `live-refresh` |
-| `dashboard/` | The `/` surface: `warehouse-dashboard`, `material-card`, `spool-card`, `material-dialog`, `inventory-filter`, `borrows-dialog`/`borrows-panel`, + `spool-form/` (add/edit-spool dialog, fields, pickers, weighing history) |
-| `inventory/` | Redesign inventory atoms (replace `dashboard/` cards in 06a): `swatch`, `meter`, `weight-display`, `spool-tile`, `material-block`, `reweigh-form` + `reweigh-popover`/`reweigh-sheet`; fixtures in `stories/fixtures/inventory.ts` |
-| `catalog/` | `/materials` + `/spool-types` (+ their admin twins): generic `catalog`/`catalog-row` and the material/spool-type list, row, edit-dialog and request-form pairs |
-| `materials/` | Material-property UI shared by catalog **and** dashboard: `material-properties-section`, `material-property-filter` |
-| `groups/` | `/groups` + `/groups/[id]` + group stock: create/join forms, `group-stock`, sharing settings, owner tools |
-| `notifications/` | `notification-bell` (rendered by layout chrome) and `notifications-list` |
-| `stats/` | `/stats`: `monthly-usage-chart`, `usage-table` |
-| `auth/` | `auth-card` shell + login/signup/reset-password forms |
-| `account/` | `/account` sections: `account-forms`, `api-tokens-section` |
-| `admin/` | Admin-only surfaces with no catalog equivalent: `create-user-form`, `trusted-contributor-toggle`, `property-admin-list`, `import-manufacturers` |
-| `api-docs/` | `swagger-docs` (the `/api-docs` Swagger UI client wrapper) |
+| Folder           | Contents                                                                                                                                                                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui/`            | shadcn/Base-UI primitives — never hand-edit for feature needs                                                                                                                                                                      |
+| `common/`        | Cross-cutting widgets used by 2+ features: `confirm-dialog`, `search-input`, `select-field`, `manufacturer-name-fields`, `request-submit-button`                                                                                   |
+| `layout/`        | App chrome mounted by layouts/pages: `page-shell`, `app-header`, `user-menu`, `theme-provider`, `live-refresh`                                                                                                                     |
+| `dashboard/`     | The `/` surface: `warehouse-dashboard`, `material-card`, `spool-card`, `material-dialog`, `inventory-filter`, `borrows-dialog`/`borrows-panel`, + `spool-form/` (add/edit-spool dialog, fields, pickers, weighing history)         |
+| `inventory/`     | Redesign inventory atoms (replace `dashboard/` cards in 06a): `swatch`, `meter`, `weight-display`, `spool-tile`, `material-block`, `reweigh-form` + `reweigh-popover`/`reweigh-sheet`; fixtures in `stories/fixtures/inventory.ts` |
+| `catalog/`       | `/materials` + `/spool-types` (+ their admin twins): generic `catalog`/`catalog-row` and the material/spool-type list, row, edit-dialog and request-form pairs                                                                     |
+| `materials/`     | Material-property UI shared by catalog **and** dashboard: `material-properties-section`, `material-property-filter`                                                                                                                |
+| `groups/`        | `/groups` + `/groups/[id]` + group stock: create/join forms, `group-stock`, sharing settings, owner tools                                                                                                                          |
+| `notifications/` | `notification-bell` (rendered by layout chrome) and `notifications-list`                                                                                                                                                           |
+| `stats/`         | `/stats`: `monthly-usage-chart`, `usage-table`                                                                                                                                                                                     |
+| `auth/`          | `auth-card` shell + login/signup/reset-password forms                                                                                                                                                                              |
+| `account/`       | `/account` sections: `account-forms`, `api-tokens-section`                                                                                                                                                                         |
+| `admin/`         | Admin-only surfaces with no catalog equivalent: `create-user-form`, `trusted-contributor-toggle`, `property-admin-list`, `import-manufacturers`                                                                                    |
+| `api-docs/`      | `swagger-docs` (the `/api-docs` Swagger UI client wrapper)                                                                                                                                                                         |
 
 ### Key files
 
-| File | Purpose |
-|---|---|
-| `lib/filament.ts` | Domain logic: gram math, thresholds, `SpoolView`, `MaterialInventory`, `toSpoolView`, `groupInventory`, `formatWeight`, `materialLabel`, `spoolTypeLabel`, `FILAMENT_TYPES`; money (`formatMoney`, `parsePriceCents`, `pricePerGramCents`), drying hint (`needsDrying`, `DRYING_INTERVAL_DAYS`), `lendUsageGrams` |
-| `lib/weighings.ts` / `lib/consumption.ts` / `lib/usage-stats.ts` | Weighing history writer + undo / pure usage math (drops, monthly, rate, forecast) / DB-backed stats for `/stats` and the material dialog |
-| `app/actions/spool-types.ts` / `app/actions/materials.ts` | Catalog actions (usable/catalog queries, request, admin approve/reject) — same pattern for both |
-| `lib/db/schema.ts` | Drizzle tables (`materials`, `spools` [DB: "filaments"], `spoolTypes`, `spoolWeighings` [weighing history], `properties` + `materialProperties` [datasheet values], `groups`, `groupMembers`, `filamentShareOverrides` [material-level], `lends`, `notifications`) + inferred types (re-exports auth schema) |
-| `components/layout/page-shell.tsx` | Shared sub-page layout (width, back-link, title, bell) — use on every sub-page |
-| `lib/notifications.ts` / `app/actions/notifications.ts` | Notification writer helper / read actions (`getUnreadCount`, `getNotifications`, `markAllRead`) |
-| `lib/auth.ts` / `lib/auth-client.ts` | better-auth server instance / React client |
-| `lib/auth-session.ts` | `requireUser()` / `requireAdmin()` — mandatory in protected pages & actions |
-| `proxy.ts` | Optimistic login redirect (cookie presence only) |
-| `lib/db/index.ts` | node-postgres pool + drizzle client singleton; `runMigrations()` / `closeDb()` |
-| `lib/db/local.mjs` / `scripts/pglite-server.mjs` | Local-dev DB connection details / the PGlite host process |
-| `scripts/with-local-db.mjs` / `scripts/local-db.mjs` | Wrapper that boots the local DB for `dev`/`start` / `withLocalDb()` for the CLI scripts |
-| `instrumentation.ts` | Applies pending migrations once, before the server serves requests |
-| `drizzle.config.ts` / `drizzle/` | drizzle-kit config and committed SQL migrations |
-| `app/actions/filaments.ts` | Spool server actions: `getInventory`, `createSpool`/`updateSpool` (usable-material/type checks), `setMeasuredWeight` (owner or active borrower), `deleteSpool` |
-| `lib/sharing.ts` | `getSharedFilaments(groupId)` — single source of truth resolving each member's share mode into the group's pooled stock; `getMembership(groupId, userId)` |
-| `app/actions/groups.ts` | Group CRUD, membership, invite codes, `updateShareSettings` |
-| `app/actions/lends.ts` | Lend lifecycle: `requestLend`, `approveLend`, `declineLend`, `markReturned`, `cancelLendRequest`, `getMyLends` (cross-group, feeds Borrows tab), `getActiveLendsForOwner` — mutations write notifications |
-| `components/dashboard/borrows-panel.tsx` / `notifications/notifications-list.tsx` | Dashboard Borrows tab / actionable notification list with approve-decline dialog |
-| `components/dashboard/warehouse-dashboard.tsx` | Main client UI: stats, tabs (incl. Borrows + per-group), dialog state |
-| `components/dashboard/material-card.tsx` | Material card with per-spool rows (re-weigh, edit/delete, lent badge) + add-spool |
-| `components/dashboard/spool-form/spool-form-dialog.tsx` | Add/edit spool: material + spool-type pickers with inline request flows, details (price, location, drying), weighing history + undo |
-| `components/groups/group-stock.tsx` / `group-sharing-settings.tsx` / `group-owner-tools.tsx` | `/groups/[id]` page sections + the dashboard's per-group stock tab |
-| `lib/api-auth.ts` | REST-API token auth: `generateApiToken`, `authenticateApiRequest(request)`, `apiError`/`unauthorized` helpers |
-| `lib/spool-type-usable.ts` | `isSpoolTypeUsable`/`assertSpoolTypeUsable` — shared by server actions and REST API |
-| `app/actions/api-tokens.ts` | API-token management actions (create/list/revoke) backing the `/account` section |
-| `app/api/v1/` | REST route handlers (see "REST API" below); `filaments/shared.ts` holds serialization + body validation |
-| `lib/material-search.ts` | SQL `WHERE` builder for the catalog: token search, manufacturer/type, property ranges |
-| `lib/property-value.ts` | Property value types + `normalizePropertyValue()` — the one place input is validated/canonicalised |
-| `lib/search.ts` | Token matching for client-side searches (`searchTokens`/`matchesTokens`/`matchRank`) |
-| `lib/spoolmandb.ts` | SpoolmanDB import core (fetch, dedupe, upsert) — used by the CLI **and** `/admin/import` |
-| `app/actions/spoolmandb.ts` | Admin import actions (`getUpstreamManufacturers`, `importManufacturerFromUpstream`) |
-| `lib/utils.ts` | `cn()` (clsx + tailwind-merge) |
+| File                                                                                         | Purpose                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/filament.ts`                                                                            | Domain logic: gram math, thresholds, `SpoolView`, `MaterialInventory`, `toSpoolView`, `groupInventory`, `formatWeight`, `materialLabel`, `spoolTypeLabel`, `FILAMENT_TYPES`; money (`formatMoney`, `parsePriceCents`, `pricePerGramCents`), drying hint (`needsDrying`, `DRYING_INTERVAL_DAYS`), `lendUsageGrams` |
+| `lib/weighings.ts` / `lib/consumption.ts` / `lib/usage-stats.ts`                             | Weighing history writer + undo / pure usage math (drops, monthly, rate, forecast) / DB-backed stats for `/stats` and the material dialog                                                                                                                                                                          |
+| `app/actions/spool-types.ts` / `app/actions/materials.ts`                                    | Catalog actions (usable/catalog queries, request, admin approve/reject) — same pattern for both                                                                                                                                                                                                                   |
+| `lib/db/schema.ts`                                                                           | Drizzle tables (`materials`, `spools` [DB: "filaments"], `spoolTypes`, `spoolWeighings` [weighing history], `properties` + `materialProperties` [datasheet values], `groups`, `groupMembers`, `filamentShareOverrides` [material-level], `lends`, `notifications`) + inferred types (re-exports auth schema)      |
+| `components/layout/page-shell.tsx`                                                           | Shared sub-page layout (width, back-link, title, bell) — use on every sub-page                                                                                                                                                                                                                                    |
+| `lib/notifications.ts` / `app/actions/notifications.ts`                                      | Notification writer helper / read actions (`getUnreadCount`, `getNotifications`, `markAllRead`)                                                                                                                                                                                                                   |
+| `lib/auth.ts` / `lib/auth-client.ts`                                                         | better-auth server instance / React client                                                                                                                                                                                                                                                                        |
+| `lib/auth-session.ts`                                                                        | `requireUser()` / `requireAdmin()` — mandatory in protected pages & actions                                                                                                                                                                                                                                       |
+| `proxy.ts`                                                                                   | Optimistic login redirect (cookie presence only)                                                                                                                                                                                                                                                                  |
+| `lib/db/index.ts`                                                                            | node-postgres pool + drizzle client singleton; `runMigrations()` / `closeDb()`                                                                                                                                                                                                                                    |
+| `lib/db/local.mjs` / `scripts/pglite-server.mjs`                                             | Local-dev DB connection details / the PGlite host process                                                                                                                                                                                                                                                         |
+| `scripts/with-local-db.mjs` / `scripts/local-db.mjs`                                         | Wrapper that boots the local DB for `dev`/`start` / `withLocalDb()` for the CLI scripts                                                                                                                                                                                                                           |
+| `instrumentation.ts`                                                                         | Applies pending migrations once, before the server serves requests                                                                                                                                                                                                                                                |
+| `drizzle.config.ts` / `drizzle/`                                                             | drizzle-kit config and committed SQL migrations                                                                                                                                                                                                                                                                   |
+| `app/actions/filaments.ts`                                                                   | Spool server actions: `getInventory`, `createSpool`/`updateSpool` (usable-material/type checks), `setMeasuredWeight` (owner or active borrower), `deleteSpool`                                                                                                                                                    |
+| `lib/sharing.ts`                                                                             | `getSharedFilaments(groupId)` — single source of truth resolving each member's share mode into the group's pooled stock; `getMembership(groupId, userId)`                                                                                                                                                         |
+| `app/actions/groups.ts`                                                                      | Group CRUD, membership, invite codes, `updateShareSettings`                                                                                                                                                                                                                                                       |
+| `app/actions/lends.ts`                                                                       | Lend lifecycle: `requestLend`, `approveLend`, `declineLend`, `markReturned`, `cancelLendRequest`, `getMyLends` (cross-group, feeds Borrows tab), `getActiveLendsForOwner` — mutations write notifications                                                                                                         |
+| `components/dashboard/borrows-panel.tsx` / `notifications/notifications-list.tsx`            | Dashboard Borrows tab / actionable notification list with approve-decline dialog                                                                                                                                                                                                                                  |
+| `components/dashboard/warehouse-dashboard.tsx`                                               | Main client UI: stats, tabs (incl. Borrows + per-group), dialog state                                                                                                                                                                                                                                             |
+| `components/dashboard/material-card.tsx`                                                     | Material card with per-spool rows (re-weigh, edit/delete, lent badge) + add-spool                                                                                                                                                                                                                                 |
+| `components/dashboard/spool-form/spool-form-dialog.tsx`                                      | Add/edit spool: material + spool-type pickers with inline request flows, details (price, location, drying), weighing history + undo                                                                                                                                                                               |
+| `components/groups/group-stock.tsx` / `group-sharing-settings.tsx` / `group-owner-tools.tsx` | `/groups/[id]` page sections + the dashboard's per-group stock tab                                                                                                                                                                                                                                                |
+| `lib/api-auth.ts`                                                                            | REST-API token auth: `generateApiToken`, `authenticateApiRequest(request)`, `apiError`/`unauthorized` helpers                                                                                                                                                                                                     |
+| `lib/spool-type-usable.ts`                                                                   | `isSpoolTypeUsable`/`assertSpoolTypeUsable` — shared by server actions and REST API                                                                                                                                                                                                                               |
+| `app/actions/api-tokens.ts`                                                                  | API-token management actions (create/list/revoke) backing the `/account` section                                                                                                                                                                                                                                  |
+| `app/api/v1/`                                                                                | REST route handlers (see "REST API" below); `filaments/shared.ts` holds serialization + body validation                                                                                                                                                                                                           |
+| `lib/material-search.ts`                                                                     | SQL `WHERE` builder for the catalog: token search, manufacturer/type, property ranges                                                                                                                                                                                                                             |
+| `lib/property-value.ts`                                                                      | Property value types + `normalizePropertyValue()` — the one place input is validated/canonicalised                                                                                                                                                                                                                |
+| `lib/search.ts`                                                                              | Token matching for client-side searches (`searchTokens`/`matchesTokens`/`matchRank`)                                                                                                                                                                                                                              |
+| `lib/spoolmandb.ts`                                                                          | SpoolmanDB import core (fetch, dedupe, upsert) — used by the CLI **and** `/admin/import`                                                                                                                                                                                                                          |
+| `app/actions/spoolmandb.ts`                                                                  | Admin import actions (`getUpstreamManufacturers`, `importManufacturerFromUpstream`)                                                                                                                                                                                                                               |
+| `lib/utils.ts`                                                                               | `cn()` (clsx + tailwind-merge)                                                                                                                                                                                                                                                                                    |
 
 ## Domain rules
 
-- **All app-table primary keys are random UUIDs** (`text`, `$defaultFn(() => randomUUID())` in `lib/db/schema.ts`), not sequential integers — they're exposed in the REST API (`/api/v1/spools/:id`) and URLs, so unguessable ids avoid enumeration/leaking counts. Only the `user`/auth tables keep better-auth's own ids. All id params in actions/API are `string`. **Foreign keys are enforced** (Postgres always is; the old SQLite setup ran with `PRAGMA foreign_keys=OFF`) — declared `onDelete` cascades really fire, and the delete guards that used to be the only protection against dangling references are now belt *and* braces.
+- **All app-table primary keys are random UUIDs** (`text`, `$defaultFn(() => randomUUID())` in `lib/db/schema.ts`), not sequential integers — they're exposed in the REST API (`/api/v1/spools/:id`) and URLs, so unguessable ids avoid enumeration/leaking counts. Only the `user`/auth tables keep better-auth's own ids. All id params in actions/API are `string`. **Foreign keys are enforced** (Postgres always is; the old SQLite setup ran with `PRAGMA foreign_keys=OFF`) — declared `onDelete` cascades really fire, and the delete guards that used to be the only protection against dangling references are now belt _and_ braces.
 - **Every server action validates its input with Zod** (`lib/schemas.ts`, `parseOrThrow`) — server actions are public POST endpoints, client-side checks are UX only. Spool actions use `spoolInputSchema` / `measuredWeightSchema`, the REST routes `spoolBodySchema`.
-- **Index every foreign-key column you filter or cascade on** — Postgres does not do it automatically (a composite unique/index whose *leading* column is the FK counts). Unique violations a caller must handle are detected by constraint name via `isUniqueViolation()` (`lib/db/errors.ts`).
+- **Index every foreign-key column you filter or cascade on** — Postgres does not do it automatically (a composite unique/index whose _leading_ column is the FK counts). Unique violations a caller must handle are detected by constraint name via `isUniqueViolation()` (`lib/db/errors.ts`).
 - **`tagUid` is unique per user** (`filaments_user_id_tag_uid_unique`; NULLs don't collide) so `POST /spools/weigh` always resolves a tag to one spool; the REST API answers duplicates with `409 tag_conflict`.
 - **All weights are gram integers** (`emptyWeightGrams`, `fullFilamentWeightGrams`, `measuredTotalWeightGrams`); display via `formatWeight()` (g below 1 kg, kg above); timestamps are `timestamptz` columns surfaced as `Date` objects
 - Remaining filament: `filamentLeftGrams = measuredTotalWeightGrams − spoolType.emptyWeightGrams` (clamped ≥ 0)
@@ -274,7 +298,7 @@ writes the barrel; it reports flat duplicates of existing components instead of 
   Paged queries order by `(manufacturer, name, id)` — the id breaks ties, without which
   LIMIT/OFFSET can skip or repeat a row.
 - **Every property definition declares a value type** (`properties.valueType`: `number | integer |
-  range | list | text`, see `lib/property-value.ts`), and `normalizePropertyValue()` validates +
+range | list | text`, see `lib/property-value.ts`), and `normalizePropertyValue()` validates +
   canonicalises against it on **every** write — `setMaterialProperty` and the SpoolmanDB importer
   both. This exists because values are free text and a decimal comma used to be read as a range:
   "1,24" parsed as 1–24 and matched a "density 20–30" filter. Now it is stored as "1.24"; input
@@ -315,7 +339,7 @@ writes the barrel; it reports flat duplicates of existing components instead of 
   (Discord-style — join via code entry on `/groups` or the `/groups/join/[code]` link). Rotating
   invalidates the old code/link immediately.
 - **Membership** (`group_members`): `role` is `owner | member`; `shareMode` is `all | whitelist |
-  blacklist`, defaulting to `all` on join. `filament_share_overrides` holds the per-member override
+blacklist`, defaulting to `all` on join. `filament_share_overrides` holds the per-member override
   list, whose meaning flips with the mode — whitelist entries **are** shared, blacklist entries are
   **excluded**. `getSharedFilaments(groupId)` in `lib/sharing.ts` is the single place that resolves
   this into the pooled group stock (also excludes empty spools); reuse it rather than
@@ -362,7 +386,7 @@ External clients authenticate with long-lived bearer tokens created on `/account
 `npm run db:import -- --manufacturer <slug> [--manufacturer …] [--type PETG,PLA] [--dry-run]`
 seeds the global **materials** & **spool-type** catalogs from the community
 [SpoolmanDB-Community](https://github.com/Icezaza2543/SpoolmanDB-Community) source
-files (`scripts/import-spoolmandb.ts`). It consumes the clean *source* files (one
+files (`scripts/import-spoolmandb.ts`). It consumes the clean _source_ files (one
 per manufacturer), NOT the compiled 50k-row output, and dedupes hard:
 
 - **Product-line near-dupes** ("PET-G Premium" / "PETG Premium" / "PET G Matt
@@ -384,7 +408,7 @@ per manufacturer), NOT the compiled 50k-row output, and dedupes hard:
 known keys, **claims** a matching manual row (sets only `externalKey` +
 NULL-backfills the extra columns; never renames/recolors), or inserts a new
 `approved` row. So admin edits and re-crawls never clobber each other. Upstream
-*renames* change the key → old row lingers; delete it via `/admin/materials`.
+_renames_ change the key → old row lingers; delete it via `/admin/materials`.
 Runs against whatever database `DATABASE_URL` names, and starts the local PGlite
 host itself if nothing is serving it yet — so it works with or without a running
 dev server.
