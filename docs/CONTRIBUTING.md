@@ -74,30 +74,30 @@ the same checks, so a bypass only moves the failure into your pull request.
 
 <!-- AUTO-GENERATED from package.json scripts -->
 
-| Command                                        | Description                                                                                                |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `npm run dev`                                  | Dev server on :3000, plus the local PGlite database                                                        |
-| `npm run build`                                | Production build (type-checks)                                                                             |
-| `npm run start`                                | Serve the production build, plus the local database                                                        |
-| `npm run db:serve`                             | Local database only (for `db:studio` / psql)                                                               |
-| `npm test`                                     | Vitest: unit (`lib/**/*.test.ts`) and component (`components/**/*.test.tsx`) tests                         |
-| `npm run test:watch`                           | Vitest in watch mode                                                                                       |
-| `npm run test:coverage`                        | Vitest with v8 coverage; HTML report in `coverage/`                                                        |
-| `npm run test:e2e`                             | Playwright: production build, throwaway seeded database, :3100. `E2E_SKIP_BUILD=1` reuses the last build   |
-| `npm run test:e2e:ui`                          | Playwright UI mode                                                                                         |
-| `npm run storybook`                            | Storybook on :6006                                                                                         |
-| `npm run build-storybook`                      | Static Storybook build (CI runs it)                                                                        |
-| `npm run format`                               | Prettier over the whole repo                                                                               |
-| `npm run format:check`                         | Prettier check, as run in CI                                                                               |
-| `npm run lint:oxlint`                          | oxlint with fixes. The aggregate `npm run lint` is currently broken: `run-s` (npm-run-all) isn't installed |
-| `npm run db:generate`                          | drizzle-kit: create a migration from schema changes                                                        |
-| `npm run db:migrate`                           | drizzle-kit: apply migrations by hand (normally automatic on start)                                        |
-| `npm run db:studio`                            | drizzle-kit database browser (needs the database up)                                                       |
-| `npm run db:seed`                              | Seed local test data (`scripts/seed-test-data.ts`)                                                         |
-| `npm run db:import -- --manufacturer <slug>`   | Import catalog data from SpoolmanDB                                                                        |
-| `npm run admin:create -- <email> <name>`       | Create or promote an admin                                                                                 |
-| `npm run token:create -- <email> <token-name>` | Create a REST API token                                                                                    |
-| `npm run prepare`                              | (Re)install the git hooks                                                                                  |
+| Command                                        | Description                                                                                                                           |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                                  | Dev server on :3000, plus the local PGlite database                                                                                   |
+| `npm run build`                                | Production build (type-checks)                                                                                                        |
+| `npm run start`                                | Serve the production build, plus the local database                                                                                   |
+| `npm run db:serve`                             | Local database only (for `db:studio` / psql)                                                                                          |
+| `npm test`                                     | Vitest: unit (`lib/**/*.test.ts`) and component (`components/**/*.test.tsx`) tests                                                    |
+| `npm run test:watch`                           | Vitest in watch mode                                                                                                                  |
+| `npm run test:coverage`                        | Vitest with v8 coverage; HTML report in `coverage/`                                                                                   |
+| `npm run test:e2e`                             | Playwright: production build, throwaway seeded database, :3100. `E2E_SKIP_BUILD=1` reuses the last build                              |
+| `npm run test:e2e:ui`                          | Playwright UI mode                                                                                                                    |
+| `npm run storybook`                            | Storybook on :6006                                                                                                                    |
+| `npm run build-storybook`                      | Static Storybook build (CI runs it)                                                                                                   |
+| `npm run format`                               | Prettier over the whole repo                                                                                                          |
+| `npm run format:check`                         | Prettier check, as run in CI                                                                                                          |
+| `npm run lint:oxlint`                          | oxlint with fixes. The aggregate `npm run lint` is currently broken: `run-s` (npm-run-all) isn't installed                            |
+| `npm run db:generate`                          | drizzle-kit: create a migration from schema changes                                                                                   |
+| `npm run db:migrate`                           | drizzle-kit: apply migrations by hand (normally automatic on start)                                                                   |
+| `npm run db:studio`                            | drizzle-kit database browser (needs the database up)                                                                                  |
+| `npm run db:seed`                              | Seed demo data: users, catalog, properties, spools + history, groups, lends (`scripts/seed-dev-data.ts`; `-- --reset` / `-- --clean`) |
+| `npm run db:import -- --manufacturer <slug>`   | Import catalog data from SpoolmanDB                                                                                                   |
+| `npm run admin:create -- <email> <name>`       | Create or promote an admin                                                                                                            |
+| `npm run token:create -- <email> <token-name>` | Create a REST API token                                                                                                               |
+| `npm run prepare`                              | (Re)install the git hooks                                                                                                             |
 
 <!-- /AUTO-GENERATED -->
 

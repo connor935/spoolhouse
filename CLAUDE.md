@@ -22,6 +22,7 @@ npm run db:generate  # drizzle-kit: generate migration from schema changes
 npm run db:migrate   # drizzle-kit: apply migrations manually (usually unnecessary, see below)
 npm run db:studio    # drizzle-kit: local DB browser (needs the DB up: dev or db:serve)
 npm run admin:create -- <email> <name>   # bootstrap/promote an admin account
+npm run db:seed      # demo data around the admin: test users, catalog, properties, a year of spools + weighings, groups, lends, notifications (-- --reset | --clean)
 npm run format       # Prettier over the repo (.prettierrc, .prettierignore)
 npm run format:check # what CI runs
 ```
@@ -458,7 +459,7 @@ rule under "Domain rules".
 
 ## Known gaps / quirks (V0 export leftovers)
 
-- No README, no seed data (fresh DB shows the empty state; spool-type catalog starts empty too)
+- No README; a fresh DB shows the empty state until `npm run db:seed` (dev demo data, all removable with `-- --clean`)
 - Server-action error messages are masked in production builds, so client toasts use static
   messages naming the likely cause rather than the thrown text
 
