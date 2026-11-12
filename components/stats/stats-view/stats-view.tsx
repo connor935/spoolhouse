@@ -164,24 +164,23 @@ function StatsView({
         )}
       </Section>
 
-      <Section
-        index="02"
-        title="By material"
-        aside={<span className="kicker">Runs out first ↑</span>}
-      >
-        <div className="overflow-x-auto">
+      {/* Side by side from xl up, as on the Statistics board. */}
+      <div className="grid items-start gap-9 xl:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]">
+        <Section
+          index="02"
+          title="By material"
+          aside={<span className="kicker">Runs out first ↑</span>}
+        >
           <RunwayTable rows={byMaterial} />
-        </div>
-      </Section>
+        </Section>
 
-      <Section index="03" title="By filament type">
-        <div className="flex flex-col gap-5">
-          <StockCompositionBar data={stockByType} />
-          <div className="overflow-x-auto">
+        <Section index="03" title="By filament type">
+          <div className="flex flex-col gap-5">
+            <StockCompositionBar data={stockByType} />
             <RunwayTable rows={byType} kind="type" />
           </div>
-        </div>
-      </Section>
+        </Section>
+      </div>
     </div>
   );
 }

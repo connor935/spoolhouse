@@ -8,11 +8,28 @@ import { cn } from '@/lib/utils';
 // cells flush with the table edge, `align="right"` for numeric columns.
 type CellAlign = { align?: 'left' | 'right' };
 
-function Table({ className, ...props }: React.ComponentProps<'table'>) {
+function Table({
+  className,
+  scrollLabel,
+  ...props
+}: React.ComponentProps<'table'> & {
+  /** Names the horizontal scroll container and makes it keyboard-focusable
+   *  (WCAG 2.1.1): set it on tables that can overflow on narrow screens. */
+  scrollLabel?: string;
+}) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className={cn(
+        'relative w-full overflow-x-auto',
+        scrollLabel &&
+          'focus-visible:ring-accent rounded-[2px] outline-none focus-visible:ring-2'
+      )}
+      {...(scrollLabel && {
+        role: 'region',
+        'aria-label': scrollLabel,
+        tabIndex: 0,
+      })}
     >
       <table
         data-slot="table"

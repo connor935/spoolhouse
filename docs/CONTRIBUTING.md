@@ -82,6 +82,7 @@ the same checks, so a bypass only moves the failure into your pull request.
 | `npm run db:serve`                             | Local database only (for `db:studio` / psql)                                                               |
 | `npm test`                                     | Vitest: unit (`lib/**/*.test.ts`) and component (`components/**/*.test.tsx`) tests                         |
 | `npm run test:watch`                           | Vitest in watch mode                                                                                       |
+| `npm run test:coverage`                        | Vitest with v8 coverage; HTML report in `coverage/`                                                        |
 | `npm run test:e2e`                             | Playwright: production build, throwaway seeded database, :3100. `E2E_SKIP_BUILD=1` reuses the last build   |
 | `npm run test:e2e:ui`                          | Playwright UI mode                                                                                         |
 | `npm run storybook`                            | Storybook on :6006                                                                                         |

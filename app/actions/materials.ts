@@ -42,15 +42,6 @@ const actions = createCatalogActions<Material, MaterialInput>({
   onRemove: deleteMaterialPropertiesFor,
 });
 
-// Materials the current user may attach spools to: all approved ones, plus
-// their own pending submissions (same rule as spool types).
-//
-// Prefer searchMaterials() for anything user-facing — the catalog runs to tens
-// of thousands of rows after a SpoolmanDB import, and this returns all of them.
-export async function getUsableMaterials() {
-  return actions.getUsable();
-}
-
 export type MaterialSearchResult = {
   materials: Material[];
   // Matches before the limit was applied, so callers can say "showing 50 of N".
@@ -256,26 +247,12 @@ export async function getMaterialManufacturers(): Promise<string[]> {
   return rows.map((r) => r.manufacturer);
 }
 
-// Resolves specific materials by id, for hydrating a selection the search
-// results no longer contain (editing a spool, presetting from a card).
-export async function getMaterialsByIds(ids: string[]): Promise<Material[]> {
-  await requireUser();
-  if (ids.length === 0) return [];
-  return db.select().from(materials).where(inArray(materials.id, ids));
-}
-
 // Any user can request a new material; it lands as `pending` and is
 // immediately usable by the submitter. Admins skip the review queue — their
 // submissions are auto-approved (self-reviewed) and instantly global.
 // Inspect the returned row's `status` for the outcome.
 export async function requestMaterial(input: MaterialInput): Promise<Material> {
   return actions.request(input);
-}
-
-// --- Admin review ---
-
-export async function getPendingMaterials() {
-  return actions.getPending();
 }
 
 export async function approveMaterial(id: string, edits?: MaterialInput) {

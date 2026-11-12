@@ -348,210 +348,219 @@ function OverviewView({
         </ReadoutStrip>
       </div>
 
-      <div className="grid gap-9 lg:grid-cols-2">
-        <Section
-          index="02"
-          title="Running low"
-          aside={<Link href="/inventory">Inventory →</Link>}
-        >
-          {runningLow.length === 0 ? (
-            <Muted>Nothing is running low.</Muted>
-          ) : (
-            <ul>
-              {runningLow.map((row) => {
-                const one = row.spools.length === 1 ? row.spools[0] : null;
-                return (
-                  <li
-                    key={row.material.id}
-                    className="border-border flex items-center gap-3 border-t py-2.5 first:border-t-0 first:pt-0"
-                  >
-                    <Swatch color={row.material.color} decorative />
-                    <span className="kicker w-10 shrink-0">
-                      {one ? spoolNumber(one.number) : `×${row.spools.length}`}
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate font-medium">
-                        {row.material.name}
-                      </span>
-                      <span className="kicker">
-                        {[one?.spool.location, row.material.filamentType]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </span>
-                    </span>
-                    <WeightDisplay grams={row.leftGrams} />
-                    <span className="flex w-28 flex-col items-end gap-1">
-                      {row.isLow ? (
-                        <Badge variant="destructive">Low</Badge>
-                      ) : (
-                        <Badge variant="muted">Forecast</Badge>
-                      )}
-                      {row.forecastDays !== null && (
-                        <span className="kicker">
-                          ~{formatDays(row.forecastDays)} left
-                        </span>
-                      )}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Section>
-
-        <Section
-          index="03"
-          title="Monthly usage"
-          aside={<Link href="/stats">Statistics →</Link>}
-        >
-          <p className="kicker mb-3">
-            {formatWeight(total12)} in 12 months · Ø{' '}
-            {formatWeight(total12 / 12)}
-          </p>
-          <UsageBarChart
-            data={usage.monthly}
-            variant="compact"
-            monthLabels="narrow"
-          />
-        </Section>
-
-        <Section
-          index="04"
-          title="Recent activity"
-          aside={<Link href="/notifications">All →</Link>}
-        >
-          <ActivityList items={feed} />
-        </Section>
-
-        {groups.length > 0 && (
+      {/* Two independent columns as on the Overview board (02–04 | 05–07),
+          so a tall section never pushes the other column's rows down. One
+          column on narrow screens keeps the 02→07 reading order. */}
+      <div className="grid items-start gap-9 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-9">
           <Section
-            index="05"
-            title="Borrows"
-            aside={<Link href="/borrows">Open →</Link>}
+            index="02"
+            title="Running low"
+            aside={<Link href="/inventory">Inventory →</Link>}
           >
-            <div className="flex flex-col gap-4">
-              {request && (
-                <LendRequestCard
-                  direction="incoming"
-                  spool={request.spool}
-                  counterpartName={request.counterpartName}
-                  groupName={request.groupName}
-                  time={request.time}
-                  filamentLeftGrams={request.filamentLeftGrams}
-                  pending={pending}
-                  onApprove={() => onApprove(request.lendId)}
-                  onDecline={() => onDecline(request.lendId)}
-                />
-              )}
-              {requestCount > 1 && (
-                <p className="kicker">
-                  +{requestCount - 1} more request
-                  {requestCount === 2 ? '' : 's'}
-                </p>
-              )}
-              {lends.length > 0 ? (
-                <div>
-                  {lends.map((l) => (
-                    <LendLine
-                      key={l.lendId}
-                      direction={l.direction}
-                      spool={l.spool}
-                      counterpartName={l.counterpartName}
-                      since={l.since}
-                      usedGrams={l.usedGrams}
-                      action={
-                        l.direction === 'in' ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) =>
-                              onWeighBorrowed(l.spoolId, e.currentTarget)
-                            }
-                          >
-                            Weigh
-                          </Button>
-                        ) : onMarkReturned ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={pending}
-                            onClick={() => onMarkReturned(l.lendId)}
-                          >
-                            Mark returned
-                          </Button>
-                        ) : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                !request && <Muted>Nothing lent or borrowed right now.</Muted>
-              )}
-            </div>
-          </Section>
-        )}
-
-        <Section index="06" title="Needs drying">
-          {drying.length === 0 ? (
-            <Muted>Everything is dry enough.</Muted>
-          ) : (
-            <ul>
-              {drying.map((row) => {
-                const label = `${spoolNumber(row.number)} ${row.material.name}`;
-                return (
-                  <li
-                    key={row.spool.id}
-                    className="border-border flex items-center gap-3 border-t py-2.5 first:border-t-0 first:pt-0"
-                  >
-                    <Swatch color={row.material.color} decorative />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate font-medium">{label}</span>
-                      <span className="kicker">
-                        {row.material.filamentType} ·{' '}
-                        {row.neverDried
-                          ? 'never dried'
-                          : `dried ${row.daysSinceDried} d ago`}
-                      </span>
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      aria-label={`Mark dried ${label}`}
-                      onClick={() => onMarkDried(row.spool)}
+            {runningLow.length === 0 ? (
+              <Muted>Nothing is running low.</Muted>
+            ) : (
+              <ul>
+                {runningLow.map((row) => {
+                  const one = row.spools.length === 1 ? row.spools[0] : null;
+                  return (
+                    <li
+                      key={row.material.id}
+                      className="border-border flex items-center gap-3 border-t py-2.5 first:border-t-0 first:pt-0"
                     >
-                      Mark dried
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Section>
-
-        {groups.length > 0 && (
-          <Section
-            index="07"
-            title="Groups"
-            aside={<Link href="/groups">All →</Link>}
-          >
-            <ul>
-              {groups.map((g) => (
-                <li
-                  key={g.id}
-                  className="border-border border-t first:border-t-0"
-                >
-                  <Link
-                    href={`/groups/${g.id}`}
-                    className="hover:text-accent-ink flex items-baseline justify-between gap-3 py-2.5"
-                  >
-                    <span className="display-name text-[19px]">{g.name}</span>
-                    <span className="kicker">{g.sharedCount} shared</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                      <Swatch color={row.material.color} decorative />
+                      <span className="kicker w-10 shrink-0">
+                        {one
+                          ? spoolNumber(one.number)
+                          : `×${row.spools.length}`}
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate font-medium">
+                          {row.material.name}
+                        </span>
+                        <span className="kicker">
+                          {[one?.spool.location, row.material.filamentType]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                      </span>
+                      <WeightDisplay grams={row.leftGrams} />
+                      <span className="flex w-28 flex-col items-end gap-1">
+                        {row.isLow ? (
+                          <Badge variant="destructive">Low</Badge>
+                        ) : (
+                          <Badge variant="muted">Forecast</Badge>
+                        )}
+                        {row.forecastDays !== null && (
+                          <span className="kicker">
+                            ~{formatDays(row.forecastDays)} left
+                          </span>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </Section>
-        )}
+
+          <Section
+            index="03"
+            title="Monthly usage"
+            aside={<Link href="/stats">Statistics →</Link>}
+          >
+            <p className="kicker mb-3">
+              {formatWeight(total12)} in 12 months · Ø{' '}
+              {formatWeight(total12 / 12)}
+            </p>
+            <UsageBarChart
+              data={usage.monthly}
+              variant="compact"
+              monthLabels="narrow"
+            />
+          </Section>
+
+          <Section
+            index="04"
+            title="Recent activity"
+            aside={<Link href="/notifications">All →</Link>}
+          >
+            <ActivityList items={feed} />
+          </Section>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-9">
+          {groups.length > 0 && (
+            <Section
+              index="05"
+              title="Borrows"
+              aside={<Link href="/borrows">Open →</Link>}
+            >
+              <div className="flex flex-col gap-4">
+                {request && (
+                  <LendRequestCard
+                    direction="incoming"
+                    spool={request.spool}
+                    counterpartName={request.counterpartName}
+                    groupName={request.groupName}
+                    time={request.time}
+                    filamentLeftGrams={request.filamentLeftGrams}
+                    pending={pending}
+                    onApprove={() => onApprove(request.lendId)}
+                    onDecline={() => onDecline(request.lendId)}
+                  />
+                )}
+                {requestCount > 1 && (
+                  <p className="kicker">
+                    +{requestCount - 1} more request
+                    {requestCount === 2 ? '' : 's'}
+                  </p>
+                )}
+                {lends.length > 0 ? (
+                  <div>
+                    {lends.map((l) => (
+                      <LendLine
+                        key={l.lendId}
+                        direction={l.direction}
+                        spool={l.spool}
+                        counterpartName={l.counterpartName}
+                        since={l.since}
+                        usedGrams={l.usedGrams}
+                        action={
+                          l.direction === 'in' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) =>
+                                onWeighBorrowed(l.spoolId, e.currentTarget)
+                              }
+                            >
+                              Weigh
+                            </Button>
+                          ) : onMarkReturned ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={pending}
+                              onClick={() => onMarkReturned(l.lendId)}
+                            >
+                              Mark returned
+                            </Button>
+                          ) : undefined
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  !request && <Muted>Nothing lent or borrowed right now.</Muted>
+                )}
+              </div>
+            </Section>
+          )}
+
+          <Section index="06" title="Needs drying">
+            {drying.length === 0 ? (
+              <Muted>Everything is dry enough.</Muted>
+            ) : (
+              <ul>
+                {drying.map((row) => {
+                  const label = `${spoolNumber(row.number)} ${row.material.name}`;
+                  return (
+                    <li
+                      key={row.spool.id}
+                      className="border-border flex items-center gap-3 border-t py-2.5 first:border-t-0 first:pt-0"
+                    >
+                      <Swatch color={row.material.color} decorative />
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate font-medium">{label}</span>
+                        <span className="kicker">
+                          {row.material.filamentType} ·{' '}
+                          {row.neverDried
+                            ? 'never dried'
+                            : `dried ${row.daysSinceDried} d ago`}
+                        </span>
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label={`Mark dried ${label}`}
+                        onClick={() => onMarkDried(row.spool)}
+                      >
+                        Mark dried
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Section>
+
+          {groups.length > 0 && (
+            <Section
+              index="07"
+              title="Groups"
+              aside={<Link href="/groups">All →</Link>}
+            >
+              <ul>
+                {groups.map((g) => (
+                  <li
+                    key={g.id}
+                    className="border-border border-t first:border-t-0"
+                  >
+                    <Link
+                      href={`/groups/${g.id}`}
+                      className="hover:text-accent-ink flex items-baseline justify-between gap-3 py-2.5"
+                    >
+                      <span className="display-name text-[19px]">{g.name}</span>
+                      <span className="kicker">{g.sharedCount} shared</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+        </div>
       </div>
     </div>
   );

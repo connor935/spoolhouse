@@ -4,7 +4,6 @@ import type { InventoryQuery } from '@/lib/inventory-params';
 import type { MaterialPropertyView } from '@/lib/material-properties';
 import { materialMatchesConstraints } from '@/lib/property-filter';
 import { matchesTokens, searchTokens } from '@/lib/search';
-import type { SharedSpool } from '@/lib/sharing';
 
 // Property values keyed by material id, for the datasheet-property range filter.
 type PropsByMaterial = Record<string, MaterialPropertyView[]>;
@@ -15,7 +14,7 @@ type SearchFilters = FilterValue & { q: string };
 // Pure filtering helpers for the search/filter bar, shared by /inventory
 // (per material) and group stock.
 
-export function materialMatches(
+function materialMatches(
   m: { id: string; name: string; manufacturer: string; filamentType: string },
   f: SearchFilters,
   propsByMaterial: PropsByMaterial,
@@ -80,22 +79,4 @@ export function statusCounts(inventory: MaterialInventory[]): StatusCounts {
   const spools = inventory.flatMap((m) => m.spools);
   const empty = spools.filter((s) => s.isEmpty).length;
   return { inStock: spools.length - empty, empty, all: spools.length };
-}
-
-// Group stock filtered by the same bar (+ hide-lent).
-export function filterGroupStock(
-  stock: SharedSpool[],
-  filters: SearchFilters,
-  propsByMaterial: PropsByMaterial
-): SharedSpool[] {
-  return stock.filter((s) => {
-    if (!materialMatches(s.material, filters, propsByMaterial)) return false;
-    if (
-      filters.minLeftGrams !== null &&
-      s.filamentLeftGrams < filters.minLeftGrams
-    )
-      return false;
-    if (filters.hideLent && s.lentTo) return false;
-    return true;
-  });
 }

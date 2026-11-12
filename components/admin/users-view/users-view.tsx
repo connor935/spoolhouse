@@ -112,7 +112,7 @@ function UsersView({
         }
       />
 
-      <div className="grid items-start gap-10 2xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid items-start gap-10 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section aria-labelledby={accountsId} className="min-w-0">
           <SectionHeader id={accountsId} index="01" title="Accounts" />
           <div className="overflow-x-auto">
