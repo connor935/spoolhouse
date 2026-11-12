@@ -8,6 +8,9 @@ on:
   pull_request:
     branches:
       - main
+      # Long-lived feature trunks (e.g. feature/redesign-spoolhouse-ui) collect
+      # sub-branch PRs before their single merge into main.
+      - 'feature/**'
   # Manual run from the Actions tab (e.g. after a startup failure, which
   # can't be re-run). Builds and deploys only when started on main.
   workflow_dispatch:
@@ -30,8 +33,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # HUSKY=0: CI needs no local git hooks; it runs the same checks below.
       - name: Install dependencies
         run: npm ci
+        env:
+          HUSKY: '0'
 
       - name: Typecheck
         run: npx tsc --noEmit
@@ -39,8 +45,16 @@ jobs:
       - name: Lint
         run: npx oxlint . --ignore-path .gitignore
 
+      # Backstop for the pre-commit hook, which --no-verify can skip.
+      - name: Formatting
+        run: npm run format:check
+
       - name: Test
         run: npm test
+
+      # Catches stories that no longer compile against their components.
+      - name: Build Storybook
+        run: npm run build-storybook
 
       # On main the Docker build below compiles the app anyway; on PRs this is
       # the only place a broken build would show up.

@@ -36,6 +36,7 @@ const server = new PGLiteSocketServer({
   // hold their own pool; queries are serialized inside PGlite regardless.
   maxConnections: 20,
 });
+keepExtendedQueryBatchesTogether(server);
 await server.start();
 
 // scripts/with-local-db.mjs waits for this line before starting Next.
@@ -54,3 +55,80 @@ async function shutdown() {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+
+/**
+ * pglite-socket (≤ 0.2.19) queues every wire message on its own and only keeps
+ * one connection's messages together while a transaction is open. node-postgres
+ * sends each parameterised query as Parse/Bind/Describe/Execute/Sync, all on the
+ * single unnamed portal, so under concurrent connections another client's batch
+ * could run between our Bind and Execute, and its Sync would drop our portal:
+ * `portal "" does not exist` (34000). That surfaced as random 500s in the
+ * parallel e2e suite.
+ *
+ * This replaces the queue's scheduler: once a connection has sent an
+ * extended-protocol message, only that connection's messages run until its
+ * Sync. Transactions stay pinned as before. A failing message is rejected
+ * without stalling the queue (upstream leaves `processing` stuck in that case).
+ */
+function keepExtendedQueryBatchesTogether(socketServer) {
+  const queue = socketServer.queryQueue;
+  if (!queue || typeof queue.processQueue !== 'function') {
+    throw new Error(
+      'pglite-socket internals changed: re-check keepExtendedQueryBatchesTogether'
+    );
+  }
+  // Parse, Bind, Describe, Execute, Close, Flush — all wait for a Sync.
+  const EXTENDED = new Set(
+    ['P', 'B', 'D', 'E', 'C', 'H'].map((c) => c.charCodeAt(0))
+  );
+  let batchOwner = null;
+
+  const clearForHandler = queue.clearQueueForHandler.bind(queue);
+  queue.clearQueueForHandler = (handlerId) => {
+    if (batchOwner === handlerId) batchOwner = null;
+    clearForHandler(handlerId);
+    // A released pin may unblock messages from other connections.
+    void queue.processQueue();
+  };
+
+  queue.processQueue = async function processQueue() {
+    if (this.processing || this.queue.length === 0) return;
+    this.processing = true;
+    try {
+      while (this.queue.length > 0) {
+        const owner =
+          batchOwner ?? (this.db.isInTransaction() ? this.lastHandlerId : null);
+        let item;
+        if (owner != null) {
+          const index = this.queue.findIndex((q) => q.handlerId === owner);
+          // The owner's next message isn't here yet; its arrival restarts us.
+          if (index === -1) break;
+          [item] = this.queue.splice(index, 1);
+        } else {
+          item = this.queue.shift();
+        }
+
+        let bytes = 0;
+        try {
+          await this.db.runExclusive(() =>
+            this.db.execProtocolRawStream(item.message, {
+              onRawData: (data) => {
+                bytes += data.length;
+                item.onData(data);
+              },
+            })
+          );
+        } catch (error) {
+          if (batchOwner === item.handlerId) batchOwner = null;
+          item.reject(error);
+          continue;
+        }
+        this.lastHandlerId = item.handlerId;
+        batchOwner = EXTENDED.has(item.message[0]) ? item.handlerId : null;
+        item.resolve(bytes);
+      }
+    } finally {
+      this.processing = false;
+    }
+  };
+}

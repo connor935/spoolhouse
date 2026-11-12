@@ -1,11 +1,11 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getGroupByInviteCode } from '@/app/actions/groups';
-import { JoinByLinkButton } from '@/components/groups/join-by-link-button';
+import { getGroupInvitePreview } from '@/app/actions/groups';
+import { JoinGroupContainer } from '@/components/groups/join-group-card';
 import { requireUser } from '@/lib/auth-session';
 
 export const dynamic = 'force-dynamic';
 
+// Standalone (no app shell): the JoinGroup board is a single centred card.
 export default async function JoinGroupPage({
   params,
 }: {
@@ -13,27 +13,12 @@ export default async function JoinGroupPage({
 }) {
   await requireUser();
   const { code } = await params;
-  const group = await getGroupByInviteCode(code);
-  if (!group) notFound();
+  const preview = await getGroupInvitePreview(code);
+  if (!preview) notFound();
 
   return (
-    <main className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 py-8 text-center md:px-6">
-      <h1 className="text-xl font-semibold tracking-tight">
-        Join &quot;{group.name}&quot;?
-      </h1>
-      <p className="text-muted-foreground mt-1 text-sm">
-        You&apos;ve been invited to join this group and share spools with its
-        members.
-      </p>
-      <div className="mt-6 flex items-center gap-3">
-        <JoinByLinkButton code={code} />
-        <Link
-          href="/groups"
-          className="text-muted-foreground hover:text-foreground text-sm"
-        >
-          Cancel
-        </Link>
-      </div>
+    <main className="bg-background flex min-h-dvh items-center justify-center px-4 py-10">
+      <JoinGroupContainer code={code} preview={preview} />
     </main>
   );
 }

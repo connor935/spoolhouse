@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { spoolInputSchema, weighRegistrationSchema } from '@/lib/schemas';
+import {
+  spoolInputSchema,
+  weighRegistrationSchema,
+  materialCatalogQuerySchema,
+  adminMaterialQuerySchema,
+  recentColorsLimitSchema,
+} from '@/lib/schemas';
 
 describe('weighRegistrationSchema', () => {
   const base = {
@@ -110,5 +116,47 @@ describe('spool detail fields', () => {
     expect(
       spoolInputSchema.safeParse({ ...base, lastDriedAt: 'yesterday' }).success
     ).toBe(false);
+  });
+});
+
+describe('materialCatalogQuerySchema', () => {
+  it('accepts a full catalog query and defaults the page', () => {
+    const parsed = materialCatalogQuerySchema.parse({
+      q: ' pla ',
+      filamentTypes: ['PLA', 'PETG'],
+      constraints: [{ id: 'c', propertyId: 'p', min: 1.2, max: null }],
+    });
+    expect(parsed).toMatchObject({ q: 'pla', limit: 150, offset: 0 });
+  });
+
+  it('caps the page size and refuses negative offsets or junk constraints', () => {
+    expect(() => materialCatalogQuerySchema.parse({ limit: 500 })).toThrow();
+    expect(() => materialCatalogQuerySchema.parse({ offset: -1 })).toThrow();
+    expect(() =>
+      materialCatalogQuerySchema.parse({
+        constraints: [{ id: 'c', propertyId: 'p', min: 'x', max: null }],
+      })
+    ).toThrow();
+  });
+});
+
+describe('adminMaterialQuerySchema', () => {
+  it('accepts a review status and treats an empty one as all', () => {
+    expect(adminMaterialQuerySchema.parse({ status: 'pending' }).status).toBe(
+      'pending'
+    );
+    expect(adminMaterialQuerySchema.parse({ status: null }).status).toBeNull();
+  });
+
+  it('refuses an unknown status', () => {
+    expect(() => adminMaterialQuerySchema.parse({ status: 'spam' })).toThrow();
+  });
+});
+
+describe('recentColorsLimitSchema', () => {
+  it('accepts a small whole number and refuses anything else', () => {
+    expect(recentColorsLimitSchema.safeParse(4).success).toBe(true);
+    for (const bad of [0, 13, 2.5, -1, '4', Number.NaN])
+      expect(recentColorsLimitSchema.safeParse(bad).success).toBe(false);
   });
 });

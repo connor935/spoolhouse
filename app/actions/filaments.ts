@@ -10,6 +10,7 @@ import {
 } from '@/lib/db/schema';
 import { requireUser } from '@/lib/auth-session';
 import { emitSpoolChange } from '@/lib/events';
+import { isLentOut, LENT_OUT_MESSAGE, notLentOut } from '@/lib/lend-lock';
 import { assertMaterialUsable } from '@/lib/material-usable';
 import { assertSpoolTypeUsable } from '@/lib/spool-type-usable';
 import {
@@ -75,10 +76,13 @@ export async function updateSpool(id: string, rawInput: SpoolInput) {
     .from(spools)
     .where(and(eq(spools.id, id), eq(spools.userId, user.id)));
   if (!before) throw new Error('Spool not found');
-  await db
+  // Not while it's lent out: the spool is with the borrower.
+  const updated = await db
     .update(spools)
     .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(spools.id, id), eq(spools.userId, user.id)));
+    .where(and(eq(spools.id, id), eq(spools.userId, user.id), notLentOut()))
+    .returning({ id: spools.id });
+  if (updated.length === 0) throw new Error(LENT_OUT_MESSAGE);
   // The edit dialog is also how the owner re-weighs; other edits (price,
   // location, …) must not add a weighing.
   if (before.grams !== input.measuredTotalWeightGrams)
@@ -88,8 +92,14 @@ export async function updateSpool(id: string, rawInput: SpoolInput) {
 }
 
 // The owner, or whoever currently borrows the spool (active lend) — the
-// borrower is the one printing with it. Returns the owner's id.
-async function requireWeigher(spoolId: string, userId: string) {
+// borrower is the one printing with it. While it is lent out only the
+// borrower may *change* its weight (`write`); the owner can still read the
+// history. Returns the owner's id.
+async function requireWeigher(
+  spoolId: string,
+  userId: string,
+  { write }: { write: boolean }
+) {
   const [spool] = await db
     .select({ userId: spools.userId })
     .from(spools)
@@ -108,19 +118,22 @@ async function requireWeigher(spoolId: string, userId: string) {
         )
       );
     if (!activeBorrow) throw new Error('Not authorized');
+  } else if (write && (await isLentOut(spoolId))) {
+    throw new Error(LENT_OUT_MESSAGE);
   }
   return spool.userId;
 }
 
 // Quick re-weigh: store the new measured total weight from the scale (g).
-// Allowed for the owner AND the active borrower (requireWeigher).
+// Allowed for the owner AND the active borrower (requireWeigher) — only the
+// borrower while it is lent out.
 export async function setMeasuredWeight(id: string, rawWeightGrams: number) {
   const user = await requireUser();
   const measuredTotalWeightGrams = parseOrThrow(
     measuredWeightSchema,
     rawWeightGrams
   );
-  const ownerId = await requireWeigher(id, user.id);
+  const ownerId = await requireWeigher(id, user.id, { write: true });
 
   await db
     .update(spools)
@@ -137,7 +150,7 @@ export async function setMeasuredWeight(id: string, rawWeightGrams: number) {
 export async function getSpoolWeighings(id: string) {
   const user = await requireUser();
   const spoolId = parseOrThrow(idSchema, id);
-  await requireWeigher(spoolId, user.id);
+  await requireWeigher(spoolId, user.id, { write: false });
   return getWeighings(spoolId);
 }
 
@@ -146,32 +159,45 @@ export async function getSpoolWeighings(id: string) {
 export async function undoLastWeighing(id: string) {
   const user = await requireUser();
   const spoolId = parseOrThrow(idSchema, id);
-  const ownerId = await requireWeigher(spoolId, user.id);
+  const ownerId = await requireWeigher(spoolId, user.id, { write: true });
   const grams = await undoLastWeighingRow(spoolId);
   revalidatePath('/');
   await emitSpoolChange(ownerId);
   return grams;
 }
 
-// "Dried today" — resets the drying hint. Owner only (it's their storage).
+// "Dried today" — resets the drying hint. Owner only (it's their storage),
+// and not while it's lent out.
 export async function markDried(id: string) {
   const user = await requireUser();
   const spoolId = parseOrThrow(idSchema, id);
   const updated = await db
     .update(spools)
     .set({ lastDriedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(spools.id, spoolId), eq(spools.userId, user.id)))
+    .where(
+      and(eq(spools.id, spoolId), eq(spools.userId, user.id), notLentOut())
+    )
     .returning({ id: spools.id });
-  if (updated.length === 0) throw new Error('Spool not found');
+  if (updated.length === 0)
+    throw new Error(
+      (await isLentOut(spoolId)) ? LENT_OUT_MESSAGE : 'Spool not found'
+    );
   revalidatePath('/');
   await emitSpoolChange(user.id);
 }
 
+// Not while it's lent out — the delete would cascade the active lend away.
 export async function deleteSpool(id: string) {
   const user = await requireUser();
-  await db
+  const spoolId = parseOrThrow(idSchema, id);
+  const deleted = await db
     .delete(spools)
-    .where(and(eq(spools.id, id), eq(spools.userId, user.id)));
+    .where(
+      and(eq(spools.id, spoolId), eq(spools.userId, user.id), notLentOut())
+    )
+    .returning({ id: spools.id });
+  if (deleted.length === 0 && (await isLentOut(spoolId)))
+    throw new Error(LENT_OUT_MESSAGE);
   revalidatePath('/');
   await emitSpoolChange(user.id);
 }

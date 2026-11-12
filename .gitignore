@@ -20,4 +20,19 @@ data/
 
 .env
 .env.docker
-.claude/
+.claude-local/
+
+# Storybook build output
+storybook-static/
+*storybook.log
+
+**/*.tmp
+# Playwright E2E (sessions, results, report)
+e2e/.auth/
+test-results/
+playwright-report/
+
+# vitest coverage reports (npm run test:coverage)
+/coverage
+
+*.local*

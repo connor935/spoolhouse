@@ -1,6 +1,6 @@
 {
   "name": "spoolhouse",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/with-local-db.mjs next dev",
@@ -8,16 +8,25 @@
     "start": "node scripts/with-local-db.mjs next start",
     "db:serve": "node scripts/pglite-server.mjs",
     "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build --quiet",
     "lint:oxlint": "oxlint . --fix --ignore-path .gitignore",
     "lint:eslint": "eslint . --fix --cache",
     "lint": "run-s lint:*",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx scripts/seed-dev-data.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "db:import": "tsx scripts/import-spoolmandb.ts",
     "token:create": "tsx scripts/create-api-token.ts",
-    "format": "prettier '*/**/*.{js,ts,mjs,cjs,json,tsx}' --write"
+    "format": "prettier . --write",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "format:check": "prettier . --check",
+    "prepare": "husky"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -41,24 +50,41 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@electric-sql/pglite": "^0.5.14",
     "@electric-sql/pglite-socket": "^0.2.17",
+    "@playwright/test": "1.65.0",
+    "@storybook/addon-a11y": "10.6.6",
+    "@storybook/addon-docs": "10.6.6",
+    "@storybook/addon-themes": "10.6.6",
+    "@storybook/nextjs-vite": "10.6.6",
+    "@storybook/react": "10.6.6",
     "@tailwindcss/postcss": "^4.3.3",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.9",
     "@types/node": "^26",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/swagger-ui-dist": "^3.30.6",
+    "@vitejs/plugin-react": "6.3.0",
+    "@vitest/coverage-v8": "5.0.5",
     "drizzle-kit": "^0.31.11",
     "eslint": "^10.14.0",
+    "husky": "^9.1.7",
+    "jsdom": "31.0.0",
+    "lint-staged": "^17.6.0",
     "oxlint": "^1.90.0",
     "postcss": "^8.5",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "storybook": "10.6.6",
     "tailwindcss": "^4.2.0",
     "tsx": "^4.23.15",
     "typescript": "6.0.3",
+    "vite": "8.3.7",
     "vitest": "^5.0.5"
   },
   "overrides": {
@@ -66,5 +92,12 @@
       "esbuild": "^0.25.12"
     },
     "minimatch@>=7 <11.0.1": "^11.0.5"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,ts,tsx}": [
+      "oxlint --fix --ignore-path .gitignore",
+      "prettier --write"
+    ],
+    "*.{json,css,md,yml,yaml}": "prettier --write"
   }
 }

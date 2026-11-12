@@ -13,6 +13,7 @@ import {
   type SpoolType,
 } from '@/lib/db/schema';
 import { toSpoolView } from '@/lib/filament';
+import { LENT_OUT_MESSAGE } from '@/lib/lend-lock';
 
 // Helpers shared by the /api/v1/spools route handlers.
 
@@ -98,6 +99,12 @@ export function parseId(raw: string): string | null {
 // duplicate a tag fail in SQL and are answered with 409.
 export function isTagConflict(error: unknown): boolean {
   return isUniqueViolation(error, 'filaments_user_id_tag_uid_unique');
+}
+
+// A spool with an active lend is with the borrower: the owner's writes are
+// refused until it is marked returned (lib/lend-lock.ts).
+export function lentOut(): Response {
+  return apiError(409, 'lent_out', LENT_OUT_MESSAGE);
 }
 
 export function tagConflict(): Response {

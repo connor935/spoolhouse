@@ -10,6 +10,7 @@ import {
 } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
 import { recordWeighing } from '@/lib/weighings';
+import { isLentOut } from '@/lib/lend-lock';
 import {
   firstIssueMessage,
   measuredWeightSchema,
@@ -20,6 +21,7 @@ import {
   getOwnedSpool,
   getOwnedSpoolByTag,
   isTagConflict,
+  lentOut,
   serializeSpool,
   tagConflict,
 } from '../shared';
@@ -57,6 +59,8 @@ export async function POST(request: Request) {
   // Refresh path: tag already registered for this user
   const existing = await getOwnedSpoolByTag(tagUid, owner.id);
   if (existing) {
+    // The tag resolves to a spool that is with a borrower right now.
+    if (await isLentOut(existing.spool.id)) return lentOut();
     await db
       .update(spools)
       .set({ measuredTotalWeightGrams: measured, updatedAt: new Date() })

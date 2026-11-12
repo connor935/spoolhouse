@@ -1,7 +1,8 @@
 import 'server-only';
 
 import { db } from '@/lib/db';
-import { spools } from '@/lib/db/schema';
+import { spools, user } from '@/lib/db/schema';
+import { pendingFirst } from '@/lib/catalog-status';
 import { requireAdmin, requireUser } from '@/lib/auth-session';
 import { and, asc, count, eq, ne, or } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -17,6 +18,13 @@ type CatalogRow = {
   id: string;
   status: string;
   submittedById: string | null;
+};
+
+export type AdminCatalogRow<TRow> = {
+  row: TRow;
+  /** null for imported rows. */
+  submitterName: string | null;
+  spoolCount: number;
 };
 
 type CatalogConfig<TInput> = {
@@ -64,9 +72,7 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     return db
       .select()
       .from(table)
-      .where(
-        or(eq(table.status, 'approved'), eq(table.submittedById, user.id))
-      )
+      .where(or(eq(table.status, 'approved'), eq(table.submittedById, user.id)))
       .orderBy(asc(table.manufacturer), asc(table.name)) as Promise<TRow[]>;
   }
 
@@ -91,15 +97,6 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     return created as TRow;
   }
 
-  async function getPending(): Promise<TRow[]> {
-    await requireAdmin();
-    return db
-      .select()
-      .from(table)
-      .where(eq(table.status, 'pending'))
-      .orderBy(asc(table.createdAt)) as Promise<TRow[]>;
-  }
-
   async function approve(id: string, edits?: TInput) {
     const admin = await requireAdmin();
     const fields = edits ? validate(edits) : {};
@@ -119,22 +116,42 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     const admin = await requireAdmin();
     await db
       .update(table)
-      .set({ status: 'rejected', reviewedById: admin.id, updatedAt: new Date() })
+      .set({
+        status: 'rejected',
+        reviewedById: admin.id,
+        updatedAt: new Date(),
+      })
       .where(and(eq(table.id, id), ne(table.status, 'approved')));
     revalidateCatalog();
   }
 
-  // Full catalog for the admin management list, incl. how many spools
-  // reference each row (governs whether it can be deleted).
-  async function getAllForAdmin(): Promise<(TRow & { spoolCount: number })[]> {
+  // Full catalog for the admin table, pending first, with the submitter's
+  // name and how many spools reference each row (governs whether it can be
+  // deleted). Only for the small spool-type catalog: materials are paged in
+  // SQL (searchMaterialsForAdmin).
+  async function getAllForAdmin(): Promise<AdminCatalogRow<TRow>[]> {
     await requireAdmin();
     const rows = await db
-      .select({ row: table, spoolCount: count(spools.id) })
+      .select({
+        row: table,
+        submitterName: user.name,
+        spoolCount: count(spools.id),
+      })
       .from(table)
       .leftJoin(spools, eq(spoolFkColumn, table.id))
-      .groupBy(table.id)
-      .orderBy(asc(table.manufacturer), asc(table.name));
-    return rows.map((r) => ({ ...(r.row as TRow), spoolCount: r.spoolCount }));
+      .leftJoin(user, eq(table.submittedById, user.id))
+      .groupBy(table.id, user.name)
+      .orderBy(
+        pendingFirst(table.status),
+        asc(table.manufacturer),
+        asc(table.name),
+        asc(table.id)
+      );
+    return rows.map((r) => ({
+      row: r.row as TRow,
+      submitterName: r.submitterName,
+      spoolCount: r.spoolCount,
+    }));
   }
 
   // Admin can edit any row, anytime, without changing its status. The
@@ -148,7 +165,8 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     const row = existing as unknown as TRow;
 
     const isAdmin = user.role === 'admin';
-    const isOwnEditable = row.submittedById === user.id && row.status !== 'approved';
+    const isOwnEditable =
+      row.submittedById === user.id && row.status !== 'approved';
     if (!isAdmin && !isOwnEditable) throw new Error(notAuthorizedMessage);
 
     const values = validate(input);
@@ -181,7 +199,6 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
   return {
     getUsable,
     request,
-    getPending,
     approve,
     reject,
     getAllForAdmin,

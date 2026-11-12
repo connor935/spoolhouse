@@ -179,3 +179,32 @@ export function parseOrThrow<T>(schema: z.ZodType<T>, input: unknown): T {
   if (!result.success) throw new Error(firstIssueMessage(result.error));
   return result.data;
 }
+
+// The /materials catalog query (searchMaterialCatalog): filters as parsed from
+// the URL, one page at a time. Bounded so a crafted call can't ask for the
+// whole catalog or an unbounded IN list.
+export const materialCatalogQuerySchema = z.object({
+  q: z.string().trim().max(200).optional(),
+  filamentTypes: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+  constraints: z
+    .array(
+      z.object({
+        id: z.string().max(64),
+        propertyId: z.string().max(64),
+        min: z.number().finite().nullable(),
+        max: z.number().finite().nullable(),
+      })
+    )
+    .max(20)
+    .optional(),
+  limit: z.number().int().min(1).max(200).default(150),
+  offset: z.number().int().min(0).max(100_000).default(0),
+});
+
+// /admin/materials: the same query plus an exact review status (null = all).
+export const adminMaterialQuerySchema = materialCatalogQuerySchema.extend({
+  status: z.enum(['approved', 'pending', 'rejected']).nullish(),
+});
+
+// getRecentMaterialColors: how many swatches the request form offers.
+export const recentColorsLimitSchema = z.number().int().min(1).max(12);

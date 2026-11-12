@@ -1,0 +1,8 @@
+# Mandatory quality gate (installed by `npm install` via the `prepare` script).
+# Never bypass with --no-verify: fix what fails and commit again.
+
+# Staged files only: oxlint --fix + Prettier, fixes are re-staged.
+npx lint-staged
+
+# Unit + component tests (Vitest, a few seconds).
+npm test

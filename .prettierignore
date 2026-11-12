@@ -1,0 +1,10 @@
+# Prettier also skips everything in .gitignore.
+
+# Agent notes, plans and design mockups (not shipped code).
+.claude/
+design/*.dc.html
+
+# Generated: drizzle-kit snapshots/journal, Next's type stub, the npm lockfile.
+drizzle/
+next-env.d.ts
+package-lock.json

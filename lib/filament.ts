@@ -38,8 +38,8 @@ export type MaterialInventory = {
   totalLeftGrams: number;
 };
 
-const EMPTY_THRESHOLD_G = 5; // 5 g or less counts as empty
-const LOW_THRESHOLD_PCT = 15;
+export const EMPTY_THRESHOLD_G = 5; // 5 g or less counts as empty
+export const LOW_THRESHOLD_PCT = 15;
 
 // Filament left = measured total weight on the scale minus the empty spool weight.
 export function computeFilamentLeft(
@@ -182,6 +182,18 @@ export function toSpoolView(
   };
 }
 
+// What anyone but the owner (a group member, a borrower) sees of a spool: the
+// weights and price, not where the owner keeps it or when they bought/dried it.
+export function withoutOwnerDetails<T extends SpoolView>(view: T): T {
+  return {
+    ...view,
+    location: null,
+    purchasedAt: null,
+    lastDriedAt: null,
+    needsDrying: false,
+  };
+}
+
 // Groups inventory rows (spool + material + spool type) by material,
 // spools oldest-first (stable #1, #2 … numbering).
 export function groupInventory(
@@ -196,6 +208,8 @@ export function groupInventory(
       row.material.filamentType
     );
     view.lentToName = lentToBySpoolId?.get(row.spool.id) ?? null;
+    // Away with a borrower: the owner can't dry it now (nor mark it dried).
+    if (view.lentToName) view.needsDrying = false;
     const entry = byMaterial.get(row.material.id) ?? {
       material: row.material,
       spools: [],
@@ -214,6 +228,39 @@ export function groupInventory(
     (a, b) => b.material.createdAt.getTime() - a.material.createdAt.getTime()
   );
   return result;
+}
+
+export type MaterialStockSummary = {
+  leftGrams: number;
+  /** Spools that are not empty. */
+  stockedCount: number;
+  /** Stocked spools with a price. */
+  pricedCount: number;
+  /** Value of the filament left on priced spools (cents); null when none is priced. */
+  valueCents: number | null;
+  /** Paid per kg of nominal filament across priced stocked spools (cents). */
+  avgPricePerKgCents: number | null;
+};
+
+// Readouts of the material detail page: "2.16 kg · 3 spools",
+// "€43.18 · Ø €19.99 / kg · 3/3 priced".
+export function materialStockSummary(
+  spools: SpoolView[]
+): MaterialStockSummary {
+  const stocked = spools.filter((s) => !s.isEmpty);
+  const priced = stocked.filter((s) => s.valueLeftCents !== null);
+  const paid = priced.reduce((sum, s) => sum + s.pricePaidCents!, 0);
+  const nominal = priced.reduce((sum, s) => sum + s.fullFilamentWeightGrams, 0);
+  return {
+    leftGrams: spools.reduce((sum, s) => sum + s.filamentLeftGrams, 0),
+    stockedCount: stocked.length,
+    pricedCount: priced.length,
+    valueCents:
+      priced.length === 0
+        ? null
+        : priced.reduce((sum, s) => sum + s.valueLeftCents!, 0),
+    avgPricePerKgCents: nominal > 0 ? (paid / nominal) * 1000 : null,
+  };
 }
 
 export function formatWeight(grams: number): string {

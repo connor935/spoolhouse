@@ -125,7 +125,11 @@ function normalizeTokens(name: string, material: string): string[] {
     .map((t) => (t === 'matte' ? 'matt' : t));
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const t of toks) if (!seen.has(t)) (seen.add(t), out.push(t));
+  for (const t of toks) {
+    if (seen.has(t)) continue;
+    seen.add(t);
+    out.push(t);
+  }
   return out;
 }
 

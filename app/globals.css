@@ -5,9 +5,24 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --font-sans: var(--font-geist-sans), 'Geist Fallback';
   --font-mono: var(--font-geist-mono), 'Geist Mono Fallback';
+  /* Barlow Condensed 600: page titles, section heads, material names, big numbers */
+  --font-display: var(--font-barlow-condensed), var(--font-sans);
+  /* Strong lines: tile/input/dialog borders, header rules, tag outlines */
+  --color-ink: var(--ink);
+  /* Accent as text color (links, numbers, outline chips) — --accent is too light for text */
+  --color-accent-ink: var(--accent-ink);
+  /* Fill levels, sparklines, chart bars */
+  --color-data: var(--data);
+  --color-swatch-ring: var(--swatch-ring);
+  --color-scrim: var(--scrim);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --shadow-pop: 0 14px 40px oklch(0.15 0 0 / 18%);
+  --shadow-dialog: 0 30px 80px oklch(0.12 0 0 / 30%);
+  --shadow-toast: 0 10px 30px oklch(0.12 0 0 / 25%);
+  --shadow-swatch: inset 0 1px 2px oklch(0 0 0 / 22%);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,73 +63,93 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Palette "A · Prusa Orange & Graphite" (design/PALETTE-PRUSA.md, hex in comments).
+ * Orange is light (~2.9:1 on white), so:
+ *  - text in the accent color uses --accent-ink, never --accent;
+ *  - orange surfaces (bg-accent) carry dark --accent-foreground, never white;
+ *  - fill levels and charts use --data; low/critical stays --destructive (carmine);
+ *  - primary buttons are graphite (--primary), orange is kept for the main action.
+ */
 :root {
-  --background: oklch(0.985 0.004 220);
-  --foreground: oklch(0.22 0.03 240);
+  --background: oklch(0.97 0 0); /* #F5F5F4 */
+  --foreground: oklch(0.218 0 0); /* #1A1A1A */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.03 240);
+  --card-foreground: oklch(0.218 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.03 240);
-  --primary: oklch(0.28 0.05 230);
-  --primary-foreground: oklch(0.985 0.004 220);
-  --secondary: oklch(0.95 0.01 220);
-  --secondary-foreground: oklch(0.28 0.05 230);
-  --muted: oklch(0.95 0.01 220);
-  --muted-foreground: oklch(0.5 0.02 240);
-  --accent: oklch(0.52 0.09 210);
-  --accent-foreground: oklch(0.99 0.005 210);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.012 220);
-  --input: oklch(0.9 0.012 220);
-  --ring: oklch(0.52 0.09 210);
-  --chart-1: oklch(0.52 0.09 210);
-  --chart-2: oklch(0.28 0.05 230);
-  --chart-3: oklch(0.65 0.07 190);
-  --chart-4: oklch(0.7 0.12 140);
-  --chart-5: oklch(0.5 0.02 240);
+  --popover-foreground: oklch(0.218 0 0);
+  --primary: oklch(0.218 0 0); /* #1A1A1A graphite */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.936 0.003 106.5); /* #EAEAE8 */
+  --secondary-foreground: oklch(0.218 0 0);
+  --muted: oklch(0.936 0.003 106.5); /* #EAEAE8 */
+  --muted-foreground: oklch(0.474 0.003 106.5); /* #5C5C5A */
+  --accent: oklch(0.693 0.191 39.3); /* #FA6832 Prusa orange */
+  --accent-foreground: oklch(0.218 0 0); /* dark text on orange */
+  --accent-ink: oklch(0.553 0.174 38.4); /* #C2410C orange as text color */
+  --data: oklch(0.693 0.191 39.3); /* #FA6832 fill levels & charts */
+  --destructive: oklch(0.538 0.2 19.9); /* #C81E3A carmine */
+  --destructive-foreground: oklch(1 0 0);
+  --ink: oklch(0.218 0 0);
+  --swatch-ring: oklch(0.218 0 0 / 18%);
+  --scrim: oklch(0.15 0 0 / 45%);
+  --border: oklch(0.888 0.004 106.5); /* #DADAD7 */
+  --input: oklch(0.888 0.004 106.5);
+  --ring: oklch(0.693 0.191 39.3);
+  --chart-1: oklch(0.693 0.191 39.3); /* #FA6832 */
+  --chart-2: oklch(0.218 0 0); /* #1A1A1A */
+  --chart-3: oklch(0.824 0.106 46.5); /* #FFB08A */
+  --chart-4: oklch(0.693 0 0); /* #9C9C9C */
+  --chart-5: oklch(0.553 0.174 38.4); /* #C2410C */
   --radius: 0.5rem;
-  --sidebar: oklch(0.99 0.004 220);
-  --sidebar-foreground: oklch(0.22 0.03 240);
-  --sidebar-primary: oklch(0.28 0.05 230);
-  --sidebar-primary-foreground: oklch(0.985 0.004 220);
-  --sidebar-accent: oklch(0.95 0.01 220);
-  --sidebar-accent-foreground: oklch(0.28 0.05 230);
-  --sidebar-border: oklch(0.9 0.012 220);
-  --sidebar-ring: oklch(0.52 0.09 210);
+  --sidebar: oklch(0.985 0 0); /* #FAFAF9 */
+  --sidebar-foreground: oklch(0.218 0 0);
+  --sidebar-primary: oklch(0.693 0.191 39.3);
+  --sidebar-primary-foreground: oklch(0.218 0 0);
+  --sidebar-accent: oklch(0.936 0.003 106.5); /* #EAEAE8 */
+  --sidebar-accent-foreground: oklch(0.218 0 0);
+  --sidebar-border: oklch(0.888 0.004 106.5);
+  --sidebar-ring: oklch(0.693 0.191 39.3);
 }
 
 .dark {
-  --background: oklch(0.17 0.02 235);
-  --foreground: oklch(0.96 0.005 220);
-  --card: oklch(0.21 0.025 235);
-  --card-foreground: oklch(0.96 0.005 220);
-  --popover: oklch(0.21 0.025 235);
-  --popover-foreground: oklch(0.96 0.005 220);
-  --primary: oklch(0.96 0.005 220);
-  --primary-foreground: oklch(0.21 0.025 235);
-  --secondary: oklch(0.26 0.025 235);
-  --secondary-foreground: oklch(0.96 0.005 220);
-  --muted: oklch(0.26 0.025 235);
-  --muted-foreground: oklch(0.68 0.02 235);
-  --accent: oklch(0.6 0.1 205);
-  --accent-foreground: oklch(0.14 0.02 220);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.6 0.1 205);
-  --chart-1: oklch(0.6 0.1 205);
-  --chart-2: oklch(0.8 0.04 235);
-  --chart-3: oklch(0.7 0.07 190);
-  --chart-4: oklch(0.7 0.12 140);
-  --chart-5: oklch(0.68 0.02 235);
-  --sidebar: oklch(0.21 0.025 235);
-  --sidebar-foreground: oklch(0.96 0.005 220);
-  --sidebar-primary: oklch(0.6 0.1 205);
-  --sidebar-primary-foreground: oklch(0.14 0.02 220);
-  --sidebar-accent: oklch(0.26 0.025 235);
-  --sidebar-accent-foreground: oklch(0.96 0.005 220);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.6 0.1 205);
+  --background: oklch(0.182 0 0); /* #121212 */
+  --foreground: oklch(0.946 0 0); /* #EDEDED */
+  --card: oklch(0.222 0 0); /* #1B1B1B */
+  --card-foreground: oklch(0.946 0 0);
+  --popover: oklch(0.222 0 0);
+  --popover-foreground: oklch(0.946 0 0);
+  --primary: oklch(0.946 0 0);
+  --primary-foreground: oklch(0.182 0 0);
+  --secondary: oklch(0.269 0 0); /* #262626 */
+  --secondary-foreground: oklch(0.946 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.693 0 0); /* #9C9C9C */
+  --accent: oklch(0.693 0.191 39.3); /* #FA6832 */
+  --accent-foreground: oklch(0.151 0.026 50.9); /* #140803 */
+  --accent-ink: oklch(0.753 0.157 43.4); /* #FF8A57 */
+  --data: oklch(0.693 0.191 39.3);
+  --destructive: oklch(0.692 0.2 17); /* #FF5A6E */
+  --destructive-foreground: oklch(0.167 0.047 15.3); /* #1F0508 */
+  --ink: oklch(0.946 0 0 / 50%);
+  --swatch-ring: oklch(1 0 0 / 22%);
+  --scrim: oklch(0 0 0 / 60%);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.693 0.191 39.3);
+  --chart-1: oklch(0.693 0.191 39.3);
+  --chart-2: oklch(0.946 0 0);
+  --chart-3: oklch(0.824 0.106 46.5);
+  --chart-4: oklch(0.693 0 0);
+  --chart-5: oklch(0.753 0.157 43.4);
+  --sidebar: oklch(0.205 0 0); /* #171717 */
+  --sidebar-foreground: oklch(0.946 0 0);
+  --sidebar-primary: oklch(0.693 0.191 39.3);
+  --sidebar-primary-foreground: oklch(0.151 0.026 50.9);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.946 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.693 0.191 39.3);
 }
 
 @layer base {
@@ -127,4 +162,137 @@
   html {
     @apply font-sans;
   }
+  ::selection {
+    background-color: color-mix(in oklab, var(--accent) 25%, transparent);
+  }
+}
+
+/*
+ * Redesign typography & decoration utilities (reference: .claude/design/spoolhouse.css).
+ * Display styles are uppercase Barlow Condensed with tabular lining numerals.
+ */
+@utility kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+@utility display-h1 {
+  font-family: var(--font-display);
+  font-size: 60px;
+  font-weight: 600;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+@utility display-h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Section head label (.sec h2) */
+@utility display-section {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Material name (.nm) */
+@utility display-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Readout number (.num) — pair with a <small> unit */
+@utility display-num {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Hero number (.big) */
+@utility display-big {
+  font-family: var(--font-display);
+  font-size: 58px;
+  font-weight: 600;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Spool tile weight (.w) */
+@utility display-weight {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Fine print in mono (.fine) */
+@utility fine {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--color-muted-foreground);
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Segmented look for the fill meter: 5px bars, 2px gaps */
+@utility mask-segments {
+  -webkit-mask: repeating-linear-gradient(
+    90deg,
+    #000 0 5px,
+    transparent 5px 7px
+  );
+  mask: repeating-linear-gradient(90deg, #000 0 5px, transparent 5px 7px);
+}
+
+/* Hatched fill, e.g. the month-to-date bar in usage charts */
+@utility hatch-data {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--color-data) 0 2px,
+    transparent 2px 5px
+  );
+  box-shadow: inset 0 0 0 1px var(--color-data);
+}
+
+/* Scale ruler decoration (.ruler) */
+@utility ruler {
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      var(--color-border) 0 1px,
+      transparent 1px 10px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--color-ink) 0 1px,
+      transparent 1px 50px
+    );
+  background-size:
+    100% 6px,
+    100% 12px;
+  background-repeat: no-repeat;
+  opacity: 0.6;
 }

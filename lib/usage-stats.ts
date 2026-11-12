@@ -6,13 +6,14 @@ import { materials, spools, spoolWeighings } from '@/lib/db/schema';
 import {
   dailyRate,
   eventsSince,
-  forecastDays,
   monthlyUsage,
   sumGrams,
   usageEvents,
   type UsageEvent,
 } from '@/lib/consumption';
 import { pricePerGramCents, type MaterialInventory } from '@/lib/filament';
+import { usageDelta, type UsageDelta } from '@/lib/overview';
+import { stockByType, usageRows, type UsageRow } from '@/lib/stats';
 
 // Usage and cost figures from the weighing history of the user's own spools
 // (weighings by a borrower count too: it is the spool that empties). Read
@@ -61,7 +62,12 @@ export type MaterialUsage = {
   gramsPerDay: number;
 };
 
-// Per material: recent usage and pace, for the dashboard's material dialog.
+export type MaterialUsageHistory = MaterialUsage & {
+  /** Last 12 months, oldest first, current month last. */
+  monthly: { month: string; grams: number; costCents: number }[];
+};
+
+// Per material: recent usage and pace, for the inventory's run-out forecasts.
 export async function getMaterialUsage(
   userId: string,
   now = new Date()
@@ -83,6 +89,73 @@ export async function getMaterialUsage(
   return result;
 }
 
+// One material's usage for its detail page: recent figures plus the
+// 12-month chart, from the user's own spools of it.
+export async function getMaterialUsageHistory(
+  userId: string,
+  materialId: string,
+  now = new Date()
+): Promise<MaterialUsageHistory> {
+  const { events, meta, trackedSince } = await loadUsage(userId);
+  const list = events.filter(
+    (e) => meta.get(e.spoolId)!.materialId === materialId
+  );
+  const cost = (e: UsageEvent) =>
+    e.grams * (meta.get(e.spoolId)?.perGramCents ?? 0);
+  const grams12 = monthlyUsage(list, 12, now);
+  const cost12 = monthlyUsage(list, 12, now, cost);
+  return {
+    usedLast30Grams: sumGrams(
+      eventsSince(list, new Date(now.getTime() - 30 * DAY_MS))
+    ),
+    gramsPerDay: trackedSince ? dailyRate(list, now, trackedSince) : 0,
+    monthly: grams12.map((m, i) => ({
+      month: m.month,
+      grams: m.value,
+      costCents: cost12[i].value,
+    })),
+  };
+}
+
+export type OverviewUsage = {
+  delta: UsageDelta;
+  /** Last 12 months, oldest first (UsageBarChart data). */
+  monthly: { month: string; grams: number; costCents: number }[];
+  /** Pace per material, for the "Running low" forecast. */
+  gramsPerDayByMaterial: Record<string, number>;
+};
+
+// Overview: the 30-day readout with its delta, the compact monthly chart and
+// the per-material pace — one read of the weighing history for all three.
+export async function getOverviewUsage(
+  userId: string,
+  now = new Date()
+): Promise<OverviewUsage> {
+  const { events, meta, trackedSince } = await loadUsage(userId);
+  const cost = (e: UsageEvent) =>
+    e.grams * (meta.get(e.spoolId)?.perGramCents ?? 0);
+  const grams12 = monthlyUsage(events, 12, now);
+  const cost12 = monthlyUsage(events, 12, now, cost);
+  const gramsPerDayByMaterial: Record<string, number> = {};
+  if (trackedSince) {
+    const byMaterial = groupEvents(
+      events,
+      (e) => meta.get(e.spoolId)!.materialId
+    );
+    for (const [materialId, list] of byMaterial)
+      gramsPerDayByMaterial[materialId] = dailyRate(list, now, trackedSince);
+  }
+  return {
+    delta: usageDelta(events, now),
+    monthly: grams12.map((m, i) => ({
+      month: m.month,
+      grams: m.value,
+      costCents: cost12[i].value,
+    })),
+    gramsPerDayByMaterial,
+  };
+}
+
 function groupEvents(
   events: UsageEvent[],
   keyOf: (e: UsageEvent) => string
@@ -97,18 +170,12 @@ function groupEvents(
   return map;
 }
 
-export type UsageRow = {
-  key: string;
-  label: string;
-  color?: string | null;
-  usedLast90Grams: number;
-  leftGrams: number;
-  forecastDays: number | null;
-};
+export type { UsageRow } from '@/lib/stats';
 
 export type UsageStats = {
   trackedSince: string | null;
-  usedLast30Grams: number;
+  /** "Used · 30 days" with the change against the 30 days before. */
+  delta: UsageDelta;
   costLast30Cents: number;
   avgPerMonthGrams: number;
   stockValueCents: number;
@@ -117,6 +184,8 @@ export type UsageStats = {
   monthly: { month: string; grams: number; costCents: number }[];
   byType: UsageRow[];
   byMaterial: UsageRow[];
+  /** Filament left per type, largest first (stock composition bar). */
+  stockByType: { type: string; grams: number }[];
 };
 
 export async function getUsageStats(
@@ -128,7 +197,6 @@ export async function getUsageStats(
   const cost = (e: UsageEvent) =>
     e.grams * (meta.get(e.spoolId)?.perGramCents ?? 0);
   const since30 = new Date(now.getTime() - 30 * DAY_MS);
-  const since90 = new Date(now.getTime() - 90 * DAY_MS);
   const recent = eventsSince(events, since30);
 
   const stocked = inventory.flatMap((m) => m.spools).filter((s) => !s.isEmpty);
@@ -151,48 +219,10 @@ export async function getUsageStats(
       )
     : 1;
 
-  const rows = (
-    keyOf: (materialId: string, filamentType: string) => string,
-    labelOf: (m: MaterialInventory) => string,
-    colorOf?: (m: MaterialInventory) => string | null
-  ): UsageRow[] => {
-    const byKey = groupEvents(events, (e) => {
-      const m = meta.get(e.spoolId)!;
-      return keyOf(m.materialId, m.filamentType);
-    });
-    const out = new Map<string, UsageRow>();
-    for (const m of inventory) {
-      const key = keyOf(m.material.id, m.material.filamentType);
-      const row = out.get(key) ?? {
-        key,
-        label: labelOf(m),
-        color: colorOf?.(m),
-        usedLast90Grams: 0,
-        leftGrams: 0,
-        forecastDays: null,
-      };
-      row.leftGrams += m.totalLeftGrams;
-      out.set(key, row);
-    }
-    for (const row of out.values()) {
-      const list = byKey.get(row.key) ?? [];
-      row.usedLast90Grams = sumGrams(eventsSince(list, since90));
-      row.forecastDays = trackedSince
-        ? forecastDays(row.leftGrams, dailyRate(list, now, trackedSince))
-        : null;
-    }
-    return [...out.values()]
-      .filter((r) => r.usedLast90Grams > 0)
-      .sort(
-        (a, b) =>
-          (a.forecastDays ?? Infinity) - (b.forecastDays ?? Infinity) ||
-          b.usedLast90Grams - a.usedLast90Grams
-      );
-  };
-
+  const common = { events, inventory, now, trackedSince };
   return {
     trackedSince: trackedSince?.toISOString() ?? null,
-    usedLast30Grams: sumGrams(recent),
+    delta: usageDelta(events, now),
     costLast30Cents: recent.reduce((sum, e) => sum + cost(e), 0),
     avgPerMonthGrams:
       grams12.slice(-trackedMonths).reduce((s, m) => s + m.value, 0) /
@@ -205,14 +235,20 @@ export async function getUsageStats(
       grams: m.value,
       costCents: cost12[i].value,
     })),
-    byType: rows(
-      (_, type) => type,
-      (m) => m.material.filamentType
-    ),
-    byMaterial: rows(
-      (id) => id,
-      (m) => `${m.material.manufacturer} ${m.material.name}`,
-      (m) => m.material.color
-    ),
+    byType: usageRows({
+      ...common,
+      eventKey: (e) => meta.get(e.spoolId)!.filamentType,
+      keyOf: (m) => m.material.filamentType,
+      labelOf: (m) => m.material.filamentType,
+    }),
+    byMaterial: usageRows({
+      ...common,
+      eventKey: (e) => meta.get(e.spoolId)!.materialId,
+      keyOf: (m) => m.material.id,
+      labelOf: (m) => `${m.material.manufacturer} ${m.material.name}`,
+      colorOf: (m) => m.material.color,
+      typeOf: (m) => m.material.filamentType,
+    }),
+    stockByType: stockByType(inventory),
   };
 }

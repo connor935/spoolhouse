@@ -32,7 +32,12 @@ function parseArgs(argv: string[]) {
     const a = argv[i];
     if (a === '--manufacturer' || a === '-m') manufacturers.push(argv[++i]);
     else if (a === '--type' || a === '-t')
-      types.push(...argv[++i].split(',').map((s) => s.trim()).filter(Boolean));
+      types.push(
+        ...argv[++i]
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      );
     else if (a === '--dry-run') dryRun = true;
     else console.warn(`Ignoring unknown argument: ${a}`);
   }

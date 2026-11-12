@@ -14,8 +14,12 @@ import {
 import { requireUser } from '@/lib/auth-session';
 import { emitSpoolChange } from '@/lib/events';
 import { createNotification } from '@/lib/notifications';
-import { getMembership } from '@/lib/sharing';
-import { and, eq, inArray, ne, or, type SQL } from 'drizzle-orm';
+import {
+  getMembership,
+  getSharedFilaments,
+  getStockForMyGroups,
+} from '@/lib/sharing';
+import { and, asc, eq, inArray, ne, or, type SQL } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 function generateInviteCode() {
@@ -302,19 +306,94 @@ export async function getGroupDetail(groupId: string) {
     .from(filamentShareOverrides)
     .where(eq(filamentShareOverrides.groupMemberId, membership.id));
 
+  // Active lends per member, either side — the same scope settleOpenLends()
+  // refuses a removal or leave for, so the UI can say so up front.
+  const active = await db
+    .select({ borrowerId: lends.borrowerId, ownerId: spools.userId })
+    .from(lends)
+    .innerJoin(spools, eq(lends.filamentId, spools.id))
+    .where(and(eq(lends.groupId, groupId), eq(lends.status, 'active')));
+  const activeLendsByUserId: Record<string, number> = {};
+  for (const l of active)
+    for (const id of new Set([l.borrowerId, l.ownerId]))
+      activeLendsByUserId[id] = (activeLendsByUserId[id] ?? 0) + 1;
+
   return {
     group,
     members,
     myMembership: membership,
     myOverrideMaterialIds: myOverrides.map((o) => o.materialId),
+    activeLendCount: active.length,
+    activeLendsByUserId,
   };
 }
 
-export async function getGroupByInviteCode(code: string) {
+// The /groups cards: members, pooled stock size and how much of it is yours.
+export async function getMyGroupSummaries() {
+  const authUser = await requireUser();
+  const memberships = await getMyGroups();
+  if (memberships.length === 0) return [];
+  const memberRows = await db
+    .select({ groupId: groupMembers.groupId, id: user.id, name: user.name })
+    .from(groupMembers)
+    .innerJoin(user, eq(groupMembers.userId, user.id))
+    .where(
+      inArray(
+        groupMembers.groupId,
+        memberships.map((m) => m.group.id)
+      )
+    )
+    .orderBy(asc(groupMembers.joinedAt));
+  const stockByGroup = await getStockForMyGroups(authUser.id);
+  const summaries = memberships.map(({ group, membership }) => {
+    const stock = stockByGroup.get(group.id) ?? [];
+    return {
+      id: group.id,
+      name: group.name,
+      role: membership.role as 'owner' | 'member',
+      members: memberRows
+        .filter((m) => m.groupId === group.id)
+        .map(({ id, name }) => ({ id, name })),
+      sharedSpoolCount: stock.length,
+      youShareCount: stock.filter((s) => s.ownerId === authUser.id).length,
+    };
+  });
+  return summaries.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export type GroupSummary = Awaited<
+  ReturnType<typeof getMyGroupSummaries>
+>[number];
+
+async function getGroupByInviteCode(code: string) {
   await requireUser();
   const [group] = await db
     .select()
     .from(groups)
     .where(eq(groups.inviteCode, code));
   return group ?? null;
+}
+
+// What the join page shows before joining. Holding the invite code is what
+// entitles you to see it — the same code joins the group.
+export async function getGroupInvitePreview(code: string) {
+  const authUser = await requireUser();
+  const group = await getGroupByInviteCode(code.trim());
+  if (!group) return null;
+  const [members, stock] = await Promise.all([
+    db
+      .select({ userId: groupMembers.userId, name: user.name })
+      .from(groupMembers)
+      .innerJoin(user, eq(groupMembers.userId, user.id))
+      .where(eq(groupMembers.groupId, group.id)),
+    getSharedFilaments(group.id, authUser.id),
+  ]);
+  return {
+    id: group.id,
+    name: group.name,
+    memberCount: members.length,
+    sharedSpoolCount: stock.length,
+    ownerName: members.find((m) => m.userId === group.ownerId)?.name ?? null,
+    alreadyMember: members.some((m) => m.userId === authUser.id),
+  };
 }
