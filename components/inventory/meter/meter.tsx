@@ -23,6 +23,9 @@ function Meter({ className, value, tone = 'default', ...props }: MeterProps) {
       data-slot="meter"
       data-tone={tone}
       value={Math.round(clamped)}
+      // Pinned so SSR and the browser format aria-valuetext identically
+      // ("66%" vs de-DE "66 %" was a hydration mismatch).
+      locale="en-US"
       className={cn('block w-full', className)}
       {...props}
     >
