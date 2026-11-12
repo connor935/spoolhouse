@@ -18,11 +18,13 @@
 //  - an API token for the main user (plaintext printed once).
 //
 // Deterministic (seeded PRNG), so re-seeding produces the same charts.
-// Usage: npm run db:seed -- [--email you@x] [--reset | --clean]
-//   --reset  remove previously seeded data, then seed again
-//   --clean  only remove previously seeded data
+// Usage: npm run db:seed -- [--email you@x] [--reset | --clean] [--allow-remote]
+//   --reset         remove previously seeded data, then seed again
+//   --clean         only remove previously seeded data
+//   --allow-remote  run even though DATABASE_URL / DATABASE_PASSWORD_FILE is
+//                   set (refused by default: never seed a real database)
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { and, eq, inArray, like, notExists } from 'drizzle-orm';
+import { and, eq, inArray, like, notExists, or } from 'drizzle-orm';
 import { hashPassword } from 'better-auth/crypto';
 import { closeDb, db, runMigrations } from '../lib/db';
 import { materialLabel } from '../lib/filament';
@@ -1491,8 +1493,29 @@ async function seed(tx: Tx, owner: Owner) {
 
 async function clean(ownerId: string) {
   return db.transaction(async (tx) => {
-    // Groups first: members, overrides and lends cascade with them.
-    await tx.delete(groups).where(inArray(groups.name, GROUP_NAMES));
+    // Groups first: members, overrides and lends cascade with them. Matched by
+    // name *and* a seeded owner, so a real group that happens to share a name
+    // is never touched.
+    const seededUserIds = tx
+      .select({ id: user.id })
+      .from(user)
+      .where(
+        inArray(
+          user.email,
+          USERS.map((u) => u.email)
+        )
+      );
+    await tx
+      .delete(groups)
+      .where(
+        and(
+          inArray(groups.name, GROUP_NAMES),
+          or(
+            eq(groups.ownerId, ownerId),
+            inArray(groups.ownerId, seededUserIds)
+          )
+        )
+      );
     await tx
       .delete(notifications)
       .where(
@@ -1607,6 +1630,21 @@ async function main() {
     return;
   }
   await db.transaction((tx) => seed(tx, owner));
+}
+
+// The seeded accounts share a published password, one is a trusted
+// contributor, and the main user gets a live API token — so refuse any
+// database but the local PGlite one unless that is explicitly intended.
+if (
+  (process.env.DATABASE_URL || process.env.DATABASE_PASSWORD_FILE) &&
+  !process.argv.includes('--allow-remote')
+) {
+  console.error(
+    'DATABASE_URL / DATABASE_PASSWORD_FILE is set: refusing to seed a non-local database.\n' +
+      'The seed creates accounts with a known password. Unset it to use local PGlite,\n' +
+      'or pass --allow-remote if this really is a throwaway database.'
+  );
+  process.exit(1);
 }
 
 // The local dev database is started on demand (and stopped again) when nothing
