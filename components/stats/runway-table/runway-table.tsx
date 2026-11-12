@@ -160,7 +160,7 @@ function Runway({ row, withMeter }: { row: UsageRow; withMeter: boolean }) {
         <i
           className={cn(
             'absolute inset-y-0 left-0',
-            short ? 'bg-destructive' : 'bg-accent'
+            short ? 'bg-destructive' : 'bg-data'
           )}
           style={{
             width: `${Math.min(100, (days / RUNWAY_SCALE_DAYS) * 100)}%`,

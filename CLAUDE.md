@@ -151,7 +151,7 @@ violate it in the same migration (see `drizzle/0007_constraints_and_fk_indexes.s
 - **Drizzle ORM + node-postgres** for data access (PostgreSQL; PGlite locally, migrations via drizzle-kit)
 - **better-auth** for authentication (see Auth section)
 - `lucide-react` icons, `sonner` toasts
-- **Theming:** `next-themes` (`components/layout/theme-provider.tsx`, wrapped in `app/layout.tsx`, default = system, class strategy). Light/dark/system switch lives in the user menu. All colors come from the oklch tokens in `app/globals.css` (`:root` + `.dark`) — petrol/blue accent (hue ~205–210), cool neutrals; never hardcode colors in components
+- **Theming:** `next-themes` (`components/layout/theme-provider.tsx`, wrapped in `app/layout.tsx`, default = system, class strategy). Light/dark/system switch lives in the user menu. All colors come from the oklch tokens in `app/globals.css` (`:root` + `.dark`) — palette **"Prusa Orange & Graphite"** (spec: `design/PALETTE-PRUSA.md`, guarded by `lib/theme-tokens.test.ts`); never hardcode colors in components. Orange is light (~2.9:1 on white), so: **text** in the accent color uses `text-accent-ink`, never `text-accent`; **orange surfaces** (`bg-accent`) carry dark `text-accent-foreground`; **fill levels/charts** use `bg-data` (peak bar may be `bg-accent`, month-to-date `hatch-data`); **low/critical** is `destructive` (carmine), never orange; **buttons** default to graphite `bg-primary` — `variant="accent"` is reserved for the one main action ("Add spool"). Material swatches stay real material colors. App icons: `node scripts/gen-app-icons.mjs` (orange tile, graphite mark)
 
 ## Architecture
 

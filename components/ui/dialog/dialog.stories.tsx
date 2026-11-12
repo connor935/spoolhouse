@@ -115,7 +115,7 @@ export const BorrowRequest: Story = {
                 </span>
               </span>
               <span className="bg-muted h-1.5 w-full rounded-full">
-                <span className="bg-accent block h-full w-2/3 rounded-full" />
+                <span className="bg-data block h-full w-2/3 rounded-full" />
               </span>
             </span>
             <span className="display-num text-[34px]">

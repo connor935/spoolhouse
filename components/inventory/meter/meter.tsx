@@ -13,7 +13,7 @@ type MeterProps = Omit<MeterPrimitive.Root.Props, 'value' | 'children'> & {
 
 /**
  * Segmented fill bar (`.meter`): muted track cut into 5px segments by
- * `mask-segments`, accent fill, destructive when low. Exposed as
+ * `mask-segments`, data-color fill, destructive when low. Exposed as
  * `role="meter"` with aria values; give it an `aria-label`.
  */
 function Meter({ className, value, tone = 'default', ...props }: MeterProps) {
@@ -33,7 +33,7 @@ function Meter({ className, value, tone = 'default', ...props }: MeterProps) {
         <MeterPrimitive.Indicator
           className={cn(
             'absolute inset-y-0 left-0 block transition-[width]',
-            tone === 'default' ? 'bg-accent' : 'bg-destructive'
+            tone === 'default' ? 'bg-data' : 'bg-destructive'
           )}
           style={{ width: `${clamped}%` }}
         />

@@ -18,7 +18,7 @@ const badgeVariants = cva(
       variant: {
         default: tag.default,
         muted: tag.muted,
-        accent: 'border-accent text-accent',
+        accent: 'border-accent-ink text-accent-ink',
         'accent-solid': 'border-accent bg-accent text-accent-foreground',
         destructive:
           'border-destructive bg-destructive text-destructive-foreground',
@@ -28,7 +28,7 @@ const badgeVariants = cva(
         outline: tag.default,
         secondary: tag.muted,
         ghost: 'border-transparent text-muted-foreground',
-        link: 'border-transparent text-accent underline-offset-4 [a&]:hover:underline',
+        link: 'border-transparent text-accent-ink underline-offset-4 [a&]:hover:underline',
       },
     },
     defaultVariants: {

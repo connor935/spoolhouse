@@ -44,7 +44,7 @@ function AuthCard({
       <div className="flex flex-col gap-3.5 px-6 pt-5 pb-6">
         {children}
         {footer && (
-          <div className="kicker [&_a]:text-accent text-center [&_a]:hover:underline">
+          <div className="kicker [&_a]:text-accent-ink text-center [&_a]:hover:underline">
             {footer}
           </div>
         )}

@@ -22,7 +22,7 @@ describe('StatusBadge', () => {
   it('styles approved and rejected apart from the muted statuses', () => {
     render(<AllStatuses />);
     const cls = (label: string) => screen.getByText(label).className;
-    expect(cls('Approved')).toContain('text-accent');
+    expect(cls('Approved')).toContain('text-accent-ink');
     expect(cls('Rejected')).toContain('text-destructive');
     expect(cls('Pending review')).toBe(cls('Unverified'));
   });

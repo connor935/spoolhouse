@@ -36,7 +36,7 @@ function JoinGroupCard({
     >
       <div className="border-ink border-b-2 px-6 pt-5 pb-4">
         <p className="kicker truncate">{linkLabel}</p>
-        <p className="kicker text-accent mt-3">Group invite</p>
+        <p className="kicker text-accent-ink mt-3">Group invite</p>
         <h1 id="join-group-title" className="display-h2 mt-1">
           Join “{name}”?
         </h1>

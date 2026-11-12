@@ -56,7 +56,7 @@ function UserMenu({
           aria-label="User menu"
           className={cn(
             'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring grid size-10 place-items-center rounded-[8px] outline-none focus-visible:ring-2',
-            active && 'bg-sidebar-accent text-accent'
+            active && 'bg-sidebar-accent text-accent-ink'
           )}
         >
           <CircleUserRound className="size-[18px]" />
@@ -72,7 +72,7 @@ function UserMenu({
             aria-hidden
             className={cn(
               'size-[18px] flex-none',
-              active ? 'text-accent' : 'text-muted-foreground'
+              active ? 'text-accent-ink' : 'text-muted-foreground'
             )}
           />
           <span className="flex min-w-0 flex-1 flex-col gap-[3px]">

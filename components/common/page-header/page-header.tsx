@@ -59,7 +59,7 @@ function PageHeader({
             <Breadcrumb index={index} crumbs={breadcrumb} />
           ) : (
             <span>
-              {index && <span className="text-accent">{index}</span>}
+              {index && <span className="text-accent-ink">{index}</span>}
               {index && kicker && ' — '}
               {kicker}
             </span>
@@ -96,7 +96,7 @@ function Breadcrumb({ index, crumbs }: { index?: string; crumbs: Crumb[] }) {
       <ol className="flex flex-wrap items-center gap-2">
         {index && (
           <li aria-hidden="true" className="flex items-center gap-2">
-            <span className="text-accent">{index}</span>
+            <span className="text-accent-ink">{index}</span>
             <span>—</span>
           </li>
         )}

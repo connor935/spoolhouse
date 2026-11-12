@@ -41,7 +41,7 @@ type ReadoutTone = 'default' | 'positive' | 'negative';
 
 const toneClass: Record<ReadoutTone, string> = {
   default: '',
-  positive: 'text-accent',
+  positive: 'text-accent-ink',
   negative: 'text-destructive',
 };
 

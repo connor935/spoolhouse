@@ -240,7 +240,13 @@ function UsageBarChart({
                 onKeyDown={(e) => onKeyDown(e, i)}
                 className={cn(
                   'outline-none',
-                  i === current ? 'hatch-accent' : 'bg-accent',
+                  // Month to date stays hatched; the peak may stand out in
+                  // the accent, every other bar is plain data color.
+                  i === current
+                    ? 'hatch-data'
+                    : i === peak
+                      ? 'bg-accent'
+                      : 'bg-data',
                   isActive &&
                     'shadow-[0_0_0_2px_var(--color-background),0_0_0_3px_var(--color-foreground)]'
                 )}

@@ -127,4 +127,11 @@ describe('ReweighForm', () => {
     );
     expect(onEditDetails).toHaveBeenCalledOnce();
   });
+
+  it('saves with a graphite primary button, not the orange accent', () => {
+    render(<Typed />);
+    const save = screen.getByRole('button', { name: /Save/ });
+    expect(save).toHaveClass('bg-primary');
+    expect(save).not.toHaveClass('bg-accent');
+  });
 });

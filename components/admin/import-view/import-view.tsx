@@ -125,11 +125,7 @@ function ImportView({
           ariaLabel="Limit the import to one filament type"
           triggerClassName="w-40"
         />
-        <Button
-          variant="accent"
-          disabled={selected.size === 0 || running}
-          onClick={onImport}
-        >
+        <Button disabled={selected.size === 0 || running} onClick={onImport}>
           {selected.size > 0 ? `Import ${selected.size} selected` : 'Import'}
         </Button>
         <span className="kicker ml-auto whitespace-nowrap">

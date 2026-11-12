@@ -13,7 +13,7 @@ const messageBoxVariants = cva(
       variant: {
         alert:
           'border-destructive bg-[color-mix(in_oklab,var(--destructive)_7%,var(--card))] px-3.5 py-3 text-destructive',
-        note: 'border-accent bg-[color-mix(in_oklab,var(--accent)_7%,var(--card))] px-3 py-2.5 text-foreground [&>svg]:text-accent',
+        note: 'border-accent bg-[color-mix(in_oklab,var(--accent)_7%,var(--card))] px-3 py-2.5 text-foreground [&>svg]:text-accent-ink',
       },
     },
   }

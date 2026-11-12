@@ -62,7 +62,7 @@ const itemClass = (size: Size, sub: boolean, active: boolean) =>
       : cn('gap-2.5 px-2.5', sub ? 'h-8 text-[13px]' : 'h-9 text-sm'),
     active &&
       cn(
-        'bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent font-semibold [&_svg]:text-accent',
+        'bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent font-semibold [&_svg]:text-accent-ink',
         'before:bg-accent before:absolute before:left-0 before:w-[3px] before:rounded-r-[3px]',
         size === 'lg' ? 'before:inset-y-2.5' : 'before:inset-y-2'
       )

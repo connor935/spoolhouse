@@ -88,7 +88,7 @@ function BorrowedRow({ lend: l }: { lend: MyLend }) {
           </div>
           <Badge
             variant="outline"
-            className="border-accent/40 text-accent shrink-0"
+            className="border-accent-ink/40 text-accent-ink shrink-0"
           >
             From {l.ownerName}
           </Badge>
@@ -295,7 +295,7 @@ export function BorrowsPanel({
                   {spoolLine(l)}
                   <Badge
                     variant="outline"
-                    className="border-accent/40 text-accent"
+                    className="border-accent-ink/40 text-accent-ink"
                   >
                     Lent to {l.borrowerName}
                   </Badge>

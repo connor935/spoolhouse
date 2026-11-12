@@ -53,7 +53,6 @@ function FilterSheet({
         </SheetHeader>
         <FilterFields layout="sheet" {...fields} />
         <Button
-          variant="accent"
           size="lg"
           className="w-full"
           onClick={() => onOpenChange(false)}

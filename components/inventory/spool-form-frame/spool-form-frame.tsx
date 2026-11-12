@@ -106,7 +106,6 @@ function SpoolFormFrame({
       </Button>
       <Button
         type="submit"
-        variant="accent"
         size={variant === 'sheet' ? 'lg' : 'default'}
         disabled={busy}
       >

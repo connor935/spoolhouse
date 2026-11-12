@@ -14,7 +14,7 @@ function Actions({ name, verify = false }: { name: string; verify?: boolean }) {
           variant="ghost"
           size="icon"
           aria-label={`Verify ${name}`}
-          className="text-accent"
+          className="text-accent-ink"
           onClick={fn()}
         >
           <CheckIcon />

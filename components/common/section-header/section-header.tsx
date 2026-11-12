@@ -28,7 +28,7 @@ function SectionHeader({
       className={cn('mb-4 flex items-center gap-2.5', className)}
     >
       {index && (
-        <span className="text-accent font-mono text-[11px] leading-none font-semibold">
+        <span className="text-accent-ink font-mono text-[11px] leading-none font-semibold">
           {index}
         </span>
       )}
@@ -37,7 +37,7 @@ function SectionHeader({
       </h2>
       <span aria-hidden="true" className="bg-border h-px flex-1" />
       {aside && (
-        <div className="[&_a]:text-accent [&_a]:hover:text-foreground flex items-center gap-2 whitespace-nowrap [&_a]:font-mono [&_a]:text-[11px] [&_a]:leading-none [&_a]:font-medium [&_a]:tracking-[0.08em] [&_a]:uppercase [&_a]:hover:underline">
+        <div className="[&_a]:text-accent-ink [&_a]:hover:text-foreground flex items-center gap-2 whitespace-nowrap [&_a]:font-mono [&_a]:text-[11px] [&_a]:leading-none [&_a]:font-medium [&_a]:tracking-[0.08em] [&_a]:uppercase [&_a]:hover:underline">
           {aside}
         </div>
       )}

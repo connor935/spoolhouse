@@ -45,7 +45,7 @@ export const Progress: Story = {
           <span className="kicker">esun ✓ · prusament · sunlu</span>
         </div>
         <div className="bg-muted mask-segments relative h-3">
-          <i className="bg-accent absolute inset-y-0 left-0 w-1/2" />
+          <i className="bg-data absolute inset-y-0 left-0 w-1/2" />
         </div>
       </>
     ),

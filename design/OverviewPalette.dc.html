@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spoolhouse · Overview colour variants</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./spoolhouse.css">
+<link rel="stylesheet" href="./palettes.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{themeClass}}">
+<div class="page">
+<div class="side"><dc-import name="Nav" active="overview" dark="{{dark}}" palette="{{palette}}" hint-size="240px,900px"></dc-import></div>
+<main class="main">
+<div class="wrap" style="gap: 32px">
+
+<header style="display: flex; flex-direction: column; gap: 10px">
+<div class="kick" style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap"><span><span class="ai">01</span> — Overview</span><span>Mon 09 Nov 2026 · last weighing 14:02</span></div>
+<div class="head-row">
+<h1 class="h1">Overview</h1>
+<a class="btn btn-acc" href="SpoolAdd.dc.html" style="color: var(--accent-fg) !important; text-decoration: none"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add spool<span class="kbd">N</span></a>
+</div>
+</header>
+
+<section aria-label="Key figures" class="ro2">
+<a href="Inventory.dc.html"><span class="kick">Spools in stock</span><span class="big">14<small>/ 19</small></span><span class="kick" style="display: flex; align-items: center; gap: 6px; letter-spacing: 0.04em"><span class="tag low">2 low</span>5 empty</span></a>
+<a href="Inventory.dc.html"><span class="kick">Filament left</span><span class="big">8.09<small>kg</small></span><span class="kick" style="letter-spacing: 0.04em">8 materials · 3 types</span></a>
+<a href="Statistics.dc.html"><span class="kick">Used · 30 days</span><span style="display: flex; align-items: flex-end; justify-content: space-between; gap: 10px"><span class="big">1.18<small>kg</small></span><svg viewBox="0 0 120 32" width="96" height="28" aria-hidden="true" style="flex: none; overflow: visible"><polyline points="0,22 8,20 16,24 24,15 32,18 40,11 48,17 56,13 64,19 72,9 80,12 88,16 96,10 104,13 112,6 120,11" fill="none" stroke="var(--data)" stroke-width="1.5" stroke-linejoin="round"/><circle cx="120" cy="11" r="3" fill="var(--accent)" stroke="var(--fg)" stroke-width="1"/></svg></span><span class="kick" style="letter-spacing: 0.04em">−12 % vs. prev. 30 days</span></a>
+<a href="Statistics.dc.html"><span class="kick">Stock value</span><span class="big">€214<small>.60</small></span><span style="display: flex; align-items: center; gap: 10px"><span class="meter" style="width: 84px"><i style="width: 78%"></i></span><span class="kick" style="letter-spacing: 0.04em">11/14 priced</span></span></a>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 40px 0; align-items: flex-start">
+
+<div style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 40px; padding-right: 40px">
+
+<section>
+<div class="sec"><span class="n">02</span><h2>Running low</h2><span class="rule"></span><a class="kick" href="Inventory.dc.html">Inventory →</a></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+<article class="label">
+<div class="lh"><span class="tag inv">AMS 2</span><span class="tag" style="margin-left: auto">PLA</span><span class="sw" style="background: #0086D6"></span></div>
+<div class="perf"></div>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="id">#01</span><span class="lname">Basic Cyan</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between"><span class="num">142<small>g</small></span><span class="tag low">Low</span></div>
+<div class="meter low"><i style="width: 14%"></i></div>
+<span class="kick">~3 wk left</span>
+</div>
+</article>
+<article class="label">
+<div class="lh"><span class="tag inv">B1</span><span class="tag" style="margin-left: auto">PETG</span><span class="sw" style="background: #F26B21"></span></div>
+<div class="perf"></div>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="id">#02</span><span class="lname">Prusa Orange</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between"><span class="num">86<small>g</small></span><span class="tag low">Low</span></div>
+<div class="meter low"><i style="width: 9%"></i></div>
+<span class="kick">~6 wk left</span>
+</div>
+</article>
+<article class="label">
+<div class="lh"><span class="tag inv">D2</span><span class="tag" style="margin-left: auto">PLA</span><span class="sw" style="background: #ECEAE3"></span></div>
+<div class="perf"></div>
+<div style="padding: 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="id">×2</span><span class="lname">Cotton White</span></div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between"><span class="num">410<small>g</small></span><span class="tag mut">Forecast</span></div>
+<div class="meter"><i style="width: 21%"></i></div>
+<span class="kick">~10 wk left</span>
+</div>
+</article>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">03</span><h2>Monthly usage</h2><span class="rule"></span><a class="kick" href="Statistics.dc.html">Statistics →</a></div>
+<div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px"><span class="num" style="font-size: 32px">12.83<small>kg</small></span><span class="kick">in 12 months · Ø 1.07 kg</span></div>
+<div role="img" aria-label="Bar chart of monthly filament usage, December 2025 to November 2026, peak 1.62 kg in October; November is month to date" style="display: flex; flex-direction: column; gap: 8px">
+<div style="position: relative; height: 150px; display: flex; align-items: flex-end; gap: 6px; border-bottom: 2px solid var(--ink)">
+<div style="position: absolute; left: 0; right: 0; bottom: 65px; border-top: 1px dotted var(--border)"></div>
+<div style="position: absolute; left: 0; right: 0; bottom: 130px; border-top: 1px dotted var(--border)"></div>
+<div class="cb" style="height: 71px"></div><div class="cb" style="height: 99px"></div><div class="cb" style="height: 83px"></div><div class="cb" style="height: 119px"></div><div class="cb" style="height: 105px"></div><div class="cb" style="height: 64px"></div><div class="cb" style="height: 60px"></div><div class="cb" style="height: 91px"></div><div class="cb" style="height: 131px"></div><div class="cb" style="height: 111px"></div>
+<div class="cb" style="height: 140px; position: relative; background: var(--accent)"><span class="mono" style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--fg)">1.62</span></div>
+<div class="cb now" style="height: 35px"></div>
+</div>
+<div class="kick" style="display: flex; gap: 6px; text-align: center; letter-spacing: 0.04em"><span style="flex: 1">Dec</span><span style="flex: 1">Jan</span><span style="flex: 1">Feb</span><span style="flex: 1">Mar</span><span style="flex: 1">Apr</span><span style="flex: 1">May</span><span style="flex: 1">Jun</span><span style="flex: 1">Jul</span><span style="flex: 1">Aug</span><span style="flex: 1">Sep</span><span style="flex: 1; color: var(--fg)">Oct</span><span style="flex: 1">Nov*</span></div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">04</span><h2>Recent activity</h2><span class="rule"></span><a class="kick" href="Notifications.dc.html">All →</a></div>
+<div>
+<div class="led"><span class="kick">14:02</span><span>Weighed <strong style="font-weight: 600">Galaxy Black #1</strong> — <span class="mono">742 g</span> <span class="mono muted">(−58)</span></span><span class="tag mut">Weigh</span></div>
+<div class="led"><span class="kick ai">● 11:40</span><span><strong style="font-weight: 600">Anna Weber</strong> requested <strong style="font-weight: 600">Prusa Orange #3</strong></span><span class="tag acc">Request</span></div>
+<div class="led"><span class="kick">Yday</span><span><strong style="font-weight: 600">Mia Koch</strong> approved your request for <strong style="font-weight: 600">Basic Cyan #4</strong></span><span class="tag mut">Borrow</span></div>
+<div class="led"><span class="kick">07 Nov</span><span>Weighed <strong style="font-weight: 600">Prusa Orange #2</strong> — <span class="mono">86 g</span> <span class="mono muted">(−41)</span></span><span class="tag mut">Weigh</span></div>
+</div>
+</section>
+
+</div>
+
+<div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 40px; padding-left: 40px; border-left: 1px solid var(--border)">
+
+<section>
+<div class="sec"><span class="n">05</span><h2>Borrows</h2><span class="rule"></span><a class="kick" href="Borrows.dc.html">Open →</a></div>
+<div style="border: 1px dashed var(--ink); border-radius: 4px; background: var(--card); padding: 14px; display: flex; flex-direction: column; gap: 12px">
+<div class="kick" style="display: flex; justify-content: space-between"><span class="ai">Request · Print Farm Friends</span><span>3 h ago</span></div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="display: flex; flex-direction: column; gap: 2px"><span class="kick">From</span><span style="font-weight: 600">Anna Weber</span></span>
+<svg class="i muted" viewBox="0 0 24 24" aria-hidden="true" style="margin: 14px 4px 0"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+<span style="display: flex; flex-direction: column; gap: 2px"><span class="kick">Wants</span><span style="display: flex; align-items: center; gap: 6px; font-weight: 600"><span class="sw" style="width: 12px; height: 12px; background: #F26B21"></span>#03 Prusa Orange</span></span>
+</div>
+<div style="display: flex; gap: 8px"><button class="btn btn-pri btn-sm" style="flex: 1">Approve</button><button class="btn btn-out btn-sm" style="flex: 1">Decline</button></div>
+</div>
+<div style="margin-top: 14px">
+<div class="rowline"><span class="tag acc">Out</span><span style="flex: 1; min-width: 0"><span style="font-weight: 500">#02 Galaxy Black</span> <span class="muted">→ Jonas</span></span><span class="kick">12 Oct</span></div>
+<div class="rowline"><span class="tag">In</span><span style="flex: 1; min-width: 0"><span style="font-weight: 500">#04 Basic Cyan</span> <span class="muted">← Mia</span></span><button class="btn btn-out btn-sm">Weigh</button></div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">06</span><h2>Needs drying</h2><span class="rule"></span><span class="kick">2</span></div>
+<div>
+<div class="rowline"><span class="sw" style="background: #C8102E"></span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">#01 Fire Engine Red</span><span class="kick" style="letter-spacing: 0.04em">PETG · dried 94 d ago</span></span><button class="btn btn-out btn-sm">Mark dried</button></div>
+<div class="rowline"><span class="sw" style="background: #4A4E54"></span><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">#03 Graphite</span><span class="kick" style="letter-spacing: 0.04em">ASA · never dried</span></span><button class="btn btn-out btn-sm">Mark dried</button></div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span class="n">07</span><h2>Groups</h2><span class="rule"></span><a class="kick" href="Groups.dc.html">All →</a></div>
+<div>
+<a class="rowline" href="Group.dc.html" style="color: var(--fg) !important; text-decoration: none"><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">Print Farm Friends</span><span class="kick" style="letter-spacing: 0.04em">5 members · 23 shared</span></span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+<a class="rowline" href="#" style="color: var(--fg) !important; text-decoration: none"><span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">Makerspace Kiel</span><span class="kick" style="letter-spacing: 0.04em">12 members · 61 shared</span></span><svg class="i s muted" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+</div>
+</section>
+
+</div>
+</div>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"palette":{"editor":"enum","default":"prusa","options":["prusa","signal","cobalt","mint","violet","rust"]},"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = this.props.dark ?? false;
+const palette = this.props.palette ?? 'prusa';
+return { dark, palette, themeClass: 'app pal-' + palette + (dark ? ' dark' : '') };
+}
+}
+</script>
+</body>
+</html>

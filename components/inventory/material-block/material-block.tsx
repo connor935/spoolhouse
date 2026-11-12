@@ -187,7 +187,7 @@ function MaterialBlock({
           aria-label={`Open ${title}`}
           className={cn(
             headerClass,
-            'focus-visible:ring-accent [&_.display-name]:group-hover/mat:text-accent cursor-pointer outline-none focus-visible:ring-2'
+            'focus-visible:ring-accent [&_.display-name]:group-hover/mat:text-accent-ink cursor-pointer outline-none focus-visible:ring-2'
           )}
         >
           {header}

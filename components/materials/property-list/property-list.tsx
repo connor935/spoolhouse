@@ -127,7 +127,7 @@ function PropertyList({
                       variant="ghost"
                       size="icon"
                       aria-label={`Save ${v.name}`}
-                      className="text-accent"
+                      className="text-accent-ink"
                       disabled={pending}
                     >
                       <CheckIcon />
@@ -189,7 +189,7 @@ function PropertyList({
                     variant="ghost"
                     size="icon"
                     aria-label={`Verify ${v.name}`}
-                    className="text-accent"
+                    className="text-accent-ink"
                     disabled={pending}
                     onClick={() => onVerify(v)}
                   >

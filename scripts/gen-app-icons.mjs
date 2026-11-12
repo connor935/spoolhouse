@@ -6,8 +6,8 @@ import sharp from 'sharp';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 
-const BG = '#007785'; // --accent (light)
-const FG = '#f8fdfe'; // --accent-foreground (light)
+const BG = '#fa6832'; // --accent (Prusa orange)
+const FG = '#1a1a1a'; // --accent-foreground (graphite: dark mark on orange)
 
 // lucide-react "boxes" icon path data (24x24 viewBox, stroke-based)
 const BOXES_PATHS = [

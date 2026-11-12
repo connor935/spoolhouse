@@ -77,7 +77,7 @@ function EmptyState({
         <ol className="my-1 flex list-none flex-col gap-1.5 p-0 text-left">
           {steps.map((step, i) => (
             <li key={i} className="kicker">
-              <span className="text-accent">
+              <span className="text-accent-ink">
                 {String(i + 1).padStart(2, '0')}
               </span>{' '}
               {step}

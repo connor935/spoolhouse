@@ -47,4 +47,13 @@ describe('SpoolFormFrame', () => {
     const sheet = await screen.findByRole('dialog', { name: 'Add new spool' });
     expect(sheet).toHaveAttribute('data-side', 'bottom');
   });
+
+  // Orange is reserved for the entry point; the dialog's submit is graphite.
+  it('renders the submit as a graphite primary button', async () => {
+    render(<Add />);
+    await screen.findByRole('dialog', { name: 'Add new spool' });
+    const submit = screen.getByRole('button', { name: /Add spool/ });
+    expect(submit).toHaveClass('bg-primary');
+    expect(submit).not.toHaveClass('bg-accent');
+  });
 });

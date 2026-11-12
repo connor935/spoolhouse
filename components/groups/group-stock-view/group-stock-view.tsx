@@ -237,7 +237,7 @@ function GroupStockView({
               Mode: {MODE_LABEL[mySharing.mode]} ·{' '}
               <Link
                 href={settingsHref}
-                className="text-accent underline underline-offset-4"
+                className="text-accent-ink underline underline-offset-4"
               >
                 Change
               </Link>

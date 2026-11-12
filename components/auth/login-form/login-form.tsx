@@ -59,7 +59,7 @@ function LoginForm({ showSignup, pending, error, onSubmit }: LoginFormProps) {
           action={
             <Link
               href="/forgot-password"
-              className="kicker text-accent hover:underline"
+              className="kicker text-accent-ink hover:underline"
             >
               Forgot password?
             </Link>

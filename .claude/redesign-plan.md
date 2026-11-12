@@ -37,7 +37,10 @@
 - **Tokens**: same palette as today's `app/globals.css` (hex conversions of the oklch values) plus
   new `--ink` (strong lines, label borders: `#0D1C27` light / `rgba(238,243,244,.55)` dark),
   `--scrim`, `--sw-ring` (swatch ring), `--sb-active`/`--sb-active-fg` (sidebar active).
-  Light accent `#007785`, dark accent `#0F919C`, dark bg `#071117`.
+  ~~Light accent `#007785`, dark accent `#0F919C`, dark bg `#071117`.~~ **Superseded 2026-11-12 by
+  palette "A · Prusa Orange & Graphite"** (`design/PALETTE-PRUSA.md`): accent `#FA6832` (both modes),
+  graphite primary `#1A1A1A`, carmine destructive, neutral greys; new tokens `--accent-ink`
+  (accent as text) and `--data` (fills/charts).
 - **Fonts**: **Barlow Condensed 600** (display: page titles, section heads, material names, big
   numbers — uppercase), **Geist** (UI/body), **Geist Mono** (measurements, chips, labels,
   kickers — tabular nums). Barlow is new; Geist + Geist Mono are already loaded in
@@ -427,7 +430,7 @@ through the affected flows on `npm run dev` in light + dark + 390px.
 - **Fonts**: `lib/fonts.ts` (Geist, Geist Mono, Barlow Condensed 600 → `--font-display`);
   `--font-heading` now = display (only `DialogTitle` used it).
 - **Utilities** in `globals.css`: `kicker`, `display-h1/h2/section/name/num/big/weight`, `fine`,
-  `tabular`, `mask-segments` (meter), `hatch-accent`, `ruler`.
+  `tabular`, `mask-segments` (meter), `hatch-data` (was `hatch-accent`), `ruler`.
 - **Storybook 10.6.6** + addons docs/a11y/themes; viewports `mobile` (390) / `desktop` (1440);
   a11y parameter `test: 'error'`.
 - **Component tests**: Vitest projects `unit` + `components` (jsdom). Gotchas recorded in

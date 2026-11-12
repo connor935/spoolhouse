@@ -56,3 +56,27 @@ describe('Badge', () => {
     expect(cls('secondary')).toBe(cls('muted'));
   });
 });
+
+// Orange is too light for text: accent outline chips use the darker
+// accent-ink, solid accent chips keep dark text on the orange fill.
+describe('Badge accent colors', () => {
+  it('draws the accent outline chip in accent-ink', () => {
+    render(<Badge variant="accent">Lent · Jonas</Badge>);
+    const chip = screen.getByText('Lent · Jonas');
+    expect(chip).toHaveClass('border-accent-ink', 'text-accent-ink');
+    expect(chip).not.toHaveClass('text-accent');
+  });
+
+  it('puts dark accent-foreground text on the solid accent chip', () => {
+    render(<Badge variant="accent-solid">Pending</Badge>);
+    expect(screen.getByText('Pending')).toHaveClass(
+      'bg-accent',
+      'text-accent-foreground'
+    );
+  });
+
+  it('colors link badges with accent-ink', () => {
+    render(<Badge variant="link">Inventory</Badge>);
+    expect(screen.getByText('Inventory')).toHaveClass('text-accent-ink');
+  });
+});

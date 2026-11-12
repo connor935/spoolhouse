@@ -542,7 +542,7 @@ function OverviewView({
                 >
                   <Link
                     href={`/groups/${g.id}`}
-                    className="hover:text-accent flex items-baseline justify-between gap-3 py-2.5"
+                    className="hover:text-accent-ink flex items-baseline justify-between gap-3 py-2.5"
                   >
                     <span className="display-name text-[19px]">{g.name}</span>
                     <span className="kicker">{g.sharedCount} shared</span>

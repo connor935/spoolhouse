@@ -183,7 +183,10 @@ function ReweighForm({
       >
         <div className="flex flex-col gap-1">
           <span className="kicker">Filament left</span>
-          <output aria-live="polite" className="text-accent font-mono text-xs">
+          <output
+            aria-live="polite"
+            className="text-accent-ink font-mono text-xs"
+          >
             {deltaText}
           </output>
         </div>
@@ -208,7 +211,6 @@ function ReweighForm({
         <>
           <Button
             type="submit"
-            variant="accent"
             size="lg"
             className="w-full"
             disabled={grams === null || pending}
@@ -235,12 +237,7 @@ function ReweighForm({
           ) : (
             <span />
           )}
-          <Button
-            type="submit"
-            variant="accent"
-            size="sm"
-            disabled={grams === null || pending}
-          >
+          <Button type="submit" size="sm" disabled={grams === null || pending}>
             Save
             <Kbd aria-hidden>↵</Kbd>
           </Button>
