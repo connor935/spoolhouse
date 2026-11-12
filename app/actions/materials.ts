@@ -18,6 +18,7 @@ import {
   materialCatalogQuerySchema,
   materialSchema,
   parseOrThrow,
+  recentColorsLimitSchema,
 } from '@/lib/schemas';
 
 type MaterialInput = {
@@ -188,8 +189,11 @@ export async function searchMaterialCatalog(rawInput: unknown = {}): Promise<{
 
 // Colours of the viewer's most recently added spools' materials, offered as
 // one-click swatches in the request form.
-export async function getRecentMaterialColors(limit = 4): Promise<string[]> {
+export async function getRecentMaterialColors(
+  rawLimit: unknown = 4
+): Promise<string[]> {
   const user = await requireUser();
+  const limit = parseOrThrow(recentColorsLimitSchema, rawLimit);
   const rows = await db
     .select({ color: materials.color, createdAt: spools.createdAt })
     .from(spools)

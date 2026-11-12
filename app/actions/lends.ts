@@ -12,7 +12,7 @@ import {
 import { requireUser } from '@/lib/auth-session';
 import { isUniqueViolation } from '@/lib/db/errors';
 import { emitSpoolChange } from '@/lib/events';
-import { toSpoolView } from '@/lib/filament';
+import { toSpoolView, withoutOwnerDetails } from '@/lib/filament';
 import { createNotification, type NotificationType } from '@/lib/notifications';
 import { getMembership, getSharedFilaments } from '@/lib/sharing';
 import { getSpoolNumbers } from '@/lib/spool-numbers';
@@ -34,7 +34,7 @@ export async function requestLend(spoolId: string, groupId: string) {
   if (row.spool.userId === authUser.id)
     throw new Error("You can't borrow your own spool");
 
-  const shared = await getSharedFilaments(groupId);
+  const shared = await getSharedFilaments(groupId, authUser.id);
   if (!shared.some((f) => f.id === spoolId))
     throw new Error("This spool isn't shared in this group");
 
@@ -285,18 +285,8 @@ export async function getMyLends() {
     return {
       ...row,
       spoolNumber: numbers.get(spool.id) ?? null,
-      // A borrower (or a past/declined requester) sees the weights, not
-      // where the owner keeps the spool or when they bought/dried it.
-      spoolView:
-        row.ownerId === authUser.id
-          ? view
-          : {
-              ...view,
-              location: null,
-              purchasedAt: null,
-              lastDriedAt: null,
-              needsDrying: false,
-            },
+      // A borrower (or a past/declined requester) sees the weights only.
+      spoolView: row.ownerId === authUser.id ? view : withoutOwnerDetails(view),
     };
   });
 }

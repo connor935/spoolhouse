@@ -9,7 +9,7 @@ import { db } from '@/lib/db';
 import { lends, materials, spools, spoolTypes } from '@/lib/db/schema';
 import { EMPTY_THRESHOLD_G } from '@/lib/filament';
 import type { NavCounts, NavGroup } from '@/lib/nav';
-import { getSharedFilaments } from '@/lib/sharing';
+import { getStockForMyGroups } from '@/lib/sharing';
 
 // Spools in stock = not empty: remaining filament (total − empty spool) above
 // the empty threshold, the same rule as toSpoolView().isEmpty.
@@ -41,17 +41,20 @@ async function countIncomingRequests(userId: string): Promise<number> {
 }
 
 // Group stock size per group, resolved by getSharedFilaments() — the single
-// source of truth for share modes, which also leaves out empty spools.
-async function groupsWithSharedCounts(): Promise<NavGroup[]> {
-  const memberships = await getMyGroups();
-  const groups = await Promise.all(
-    memberships.map(async ({ group }) => ({
+// source of truth for share modes, which also leaves out empty spools. Read
+// from the per-request getStockForMyGroups(), which the page shares.
+async function groupsWithSharedCounts(userId: string): Promise<NavGroup[]> {
+  const [memberships, stock] = await Promise.all([
+    getMyGroups(),
+    getStockForMyGroups(userId),
+  ]);
+  return memberships
+    .map(({ group }) => ({
       id: group.id,
       name: group.name,
-      sharedCount: (await getSharedFilaments(group.id)).length,
+      sharedCount: stock.get(group.id)?.length ?? 0,
     }))
-  );
-  return groups.sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function countPending(
@@ -82,7 +85,7 @@ export const getNavCounts = cache(async (): Promise<NavCounts> => {
     countInStock(user.id),
     countIncomingRequests(user.id),
     getUnreadCount(),
-    groupsWithSharedCounts(),
+    groupsWithSharedCounts(user.id),
     isAdmin ? countPending(materials) : null,
     isAdmin ? countPending(spoolTypes) : null,
   ]);

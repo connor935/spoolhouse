@@ -4,7 +4,7 @@ import { and, count, eq, or } from 'drizzle-orm';
 import { getMyGroups } from '@/app/actions/groups';
 import { db } from '@/lib/db';
 import { materials, spools, user, type Material } from '@/lib/db/schema';
-import { getSharedFilaments, type SharedSpool } from '@/lib/sharing';
+import { getStockForMyGroups, type SharedSpool } from '@/lib/sharing';
 
 // Read side of /materials/[id]. Visibility is decided in the WHERE clause, so
 // a material the viewer may not see is indistinguishable from a missing one.
@@ -55,19 +55,20 @@ export async function getMaterialGroupStock(
   materialId: string,
   viewerId: string
 ): Promise<MaterialGroupSpool[]> {
-  const myGroups = await getMyGroups();
-  const perGroup = await Promise.all(
-    myGroups.map(async ({ group }) => {
-      const stock = (await getSharedFilaments(group.id))
-        .filter((s) => s.materialId === materialId && s.ownerId !== viewerId)
-        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-      const seen = new Map<string, number>();
-      return stock.map((spool) => {
-        const number = (seen.get(spool.ownerId) ?? 0) + 1;
-        seen.set(spool.ownerId, number);
-        return { groupId: group.id, groupName: group.name, number, spool };
-      });
-    })
-  );
-  return perGroup.flat();
+  const [myGroups, stockByGroup] = await Promise.all([
+    getMyGroups(),
+    getStockForMyGroups(viewerId),
+  ]);
+  return myGroups.flatMap(({ group }) => {
+    // filter() copies, so sorting never touches the shared cached list.
+    const stock = (stockByGroup.get(group.id) ?? [])
+      .filter((s) => s.materialId === materialId && s.ownerId !== viewerId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    const seen = new Map<string, number>();
+    return stock.map((spool) => {
+      const number = (seen.get(spool.ownerId) ?? 0) + 1;
+      seen.set(spool.ownerId, number);
+      return { groupId: group.id, groupName: group.name, number, spool };
+    });
+  });
 }

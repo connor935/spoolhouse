@@ -10,6 +10,7 @@ import {
   needsDrying,
   parsePriceCents,
   toSpoolView,
+  withoutOwnerDetails,
 } from '@/lib/filament';
 
 const at = (iso: string) => new Date(iso);
@@ -60,6 +61,34 @@ describe('computeFilamentLeft', () => {
   });
   it('never goes negative', () => {
     expect(computeFilamentLeft(150, 200)).toBe(0);
+  });
+});
+
+describe('withoutOwnerDetails', () => {
+  it("drops the owner's private details and keeps weights and price", () => {
+    const full = toSpoolView(
+      spool({
+        measuredTotalWeightGrams: 700,
+        pricePaidCents: 2500,
+        purchasedAt: '2026-01-01',
+        location: 'Shelf A',
+        lastDriedAt: at('2026-01-02'),
+        createdAt: at('2025-01-01'),
+      }),
+      spoolType(200),
+      'PETG'
+    );
+    expect(full.needsDrying).toBe(true);
+    const masked = withoutOwnerDetails(full);
+    expect(masked).toMatchObject({
+      location: null,
+      purchasedAt: null,
+      lastDriedAt: null,
+      needsDrying: false,
+      filamentLeftGrams: 500,
+      pricePaidCents: 2500,
+    });
+    expect(full.location).toBe('Shelf A'); // input untouched
   });
 });
 

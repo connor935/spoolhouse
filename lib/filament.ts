@@ -182,6 +182,18 @@ export function toSpoolView(
   };
 }
 
+// What anyone but the owner (a group member, a borrower) sees of a spool: the
+// weights and price, not where the owner keeps it or when they bought/dried it.
+export function withoutOwnerDetails<T extends SpoolView>(view: T): T {
+  return {
+    ...view,
+    location: null,
+    purchasedAt: null,
+    lastDriedAt: null,
+    needsDrying: false,
+  };
+}
+
 // Groups inventory rows (spool + material + spool type) by material,
 // spools oldest-first (stable #1, #2 … numbering).
 export function groupInventory(

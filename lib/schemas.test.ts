@@ -4,6 +4,7 @@ import {
   weighRegistrationSchema,
   materialCatalogQuerySchema,
   adminMaterialQuerySchema,
+  recentColorsLimitSchema,
 } from '@/lib/schemas';
 
 describe('weighRegistrationSchema', () => {
@@ -149,5 +150,13 @@ describe('adminMaterialQuerySchema', () => {
 
   it('refuses an unknown status', () => {
     expect(() => adminMaterialQuerySchema.parse({ status: 'spam' })).toThrow();
+  });
+});
+
+describe('recentColorsLimitSchema', () => {
+  it('accepts a small whole number and refuses anything else', () => {
+    expect(recentColorsLimitSchema.safeParse(4).success).toBe(true);
+    for (const bad of [0, 13, 2.5, -1, '4', Number.NaN])
+      expect(recentColorsLimitSchema.safeParse(bad).success).toBe(false);
   });
 });

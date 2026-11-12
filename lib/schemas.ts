@@ -205,3 +205,6 @@ export const materialCatalogQuerySchema = z.object({
 export const adminMaterialQuerySchema = materialCatalogQuerySchema.extend({
   status: z.enum(['approved', 'pending', 'rejected']).nullish(),
 });
+
+// getRecentMaterialColors: how many swatches the request form offers.
+export const recentColorsLimitSchema = z.number().int().min(1).max(12);

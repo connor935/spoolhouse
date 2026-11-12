@@ -156,7 +156,6 @@ function Runway({ row, withMeter }: { row: UsageRow; withMeter: boolean }) {
     <span className="font-mono">{text}</span>
   );
   if (!withMeter) return label;
-  // TODO(04b): swap for <Meter> once the inventory atoms land.
   return (
     <span className="flex items-center gap-2.5">
       <span

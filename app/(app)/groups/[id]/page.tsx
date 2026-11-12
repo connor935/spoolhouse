@@ -5,7 +5,7 @@ import { GroupDetailContainer } from '@/components/groups/group-detail';
 import type { ShareMode } from '@/components/groups/share-mode-picker';
 import { requireUser } from '@/lib/auth-session';
 import { groupInventory } from '@/lib/filament';
-import { getSharedFilaments } from '@/lib/sharing';
+import { getStockForMyGroups } from '@/lib/sharing';
 import { getSpoolNumbers } from '@/lib/spool-numbers';
 
 export const dynamic = 'force-dynamic';
@@ -24,10 +24,13 @@ export default async function GroupPage({
   const detail = await getGroupDetail(id);
   if (!detail) redirect('/groups');
 
-  const [stock, rows] = await Promise.all([
-    getSharedFilaments(id),
+  // Membership is confirmed above, so the group is among the viewer's own;
+  // the shell's nav counts already resolved this stock for the request.
+  const [stockByGroup, rows] = await Promise.all([
+    getStockForMyGroups(user.id),
     getInventory(),
   ]);
+  const stock = stockByGroup.get(id) ?? [];
   const spoolNumbers = await getSpoolNumbers(stock.map((s) => s.id));
 
   // Sharing is material-level: every material you have spools of, with how

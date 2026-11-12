@@ -14,7 +14,11 @@ import {
 import { requireUser } from '@/lib/auth-session';
 import { emitSpoolChange } from '@/lib/events';
 import { createNotification } from '@/lib/notifications';
-import { getMembership, getSharedFilaments } from '@/lib/sharing';
+import {
+  getMembership,
+  getSharedFilaments,
+  getStockForMyGroups,
+} from '@/lib/sharing';
 import { and, asc, eq, inArray, ne, or, type SQL } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
@@ -340,21 +344,20 @@ export async function getMyGroupSummaries() {
       )
     )
     .orderBy(asc(groupMembers.joinedAt));
-  const summaries = await Promise.all(
-    memberships.map(async ({ group, membership }) => {
-      const stock = await getSharedFilaments(group.id);
-      return {
-        id: group.id,
-        name: group.name,
-        role: membership.role as 'owner' | 'member',
-        members: memberRows
-          .filter((m) => m.groupId === group.id)
-          .map(({ id, name }) => ({ id, name })),
-        sharedSpoolCount: stock.length,
-        youShareCount: stock.filter((s) => s.ownerId === authUser.id).length,
-      };
-    })
-  );
+  const stockByGroup = await getStockForMyGroups(authUser.id);
+  const summaries = memberships.map(({ group, membership }) => {
+    const stock = stockByGroup.get(group.id) ?? [];
+    return {
+      id: group.id,
+      name: group.name,
+      role: membership.role as 'owner' | 'member',
+      members: memberRows
+        .filter((m) => m.groupId === group.id)
+        .map(({ id, name }) => ({ id, name })),
+      sharedSpoolCount: stock.length,
+      youShareCount: stock.filter((s) => s.ownerId === authUser.id).length,
+    };
+  });
   return summaries.sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -383,7 +386,7 @@ export async function getGroupInvitePreview(code: string) {
       .from(groupMembers)
       .innerJoin(user, eq(groupMembers.userId, user.id))
       .where(eq(groupMembers.groupId, group.id)),
-    getSharedFilaments(group.id),
+    getSharedFilaments(group.id, authUser.id),
   ]);
   return {
     id: group.id,
