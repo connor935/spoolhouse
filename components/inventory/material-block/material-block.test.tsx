@@ -16,9 +16,11 @@ describe('MaterialBlock', () => {
     const header = within(block).getByRole('button', {
       name: 'Open Galaxy Black PLA',
     });
-    expect(header).toHaveTextContent('Prusament');
-    expect(header).toHaveTextContent('2.16 kg');
-    expect(header).toHaveTextContent('3 spools · ~6 weeks');
+    // Overlay button described by the visible header (WCAG 2.5.3).
+    expect(header).toBeEmptyDOMElement();
+    expect(header).toHaveAccessibleDescription(/Prusament/);
+    expect(header).toHaveAccessibleDescription(/2\.16 kg/);
+    expect(header).toHaveAccessibleDescription(/3 spools · ~6 weeks/);
   });
 
   it('renders a tile per spool, numbered oldest-first', () => {
@@ -61,7 +63,7 @@ describe('MaterialBlock', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Open Basic Cyan PLA' })
-    ).toHaveTextContent('1 spool');
+    ).toHaveAccessibleDescription(/1 spool/);
   });
 
   it('shows pending requests on the requested tile', () => {
@@ -72,7 +74,7 @@ describe('MaterialBlock', () => {
   describe('card layout', () => {
     it('collapses and expands its spool rows', async () => {
       render(<Card />);
-      const trigger = screen.getByRole('button', { name: /Galaxy Black/ });
+      const trigger = screen.getByRole('button', { name: /^Galaxy Black/ });
       expect(trigger).toHaveAttribute('aria-expanded', 'true');
       expect(
         screen.getByRole('button', { name: 'Re-weigh spool #01' })
@@ -90,8 +92,35 @@ describe('MaterialBlock', () => {
     it('starts collapsed when asked', () => {
       render(<CardCollapsed />);
       expect(
-        screen.getByRole('button', { name: /Galaxy Black/ })
+        screen.getByRole('button', { name: /^Galaxy Black/ })
       ).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('names a row by its number and describes it by the visible row', () => {
+      render(<Card />);
+      const row = screen.getByRole('button', { name: 'Re-weigh spool #01' });
+      // Overlay button: the visible text is the description, not hidden by
+      // the label (WCAG 2.5.3).
+      expect(row).toBeEmptyDOMElement();
+      expect(row).toHaveAccessibleDescription(/#01/);
+    });
+
+    it('links to the material page below the rows', async () => {
+      const onOpenMaterial = fn();
+      render(<Card onOpenMaterial={onOpenMaterial} />);
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: 'Material details: Galaxy Black PLA',
+        })
+      );
+      expect(onOpenMaterial).toHaveBeenCalledOnce();
+    });
+
+    it('has no material link without onOpenMaterial', () => {
+      render(<Card onOpenMaterial={undefined} />);
+      expect(
+        screen.queryByRole('button', { name: /Material details/ })
+      ).not.toBeInTheDocument();
     });
 
     it('re-weighs from a row', async () => {

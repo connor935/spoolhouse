@@ -55,7 +55,14 @@ function RunwayTable({
   const isMaterial = kind === 'material';
 
   return (
-    <Table data-slot="runway-table" data-kind={kind} className={className}>
+    <Table
+      data-slot="runway-table"
+      data-kind={kind}
+      scrollLabel={
+        isMaterial ? 'Material runway table' : 'Filament type runway table'
+      }
+      className={className}
+    >
       <TableHeader>
         <TableRow>
           <TableHead scope="col">{isMaterial ? 'Material' : 'Type'}</TableHead>

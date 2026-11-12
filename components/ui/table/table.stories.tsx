@@ -50,3 +50,33 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 export const Mobile: Story = { globals: { viewport: { value: 'mobile' } } };
+
+/** A table that can overflow on phones: the scroll container is a named,
+ *  focusable region so keyboard users can scroll it. */
+export const ScrollRegion: Story = {
+  globals: { viewport: { value: 'mobile' } },
+  render: () => (
+    <Table scrollLabel="Spools by manufacturer" className="min-w-[560px]">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Manufacturer</TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead align="right">Spools</TableHead>
+          <TableHead align="right">Left</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow key={row.name}>
+            <TableCell className="font-medium">{row.name}</TableCell>
+            <TableCell>{row.type}</TableCell>
+            <TableCell align="right">{row.spools}</TableCell>
+            <TableCell align="right" className="font-mono">
+              {row.left}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  ),
+};

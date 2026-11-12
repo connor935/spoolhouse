@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as stories from './table.stories';
 
-const { Default } = composeStories(stories);
+const { Default, ScrollRegion } = composeStories(stories);
 
 describe('Table', () => {
   it('renders column headers and cells', () => {
@@ -41,5 +41,19 @@ describe('Table', () => {
     for (const th of screen.getAllByRole('columnheader')) {
       expect(th).toHaveClass('border-b', 'border-ink');
     }
+  });
+
+  it('is a plain scroll container by default', () => {
+    render(<Default />);
+    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+  });
+
+  it('names an overflowing scroll container and makes it focusable', () => {
+    render(<ScrollRegion />);
+    const region = screen.getByRole('region', {
+      name: 'Spools by manufacturer',
+    });
+    expect(region).toHaveAttribute('tabindex', '0');
+    expect(within(region).getByRole('table')).toBeInTheDocument();
   });
 });

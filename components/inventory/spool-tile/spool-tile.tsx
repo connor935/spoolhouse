@@ -261,7 +261,7 @@ function AddSpoolTile({
       type="button"
       data-slot="add-spool-tile"
       className={cn(
-        'border-ink text-muted-foreground hover:border-accent-ink hover:text-accent-ink focus-visible:ring-accent flex min-h-[86px] w-[200px] cursor-pointer items-center justify-center gap-1.5 rounded-[4px] border border-dashed bg-transparent opacity-75 transition-[opacity,color,border-color] outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 [&_svg]:size-4',
+        'border-ink/60 text-muted-foreground hover:border-accent-ink hover:text-accent-ink focus-visible:ring-accent flex min-h-[86px] w-[200px] cursor-pointer items-center justify-center gap-1.5 rounded-[4px] border border-dashed bg-transparent transition-[color,border-color] outline-none focus-visible:ring-2 [&_svg]:size-4',
         className
       )}
       {...props}

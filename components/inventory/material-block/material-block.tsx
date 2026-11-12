@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -86,6 +86,7 @@ function MaterialBlock({
     .filter(Boolean)
     .join(' · ');
   const title = `${material.name} ${material.filamentType}`;
+  const headerId = React.useId();
 
   const nameRow = (
     <span className="flex items-center gap-2">
@@ -145,6 +146,21 @@ function MaterialBlock({
                 </li>
               ))}
             </ul>
+            {onOpenMaterial && (
+              // The card's header toggles the rows, so the way to the
+              // material page (MaterialDetailMobile board) sits at the end.
+              <div className="border-border border-t px-3 py-1">
+                <button
+                  type="button"
+                  onClick={onOpenMaterial}
+                  className="kicker text-accent-ink focus-visible:ring-accent inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-[3px] outline-none focus-visible:ring-2"
+                >
+                  Material details
+                  <span className="sr-only">: {title}</span>
+                  <ChevronRightIcon aria-hidden className="size-3.5" />
+                </button>
+              </div>
+            )}
           </CollapsibleContent>
         </section>
       </Collapsible>
@@ -181,17 +197,25 @@ function MaterialBlock({
       {...props}
     >
       {onOpenMaterial ? (
-        <button
-          type="button"
-          onClick={onOpenMaterial}
-          aria-label={`Open ${title}`}
+        // Overlay button (see SpoolRow): "Open <title>" as the name, the
+        // visible header stays plain text so the name never hides it.
+        <div
           className={cn(
             headerClass,
-            'focus-visible:ring-accent [&_.display-name]:group-hover/mat:text-accent-ink cursor-pointer outline-none focus-visible:ring-2'
+            '[&_.display-name]:group-hover/mat:text-accent-ink'
           )}
         >
-          {header}
-        </button>
+          <button
+            type="button"
+            onClick={onOpenMaterial}
+            aria-label={`Open ${title}`}
+            aria-describedby={headerId}
+            className="focus-visible:ring-accent absolute inset-0 cursor-pointer rounded-[4px] outline-none focus-visible:ring-2"
+          />
+          <div id={headerId} className="contents">
+            {header}
+          </div>
+        </div>
       ) : (
         <div className={headerClass}>{header}</div>
       )}
@@ -233,6 +257,7 @@ function SpoolRow({
   onSelect?: () => void;
 }) {
   const label = spoolNumber(number);
+  const summaryId = React.useId();
   const content = (
     <>
       <span className="flex min-w-0 items-center gap-2">
@@ -259,18 +284,22 @@ function SpoolRow({
     </>
   );
   const rowClass = 'flex w-full flex-col gap-[7px] py-2.5 text-left';
+  // Same pattern as SpoolTile: an empty overlay button with a short name,
+  // described by the visible row. Wrapping the row in the button would make
+  // the name hide visible text (WCAG 2.5.3 label-in-name).
   return onSelect ? (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-label={`Re-weigh spool ${label}`}
-      className={cn(
-        rowClass,
-        'focus-visible:ring-accent cursor-pointer rounded-[3px] outline-none focus-visible:ring-2'
-      )}
-    >
-      {content}
-    </button>
+    <div className={cn(rowClass, 'relative')}>
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-label={`Re-weigh spool ${label}`}
+        aria-describedby={summaryId}
+        className="focus-visible:ring-accent absolute inset-0 cursor-pointer rounded-[3px] outline-none focus-visible:ring-2"
+      />
+      <div id={summaryId} className="contents">
+        {content}
+      </div>
+    </div>
   ) : (
     <div className={rowClass}>{content}</div>
   );
