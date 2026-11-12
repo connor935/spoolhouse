@@ -362,7 +362,7 @@ export type GroupSummary = Awaited<
   ReturnType<typeof getMyGroupSummaries>
 >[number];
 
-export async function getGroupByInviteCode(code: string) {
+async function getGroupByInviteCode(code: string) {
   await requireUser();
   const [group] = await db
     .select()

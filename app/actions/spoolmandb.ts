@@ -1,6 +1,6 @@
 'use server';
 
-import { eq, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { catalogImports, materials } from '@/lib/db/schema';
@@ -151,14 +151,4 @@ async function recordImport(
       target: catalogImports.slug,
       set: { ...row, updatedAt: new Date() },
     });
-}
-
-// Clears the recorded failure for a manufacturer (the row itself is history).
-export async function clearImportError(slug: string) {
-  await requireAdmin();
-  await db
-    .update(catalogImports)
-    .set({ lastError: null, updatedAt: new Date() })
-    .where(eq(catalogImports.slug, slug));
-  revalidatePath('/admin/import');
 }

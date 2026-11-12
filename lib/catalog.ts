@@ -97,15 +97,6 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
     return created as TRow;
   }
 
-  async function getPending(): Promise<TRow[]> {
-    await requireAdmin();
-    return db
-      .select()
-      .from(table)
-      .where(eq(table.status, 'pending'))
-      .orderBy(asc(table.createdAt)) as Promise<TRow[]>;
-  }
-
   async function approve(id: string, edits?: TInput) {
     const admin = await requireAdmin();
     const fields = edits ? validate(edits) : {};
@@ -208,7 +199,6 @@ export function createCatalogActions<TRow extends CatalogRow, TInput>(
   return {
     getUsable,
     request,
-    getPending,
     approve,
     reject,
     getAllForAdmin,

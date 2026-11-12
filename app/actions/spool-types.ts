@@ -68,12 +68,6 @@ export async function requestSpoolType(
   return actions.request(input);
 }
 
-// --- Admin review ---
-
-export async function getPendingSpoolTypes() {
-  return actions.getPending();
-}
-
 export async function approveSpoolType(id: string, edits?: SpoolTypeInput) {
   return actions.approve(id, edits);
 }
