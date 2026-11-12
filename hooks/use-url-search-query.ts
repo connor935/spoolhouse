@@ -35,10 +35,14 @@ export function useUrlSearchQuery(
     latestNavigate.current = navigate;
   });
   useEffect(() => {
+    // Only act on a settled value: right after `reset` or a URL sync the
+    // debounced copy still holds the old text, and navigating to it would
+    // undo the change that just happened.
+    if (debounced !== query) return;
     if (debounced.trim() === requested.trim()) return;
     setRequested(debounced);
     latestNavigate.current(debounced);
-  }, [debounced, requested]);
+  }, [debounced, query, requested]);
 
   function reset(next: string) {
     setQuery(next);
