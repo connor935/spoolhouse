@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import {
   ChevronsUpDown,
   CircleUserRound,
@@ -14,7 +15,6 @@ import {
 } from '@/components/layout/theme-switch';
 import {
   Popover,
-  PopoverClose,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
@@ -48,8 +48,9 @@ function UserMenu({
   defaultOpen,
 }: UserMenuProps) {
   const role = user.isAdmin ? 'Admin' : 'Member';
+  const [open, setOpen] = useState(defaultOpen ?? false);
   return (
-    <Popover defaultOpen={defaultOpen}>
+    <Popover open={open} onOpenChange={setOpen}>
       {collapsed ? (
         <PopoverTrigger
           aria-label="User menu"
@@ -99,10 +100,15 @@ function UserMenu({
           <div className="text-muted-foreground text-xs">{role}</div>
         </div>
         <div className="bg-border -mx-1.5 my-1 h-px" />
-        <PopoverClose render={<Link href="/account" />} className={menuRow}>
+        {/* A real link, not PopoverClose: that renders role="button". */}
+        <Link
+          href="/account"
+          onClick={() => setOpen(false)}
+          className={menuRow}
+        >
           <Settings aria-hidden />
           Account
-        </PopoverClose>
+        </Link>
         <div className="flex flex-col gap-1.5 px-2 pt-2 pb-1.5">
           <span className="text-muted-foreground text-xs">Theme</span>
           <ThemeSwitch value={theme} onValueChange={onThemeChange} />

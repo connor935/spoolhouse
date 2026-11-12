@@ -9,6 +9,7 @@ import { assertMaterialUsable } from '@/lib/material-usable';
 import {
   isPropertyValueType,
   normalizePropertyValue,
+  typeChangeRefusal,
   type PropertyValueType,
 } from '@/lib/property-value';
 import {
@@ -80,18 +81,17 @@ export async function createPropertyDefinition(input: PropertyDefinitionInput) {
   revalidateDefinitions();
 }
 
-// Edits name/unit/description only — `key` is immutable (migrations and the
-// importer reference definitions by key).
+// Edits name/unit/description/type — `key` is immutable (migrations and the
+// importer reference definitions by key). A type change some existing value
+// no longer fits is refused with a message rather than thrown: production
+// builds mask thrown server-action errors, and the admin needs the count.
 export async function updatePropertyDefinition(
   id: string,
   input: Omit<PropertyDefinitionInput, 'key'>
-) {
+): Promise<{ ok: true } | { ok: false; message: string }> {
   await requireAdmin();
   const values = parseOrThrow(propertyDefinitionEditSchema, input);
 
-  // Changing the type must not strand values that no longer fit it — they would
-  // keep their old bounds and filter wrongly, invisibly. Re-validate first and
-  // refuse with a count so an admin can fix those values (or pick another type).
   const [existing] = await db
     .select({ valueType: properties.valueType })
     .from(properties)
@@ -102,16 +102,11 @@ export async function updatePropertyDefinition(
       .from(materialProperties)
       .where(eq(materialProperties.propertyId, id));
     const type = asValueType(values.valueType);
-    const bad = rows.filter((r) => !normalizePropertyValue(type, r.value).ok);
-    if (bad.length > 0) {
-      const sample = bad
-        .slice(0, 3)
-        .map((r) => `"${r.value}"`)
-        .join(', ');
-      throw new Error(
-        `${bad.length} existing value${bad.length === 1 ? '' : 's'} do not fit "${values.valueType}" (e.g. ${sample}). Fix them first, or choose another type.`
-      );
-    }
+    const refusal = typeChangeRefusal(
+      type,
+      rows.map((r) => r.value)
+    );
+    if (refusal) return { ok: false, message: refusal };
     // Re-normalise so stored values and bounds match the new type — a range
     // becoming text must drop its bounds, and text becoming a number must gain
     // them. One statement per *distinct* value: a property with thousands of
@@ -141,6 +136,7 @@ export async function updatePropertyDefinition(
     .set({ ...values, updatedAt: new Date() })
     .where(eq(properties.id, id));
   revalidateDefinitions();
+  return { ok: true };
 }
 
 // Admin-only, and only when no material references it (FK cascade is inert at

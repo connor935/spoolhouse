@@ -178,3 +178,22 @@ export function normalizePropertyValue(
     }
   }
 }
+
+// Changing a definition's type must not strand values that no longer fit it —
+// they would keep their old bounds and filter wrongly, invisibly. The message
+// names how many and quotes a few, so an admin can fix them (or pick another
+// type). Null when every value fits.
+export function typeChangeRefusal(
+  type: PropertyValueType,
+  values: string[]
+): string | null {
+  const bad = values.filter((v) => !normalizePropertyValue(type, v).ok);
+  if (bad.length === 0) return null;
+  const sample = bad
+    .slice(0, 3)
+    .map((v) => `"${v}"`)
+    .join(', ');
+  return bad.length === 1
+    ? `1 existing value does not fit "${type}" (e.g. ${sample}). Fix it first, or choose another type.`
+    : `${bad.length} existing values do not fit "${type}" (e.g. ${sample}). Fix them first, or choose another type.`;
+}

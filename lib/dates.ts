@@ -24,6 +24,11 @@ export function shortDate(date: Date): string {
   return `${day} ${MONTHS[date.getUTCMonth()]}`;
 }
 
+/** "10 Nov 2026" (UTC), e.g. when an API token was created. */
+export function fullDate(date: Date): string {
+  return `${shortDate(date)} ${date.getUTCFullYear()}`;
+}
+
 /** "Mar 2026" (UTC), e.g. when a member joined. */
 export function monthYear(date: Date): string {
   return `${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
