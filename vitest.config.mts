@@ -7,6 +7,17 @@ const root = import.meta.dirname;
 export default defineConfig({
   resolve: { alias: { '@': path.resolve(root) } },
   test: {
+    // `npm run test:coverage`. Measures what the two projects can reach:
+    // domain logic, hooks and components. Server actions, route handlers and
+    // DB-backed lib modules need Postgres and are exercised by the Playwright
+    // suite instead, so they show up here with low numbers by design.
+    coverage: {
+      provider: 'v8',
+      include: ['lib/**/*.ts', 'hooks/**/*.ts', 'components/**/*.tsx'],
+      exclude: ['**/*.test.{ts,tsx}', '**/*.stories.tsx', '**/index.ts'],
+      reporter: ['text-summary', 'html', 'json-summary'],
+      reportsDirectory: 'coverage',
+    },
     projects: [
       // Unit tests for the pure domain logic. Nothing here needs a database
       // or a running server.
@@ -37,7 +48,7 @@ export default defineConfig({
         },
         test: {
           name: 'components',
-          include: ['components/**/*.test.tsx'],
+          include: ['components/**/*.test.tsx', 'hooks/**/*.test.{ts,tsx}'],
           environment: 'jsdom',
           setupFiles: ['.storybook/vitest.setup.ts'],
           css: false,
