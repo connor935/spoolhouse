@@ -45,14 +45,16 @@ const sheetContentVariants = cva(
     variants: {
       side: {
         // Mobile forms, filters, re-weigh (Reweigh.dc.html): ink top rule,
-        // 14px top corners.
+        // 14px top corners. The rule runs on down the sides: a top-only
+        // border tapers to nothing around rounded corners, which in dark mode
+        // (translucent light ink) read as a glow above the sheet.
         bottom:
-          'bg-card border-ink inset-x-0 bottom-0 max-h-[90dvh] gap-4 overflow-y-auto rounded-t-[14px] border-t-2 px-[18px] pt-2.5 pb-[26px] data-ending-style:translate-y-10 data-starting-style:translate-y-10',
+          'bg-card border-ink inset-x-0 bottom-0 max-h-[90dvh] gap-4 overflow-y-auto rounded-t-[14px] border-2 border-b-0 px-[18px] pt-2.5 pb-[26px] data-ending-style:translate-y-10 data-starting-style:translate-y-10',
         // Navigation drawer (MobileDrawer.dc.html).
         left: 'bg-sidebar text-sidebar-foreground shadow-toast inset-y-0 left-0 w-[304px] max-w-[85vw] gap-2 overflow-y-auto border-r px-3 pt-2 pb-3 data-ending-style:-translate-x-10 data-starting-style:-translate-x-10',
         right:
           'bg-card border-ink shadow-dialog inset-y-0 right-0 w-full max-w-sm gap-4 overflow-y-auto border-l p-6 data-ending-style:translate-x-10 data-starting-style:translate-x-10',
-        top: 'bg-card border-ink inset-x-0 top-0 max-h-[90dvh] gap-4 overflow-y-auto rounded-b-[14px] border-b-2 px-[18px] pt-[26px] pb-4 data-ending-style:-translate-y-10 data-starting-style:-translate-y-10',
+        top: 'bg-card border-ink inset-x-0 top-0 max-h-[90dvh] gap-4 overflow-y-auto rounded-b-[14px] border-2 border-t-0 px-[18px] pt-[26px] pb-4 data-ending-style:-translate-y-10 data-starting-style:-translate-y-10',
       },
     },
     defaultVariants: { side: 'right' },

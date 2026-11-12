@@ -46,11 +46,11 @@ describe('MaterialDetail', () => {
     const onSelectSpool = fn();
     render(<Member onSelectSpool={onSelectSpool} />);
     await userEvent.click(
-      screen.getByRole('button', { name: 'Re-weigh spool #02' })
+      screen.getByRole('button', { name: 'Re-weigh spool #03' })
     );
     expect(onSelectSpool).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'spool-gb-2' }),
-      2,
+      expect.objectContaining({ id: 'spool-gb-3' }),
+      3,
       expect.any(HTMLElement)
     );
   });

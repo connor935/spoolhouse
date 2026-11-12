@@ -7,10 +7,12 @@ import { emitSpoolChange } from '@/lib/events';
 import { recordWeighing } from '@/lib/weighings';
 import { isSpoolTypeUsable } from '@/lib/spool-type-usable';
 import { isMaterialUsable } from '@/lib/material-usable';
+import { isLentOut, notLentOut } from '@/lib/lend-lock';
 import { firstIssueMessage, spoolBodySchema } from '@/lib/schemas';
 import {
   getOwnedSpool,
   isTagConflict,
+  lentOut,
   parseId,
   serializeSpool,
   tagConflict,
@@ -79,13 +81,14 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     result = await db
       .update(spools)
       .set({ ...parsed.data, updatedAt: new Date() })
-      .where(and(eq(spools.id, id), eq(spools.userId, owner.id)))
+      .where(and(eq(spools.id, id), eq(spools.userId, owner.id), notLentOut()))
       .returning({ id: spools.id });
   } catch (error) {
     if (isTagConflict(error)) return tagConflict();
     throw error;
   }
-  if (result.length === 0) return notFound();
+  // The owner check passed above, so no row means an active lend.
+  if (result.length === 0) return lentOut();
   const grams = parsed.data.measuredTotalWeightGrams;
   if (grams !== undefined && grams !== before.grams)
     await recordWeighing(id, grams, owner.id);
@@ -104,9 +107,12 @@ export async function DELETE(request: Request, { params }: RouteContext) {
   if (!id) return notFound();
   const deleted = await db
     .delete(spools)
-    .where(and(eq(spools.id, id), eq(spools.userId, owner.id)))
+    .where(and(eq(spools.id, id), eq(spools.userId, owner.id), notLentOut()))
     .returning({ id: spools.id });
-  if (deleted.length === 0) return notFound();
+  if (deleted.length === 0)
+    return (await getOwnedSpool(id, owner.id)) && (await isLentOut(id))
+      ? lentOut()
+      : notFound();
   revalidatePath('/');
   await emitSpoolChange(owner.id);
   return new Response(null, { status: 204 });

@@ -5,8 +5,9 @@ import { spools } from '@/lib/db/schema';
 import { apiError, authenticateApiRequest, unauthorized } from '@/lib/api-auth';
 import { emitSpoolChange } from '@/lib/events';
 import { recordWeighing } from '@/lib/weighings';
+import { isLentOut, notLentOut } from '@/lib/lend-lock';
 import { firstIssueMessage, measuredWeightSchema } from '@/lib/schemas';
-import { getOwnedSpool, parseId, serializeSpool } from '../../shared';
+import { getOwnedSpool, lentOut, parseId, serializeSpool } from '../../shared';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -36,9 +37,12 @@ export async function PUT(request: Request, { params }: RouteContext) {
   const result = await db
     .update(spools)
     .set({ measuredTotalWeightGrams: grams, updatedAt: new Date() })
-    .where(and(eq(spools.id, id), eq(spools.userId, owner.id)))
+    .where(and(eq(spools.id, id), eq(spools.userId, owner.id), notLentOut()))
     .returning({ id: spools.id });
-  if (result.length === 0) return apiError(404, 'not_found', 'Spool not found');
+  if (result.length === 0)
+    return (await getOwnedSpool(id, owner.id)) && (await isLentOut(id))
+      ? lentOut()
+      : apiError(404, 'not_found', 'Spool not found');
   await recordWeighing(id, grams, owner.id);
 
   revalidatePath('/');

@@ -150,7 +150,8 @@ type SpoolTileProps = Omit<React.ComponentProps<'div'>, 'onSelect'> &
  * One physical spool (`.slot`): number, location, weight, meter and status
  * tags. The whole tile is clickable via a full-size button laid over it;
  * "Dry?" and the edit button sit above that layer, so they never trigger
- * `onSelect`.
+ * `onSelect`. A lent-out spool is with the borrower, so it renders read-only
+ * whatever callbacks are passed — the server refuses those writes anyway.
  */
 function SpoolTile({
   className,
@@ -158,15 +159,19 @@ function SpoolTile({
   number,
   selected,
   details,
-  onSelect,
   selectLabel,
-  onEdit,
   requestedByName,
   borrowedFromName,
-  onMarkDried,
+  onMarkDried: onMarkDriedProp,
+  onSelect: onSelectProp,
+  onEdit: onEditProp,
   ...props
 }: SpoolTileProps) {
   const id = React.useId();
+  const lentOut = !!spool.lentToName;
+  const onSelect = lentOut ? undefined : onSelectProp;
+  const onEdit = lentOut ? undefined : onEditProp;
+  const onMarkDried = lentOut ? undefined : onMarkDriedProp;
   const label = spoolNumber(number);
   const meta = [
     spool.pricePaidCents !== null && formatMoney(spool.pricePaidCents),
@@ -178,6 +183,12 @@ function SpoolTile({
     <div
       data-slot="spool-tile"
       data-selected={selected || undefined}
+      data-lent-out={lentOut || undefined}
+      title={
+        lentOut
+          ? `Lent to ${spool.lentToName} — editable again once returned`
+          : undefined
+      }
       className={cn(
         'border-ink bg-card text-card-foreground relative flex w-[200px] flex-col gap-2 rounded-[4px] border pt-2 pr-2 pb-2.5 pl-2.5 transition-[border-color,box-shadow]',
         onSelect && 'hover:border-accent',

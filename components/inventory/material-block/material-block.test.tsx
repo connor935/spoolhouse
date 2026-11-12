@@ -25,21 +25,26 @@ describe('MaterialBlock', () => {
 
   it('renders a tile per spool, numbered oldest-first', () => {
     render(<Shelf />);
-    for (const n of ['#01', '#02', '#03']) {
+    for (const n of ['#01', '#03']) {
       expect(
         screen.getByRole('button', { name: `Re-weigh spool ${n}` })
       ).toBeInTheDocument();
     }
+    // #02 is lent out: shown, but read-only (it's with the borrower).
     expect(screen.getByText('Lent · Jonas')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Re-weigh spool #02' })
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit spool #02' })).toBeNull();
   });
 
   it('passes the clicked spool to onSelectSpool', async () => {
     const onSelectSpool = fn();
     render(<Shelf onSelectSpool={onSelectSpool} />);
     await userEvent.click(
-      screen.getByRole('button', { name: 'Re-weigh spool #02' })
+      screen.getByRole('button', { name: 'Re-weigh spool #03' })
     );
-    expect(onSelectSpool).toHaveBeenCalledWith(galaxyBlackPla.spools[1]);
+    expect(onSelectSpool).toHaveBeenCalledWith(galaxyBlackPla.spools[2]);
   });
 
   it('opens the material and adds spools', async () => {

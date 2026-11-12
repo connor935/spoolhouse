@@ -208,6 +208,8 @@ export function groupInventory(
       row.material.filamentType
     );
     view.lentToName = lentToBySpoolId?.get(row.spool.id) ?? null;
+    // Away with a borrower: the owner can't dry it now (nor mark it dried).
+    if (view.lentToName) view.needsDrying = false;
     const entry = byMaterial.get(row.material.id) ?? {
       material: row.material,
       spools: [],

@@ -125,10 +125,10 @@ describe('InventoryView', () => {
       expect.objectContaining({ name: 'Galaxy Black' })
     );
     await userEvent.click(
-      within(galaxy).getByRole('button', { name: 'Edit spool #02' })
+      within(galaxy).getByRole('button', { name: 'Edit spool #03' })
     );
     expect(onEditSpool).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'spool-gb-2' }),
+      expect.objectContaining({ id: 'spool-gb-3' }),
       expect.objectContaining({ name: 'Galaxy Black' })
     );
     await userEvent.click(

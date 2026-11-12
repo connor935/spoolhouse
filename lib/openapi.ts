@@ -236,7 +236,9 @@ export const openApiSpec = {
           '400': errorResponse('Invalid JSON or input'),
           '401': errorResponse('Missing or invalid API token'),
           '404': errorResponse('Not found (or not yours)'),
-          '409': errorResponse('tagUid already used by another own spool'),
+          '409': errorResponse(
+            'tag_conflict: tagUid already used by another own spool; lent_out: the spool is lent out'
+          ),
         },
       },
       delete: {
@@ -248,6 +250,7 @@ export const openApiSpec = {
           '204': { description: 'Deleted' },
           '401': errorResponse('Missing or invalid API token'),
           '404': errorResponse('Not found (or not yours)'),
+          '409': errorResponse('lent_out: the spool is lent out'),
         },
       },
     },
@@ -270,7 +273,9 @@ export const openApiSpec = {
           '400': errorResponse('Invalid JSON or input'),
           '401': errorResponse('Missing or invalid API token'),
           '404': errorResponse('Not found (or not yours)'),
-          '409': errorResponse('tagUid already used by another own spool'),
+          '409': errorResponse(
+            'lent_out: the spool is lent out — only the borrower re-weighs it until it is returned'
+          ),
         },
       },
     },
@@ -371,7 +376,7 @@ export const openApiSpec = {
           ),
           '401': errorResponse('Missing or invalid API token'),
           '409': errorResponse(
-            'The tag was registered concurrently by another request — retry'
+            'The tag was registered concurrently by another request (retry), or lent_out: the tagged spool is lent out'
           ),
         },
       },

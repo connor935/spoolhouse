@@ -249,7 +249,7 @@ function SpoolRow({
   spool,
   number,
   requestedByName,
-  onSelect,
+  onSelect: onSelectProp,
 }: {
   spool: SpoolView;
   number: number;
@@ -257,6 +257,8 @@ function SpoolRow({
   onSelect?: () => void;
 }) {
   const label = spoolNumber(number);
+  // Lent out = with the borrower: no re-weigh from here (see SpoolTile).
+  const onSelect = spool.lentToName ? undefined : onSelectProp;
   const summaryId = React.useId();
   const content = (
     <>

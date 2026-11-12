@@ -52,6 +52,17 @@ describe('SpoolTile', () => {
     expect(screen.getByText(text)).toBeInTheDocument();
   });
 
+  it('is read-only while lent out, even with callbacks passed', () => {
+    // The Lent story inherits onSelect/onEdit/onMarkDried from the meta.
+    render(<Lent />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(tile()).toHaveAttribute('data-lent-out');
+    expect(tile()).toHaveAttribute(
+      'title',
+      expect.stringContaining('editable again once returned')
+    );
+  });
+
   it('truncates long names and locations, keeping the full text as title', () => {
     render(<LongNames />);
     const name = 'Maximiliane Alexandra von Hohenzollern-Sigmaringen';

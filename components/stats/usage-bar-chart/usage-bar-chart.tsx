@@ -158,7 +158,7 @@ function UsageBarChart({
       data-slot="usage-bar-chart"
       data-variant={variant}
       className={cn(
-        'flex flex-col',
+        '@container flex min-w-0 flex-col',
         compact ? 'gap-2' : 'gap-2.5 pl-12',
         className
       )}
@@ -267,11 +267,26 @@ function UsageBarChart({
           <span
             key={m.month}
             className={cn(
-              'flex-1',
+              // min-w-0: a label wider than its column must not push the row
+              // (and with it the page) wider than the screen.
+              'min-w-0 flex-1',
               active === i && 'text-foreground font-semibold'
             )}
           >
-            {monthFormats[monthLabels].format(monthDate(m.month))}
+            {monthLabels === 'short' ? (
+              // Twelve "Nov"s need ~32rem; narrower charts (phones) fall back
+              // to "N", like the compact charts.
+              <>
+                <span className="hidden @[32rem]:inline">
+                  {monthFormats.short.format(monthDate(m.month))}
+                </span>
+                <span className="@[32rem]:hidden">
+                  {monthFormats.narrow.format(monthDate(m.month))}
+                </span>
+              </>
+            ) : (
+              monthFormats[monthLabels].format(monthDate(m.month))
+            )}
             {i === current && '*'}
           </span>
         ))}

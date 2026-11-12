@@ -29,6 +29,10 @@ Missing/invalid tokens get `401 {"error":{"code":"unauthorized",…}}`. Revoking
 `tagUid` is unique per user: creating or patching a spool with a tag another of your
 spools already carries returns `409 {"error":{"code":"tag_conflict",…}}`.
 
+While one of your spools is **lent out** (an active lend) it is with the borrower: patching,
+deleting or re-weighing it (`PUT …/weight`, or `POST /spools/weigh` with its tag) returns
+`409 {"error":{"code":"lent_out",…}}` until you mark it returned in the app.
+
 ## Endpoints
 
 | Method & path                      | Purpose                                                                                                                       |
