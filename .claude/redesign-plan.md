@@ -410,11 +410,13 @@ through the affected flows on `npm run dev` in light + dark + 390px.
 
 ## 11. Acceptance (whole redesign)
 
-- [ ] All boards in `.claude/design/canvas.json` implemented (light + dark + mobile where designed)
-- [ ] Every UI component has stories; Storybook builds in CI
-- [ ] No hardcoded colours; tokens match `spoolhouse.css`
-- [ ] All existing behaviours preserved (CLAUDE.md domain rules), no auth/ownership regressions
-- [ ] Dead components removed, CLAUDE.md updated
+- [x] All boards in `.claude/design/canvas.json` implemented (light + dark + mobile where designed)
+      — minor open deltas listed in the task-07 log below
+- [x] Every UI component has stories; Storybook builds in CI
+- [x] No hardcoded colours; tokens match the Prusa palette (`design/PALETTE-PRUSA.md`, superseded
+      `spoolhouse.css`)
+- [x] All existing behaviours preserved (CLAUDE.md domain rules), no auth/ownership regressions
+- [x] Dead components removed, CLAUDE.md updated
 - [ ] Trunk merged to `main`, deployed, health check green
 
 ## 12. Implementation log
@@ -447,3 +449,25 @@ through the affected flows on `npm run dev` in light + dark + 390px.
 - Decided against moving UI into `.storybook/` (config-only folder; the app must not import from
   tooling) and against a separate `packages/ui` (single app, not worth workspace overhead).
 - Feature components adopt the layout when they are rebuilt in Phases 4–6.
+
+### Task 07 — cleanup, QA, docs (2026-11-12, branch `redesign/cleanup`)
+
+- **Dead code** (knip): legacy `borrows-panel`, `group-stock`, `page-shell`,
+  `material-property-filter`, `describe-review-status`; unused ui `tabs`, `dropdown-menu`,
+  `combobox-list`, `separator`; unused server actions `getUsableMaterials`, `getMaterialsByIds`,
+  `getPendingMaterials`, `getPendingSpoolTypes`, `clearImportError` (+ `catalog.getPending`),
+  `filterGroupStock`; `getGroupByInviteCode` no longer exported.
+- **Folder per component** for the last 10 flat components (common/*, catalog edit dialogs,
+  swagger-docs, live-refresh, theme-provider), each with stories + tests.
+- **a11y**: `e2e/a11y.ts` axe scan (WCAG 2.2 AA) of every route, light + dark, desktop + mobile.
+  Fixes: overlay-button pattern for material/spool rows (label-in-name), AddSpoolTile contrast,
+  focusable scroll regions (`Table scrollLabel`), "Material details" link on mobile cards.
+- **Visual QA** against the boards: two-column grids for overview/stats/account, readout strip
+  2-up on mobile, group-stock table on mobile, admin-users aside breakpoint.
+  Still open (minor/features): inventory sort/view toggle icons, review-queue prev/next arrows,
+  admin header Materials|Spool types switch, Price/Purchased side by side in the mobile sheet,
+  PropertyDialog "re-checks N values" warning; mockups predate the Prusa palette.
+- **Bug fixed via new tests**: `useUrlSearchQuery` navigated to the stale debounced query right
+  after Clear/back-forward (brief revert + extra `router.replace`); now acts only on settled input.
+- **Coverage**: `npm run test:coverage` (v8). 55.2% → 58.7% statements; every pure lib/hook file
+  ≥ 89%. The rest is DB-bound actions/containers, covered by Playwright rather than unit tests.

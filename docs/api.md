@@ -158,7 +158,7 @@ Groups and lending are not exposed in the API (webapp only).
 
 Every API mutation also pushes a Server-Sent-Events signal to the affected users' open
 browser tabs (`GET /api/events`), which then re-render with fresh data — a weigh-in shows
-up on the dashboard within about a second, no reload needed. `/api/events` is **not part
+up in the open web app within about a second, no reload needed. `/api/events` is **not part
 of this token API**: it authenticates with the browser session cookie, carries no payload
 (just "something changed" signals), and isn't in the OpenAPI spec. API clients like the
 scale don't need it — keep using the endpoints above.
