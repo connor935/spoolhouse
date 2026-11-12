@@ -61,6 +61,9 @@ UI redesign in progress on `feature/redesign-spoolhouse-ui` — plan, decisions 
   plugin (its global `module-alias` hook breaks under Node's ESM loader); only `next/font/google`
   is stubbed (`.storybook/mocks/next-font-google.ts`). Keep components presentational (data +
   callbacks as props, no `app/actions/*` / `lib/db` imports) so they need no Next runtime mocks.
+- **Page shortcuts** (N add spool, R request, / search, review R/E/J/A) go through
+  `useHotkeys` (`hooks/use-hotkeys.ts`, rules in `lib/hotkeys.ts`: never while typing, inside a
+  dialog/menu or with Ctrl/Meta/Alt); show the key as `<Kbd aria-hidden>` and set `aria-keyshortcuts`.
 
 ## Auth
 

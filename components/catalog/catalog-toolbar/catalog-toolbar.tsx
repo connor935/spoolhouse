@@ -1,6 +1,7 @@
 'use client';
 
 import { SearchIcon, SlidersHorizontalIcon } from 'lucide-react';
+import { useRef } from 'react';
 
 import { FiltersButton } from '@/components/common/filter-panel';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,9 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input';
+import { Kbd } from '@/components/ui/kbd';
+import { useHotkeys } from '@/hooks/use-hotkeys';
+import { focusSearch } from '@/lib/hotkeys';
 import { cn } from '@/lib/utils';
 
 type CatalogToolbarProps = {
@@ -39,6 +43,7 @@ const fmt = (n: number) => n.toLocaleString('en-US');
 /**
  * Search row over a catalog (CatalogMaterials / CatalogSpoolTypes boards):
  * search input, Filters toggle, Clear and the "1,204 of 23,871" count.
+ * "/" focuses the search (desktop, where the hint shows).
  */
 function CatalogToolbar({
   query,
@@ -56,6 +61,8 @@ function CatalogToolbar({
   compact = false,
   className,
 }: CatalogToolbarProps) {
+  const searchRef = useRef<HTMLInputElement>(null);
+  useHotkeys({ '/': () => focusSearch(searchRef.current) }, !compact);
   const active = query.trim() !== '' || filterCount > 0;
   return (
     <div
@@ -70,12 +77,19 @@ function CatalogToolbar({
           <SearchIcon />
         </InputGroupAddon>
         <InputGroupInput
+          ref={searchRef}
           type="search"
+          aria-keyshortcuts={compact ? undefined : '/'}
           aria-label={searchLabel}
           placeholder={placeholder}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
         />
+        {!compact && (
+          <InputGroupAddon>
+            <Kbd aria-hidden>/</Kbd>
+          </InputGroupAddon>
+        )}
       </InputGroup>
       {onFiltersClick &&
         (compact ? (

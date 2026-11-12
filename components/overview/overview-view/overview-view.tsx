@@ -21,6 +21,8 @@ import { WeightDisplay } from '@/components/inventory/weight-display';
 import { UsageBarChart } from '@/components/stats/usage-bar-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Kbd } from '@/components/ui/kbd';
+import { useHotkeys } from '@/hooks/use-hotkeys';
 import { activityTime, type ActivityEvent } from '@/lib/activity';
 import { formatDays } from '@/lib/consumption';
 import { formatMoney, formatWeight, type SpoolView } from '@/lib/filament';
@@ -238,6 +240,7 @@ function OverviewView({
   onMarkDried,
   className,
 }: OverviewViewProps) {
+  useHotkeys({ n: onAddSpool });
   const header = (
     <PageHeader
       index="01"
@@ -246,9 +249,12 @@ function OverviewView({
       title="Overview"
       rule={summary.total === 0}
       actions={
-        <Button variant="accent" onClick={onAddSpool}>
+        <Button variant="accent" onClick={onAddSpool} aria-keyshortcuts="N">
           <PlusIcon aria-hidden />
           Add spool
+          <Kbd aria-hidden className="max-md:hidden">
+            N
+          </Kbd>
         </Button>
       }
     />
