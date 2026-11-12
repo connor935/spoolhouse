@@ -34,3 +34,5 @@ playwright-report/
 
 # vitest coverage reports (npm run test:coverage)
 /coverage
+
+*.local*
