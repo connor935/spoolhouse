@@ -64,7 +64,10 @@ function RowAction({
     case 'requested-by-you':
       return (
         <>
-          <Badge variant="accent">Awaiting approval</Badge>
+          <Badge variant="accent">
+            <span className="max-sm:hidden">Awaiting approval</span>
+            <span className="sm:hidden">Pending</span>
+          </Badge>
           {onCancelRequest && (
             <Button
               variant="ghost"
@@ -111,14 +114,19 @@ function MaterialGroupStockTable({
   className,
 }: MaterialGroupStockTableProps) {
   return (
-    <Table className={cn('min-w-0', className)}>
+    <Table
+      scrollLabel="Group stock of this material"
+      className={cn('min-w-0', className)}
+    >
       <TableHeader>
         <TableRow>
           <TableHead scope="col">Member</TableHead>
           <TableHead scope="col" className="max-sm:hidden">
             Group
           </TableHead>
-          <TableHead scope="col">Spool</TableHead>
+          <TableHead scope="col" className="max-sm:hidden">
+            Spool
+          </TableHead>
           <TableHead scope="col" className="text-right">
             Left
           </TableHead>
@@ -142,18 +150,19 @@ function MaterialGroupStockTable({
                     <InitialsAvatar name={spool.ownerName} />
                   </span>
                   <span className="max-sm:hidden">{spool.ownerName}</span>
-                  <span className="sm:hidden">
-                    {firstName(spool.ownerName)}
+                  {/* Phones fold the spool column in: "Anna · #02". */}
+                  <span className="whitespace-nowrap sm:hidden">
+                    {firstName(spool.ownerName)} · {label}
                   </span>
                 </span>
               </TableCell>
               <TableCell className="kicker max-sm:hidden">
                 {row.groupName}
               </TableCell>
-              <TableCell className="text-muted-foreground font-mono">
+              <TableCell className="text-muted-foreground font-mono max-sm:hidden">
                 {label}
               </TableCell>
-              <TableCell className="display-num text-right text-xl">
+              <TableCell className="display-num text-right text-xl whitespace-nowrap">
                 {formatWeight(spool.filamentLeftGrams)}
               </TableCell>
               <TableCell className="max-md:hidden">

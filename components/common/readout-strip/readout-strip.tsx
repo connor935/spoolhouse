@@ -27,7 +27,10 @@ function ReadoutStrip({
       aria-label={label}
       data-slot="readout-strip"
       className={cn(
-        'border-ink grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] border-b',
+        // Phones: a fixed 2×2 grid (MaterialDetailMobile board), so the left
+        // rule and padding only apply to the right-hand column.
+        'border-ink grid grid-cols-2 border-b sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]',
+        'max-sm:[&>[data-slot=readout]:nth-child(odd)]:border-l-0 max-sm:[&>[data-slot=readout]:nth-child(odd)]:pl-0',
         ruled && 'border-t-2',
         className
       )}
