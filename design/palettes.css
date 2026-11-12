@@ -1,0 +1,397 @@
+/* Spoolhouse – Farbvarianten für die Overview (A Prusa · B Signal · C Cobalt)
+   Lädt nach spoolhouse.css. Neue Tokens: --accent-ink (Accent als Textfarbe, kontraststark)
+   und --data (Füllstände & Diagramme). */
+
+/* A · Prusa Orange & Graphit */
+.app.pal-prusa {
+  --bg: #f5f5f4;
+  --fg: #1a1a1a;
+  --card: #ffffff;
+  --primary: #1a1a1a;
+  --primary-fg: #ffffff;
+  --muted: #eaeae8;
+  --muted-fg: #5c5c5a;
+  --accent: #fa6832;
+  --accent-fg: #1a1a1a;
+  --accent-ink: #c2410c;
+  --data: #fa6832;
+  --destructive: #c81e3a;
+  --destructive-fg: #ffffff;
+  --border: #dadad7;
+  --input: #dadad7;
+  --sidebar: #fafaf9;
+  --sb-active: #eaeae8;
+  --sb-active-fg: #1a1a1a;
+  --ring: #fa6832;
+  --ink: #1a1a1a;
+  --sw-ring: rgba(26, 26, 26, 0.18);
+}
+.app.pal-prusa.dark {
+  --bg: #121212;
+  --fg: #ededed;
+  --card: #1b1b1b;
+  --primary: #ededed;
+  --primary-fg: #121212;
+  --muted: #262626;
+  --muted-fg: #9c9c9c;
+  --accent: #fa6832;
+  --accent-fg: #140803;
+  --accent-ink: #ff8a57;
+  --data: #fa6832;
+  --destructive: #ff5a6e;
+  --destructive-fg: #1f0508;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --sidebar: #171717;
+  --sb-active: #262626;
+  --sb-active-fg: #ededed;
+  --ring: #fa6832;
+  --ink: rgba(237, 237, 237, 0.5);
+  --sw-ring: rgba(255, 255, 255, 0.22);
+}
+
+/* B · Signal – Sicherheitsgelb & Tinte */
+.app.pal-signal {
+  --bg: #f3f2ec;
+  --fg: #151514;
+  --card: #ffffff;
+  --primary: #151514;
+  --primary-fg: #ffffff;
+  --muted: #e6e4db;
+  --muted-fg: #5f5d55;
+  --accent: #f2c200;
+  --accent-fg: #151514;
+  --accent-ink: #7a6200;
+  --data: #151514;
+  --destructive: #d0312d;
+  --destructive-fg: #ffffff;
+  --border: #d8d5ca;
+  --input: #d8d5ca;
+  --sidebar: #f8f7f2;
+  --sb-active: #e6e4db;
+  --sb-active-fg: #151514;
+  --ring: #151514;
+  --ink: #151514;
+  --sw-ring: rgba(21, 21, 20, 0.18);
+}
+.app.pal-signal.dark {
+  --bg: #0f0f0e;
+  --fg: #efeee8;
+  --card: #181816;
+  --primary: #efeee8;
+  --primary-fg: #0f0f0e;
+  --muted: #24231f;
+  --muted-fg: #a09e95;
+  --accent: #ffd12e;
+  --accent-fg: #141200;
+  --accent-ink: #ffd12e;
+  --data: #ffd12e;
+  --destructive: #ff5f57;
+  --destructive-fg: #1f0503;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --sidebar: #151513;
+  --sb-active: #24231f;
+  --sb-active-fg: #efeee8;
+  --ring: #ffd12e;
+  --ink: rgba(239, 238, 232, 0.5);
+  --sw-ring: rgba(255, 255, 255, 0.22);
+}
+
+/* C · Cobalt – Blaupause */
+.app.pal-cobalt {
+  --bg: #f4f6fa;
+  --fg: #0e1424;
+  --card: #ffffff;
+  --primary: #0e1424;
+  --primary-fg: #ffffff;
+  --muted: #e5e9f2;
+  --muted-fg: #56607a;
+  --accent: #2e54e8;
+  --accent-fg: #ffffff;
+  --accent-ink: #2447cc;
+  --data: #2e54e8;
+  --destructive: #e11d48;
+  --destructive-fg: #ffffff;
+  --border: #d5dbe8;
+  --input: #d5dbe8;
+  --sidebar: #f9fafd;
+  --sb-active: #e5e9f2;
+  --sb-active-fg: #0e1424;
+  --ring: #2e54e8;
+  --ink: #0e1424;
+  --sw-ring: rgba(14, 20, 36, 0.18);
+}
+.app.pal-cobalt.dark {
+  --bg: #0a0d14;
+  --fg: #e8ecf5;
+  --card: #111623;
+  --primary: #e8ecf5;
+  --primary-fg: #0a0d14;
+  --muted: #1b2232;
+  --muted-fg: #8e97ad;
+  --accent: #6f8cff;
+  --accent-fg: #070b1a;
+  --accent-ink: #8fa5ff;
+  --data: #6f8cff;
+  --destructive: #ff5c7a;
+  --destructive-fg: #1f0510;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --sidebar: #0e121c;
+  --sb-active: #1b2232;
+  --sb-active-fg: #e8ecf5;
+  --ring: #6f8cff;
+  --ink: rgba(232, 236, 245, 0.5);
+  --sw-ring: rgba(255, 255, 255, 0.22);
+}
+
+/* E · Terminal Mint */
+.app.pal-mint {
+  --bg: #f3f5f4;
+  --fg: #0f1412;
+  --card: #ffffff;
+  --primary: #0f1412;
+  --primary-fg: #ffffff;
+  --muted: #e3e8e5;
+  --muted-fg: #56615c;
+  --accent: #00c896;
+  --accent-fg: #04130e;
+  --accent-ink: #00785a;
+  --data: #00a57c;
+  --destructive: #d92d3a;
+  --destructive-fg: #ffffff;
+  --border: #d3dad6;
+  --input: #d3dad6;
+  --sidebar: #f8faf9;
+  --sb-active: #e3e8e5;
+  --sb-active-fg: #0f1412;
+  --ring: #00a57c;
+  --ink: #0f1412;
+  --sw-ring: rgba(15, 20, 18, 0.18);
+}
+.app.pal-mint.dark {
+  --bg: #0b0d0c;
+  --fg: #e4eee9;
+  --card: #131614;
+  --primary: #e4eee9;
+  --primary-fg: #0b0d0c;
+  --muted: #1e2320;
+  --muted-fg: #7f8a85;
+  --accent: #00e0a8;
+  --accent-fg: #02130d;
+  --accent-ink: #3df0be;
+  --data: #00e0a8;
+  --destructive: #ff5c6c;
+  --destructive-fg: #1f0508;
+  --border: rgba(228, 238, 233, 0.1);
+  --input: rgba(228, 238, 233, 0.14);
+  --sidebar: #0f1211;
+  --sb-active: #1e2320;
+  --sb-active-fg: #e4eee9;
+  --ring: #00e0a8;
+  --ink: rgba(124, 240, 200, 0.38);
+  --sw-ring: rgba(255, 255, 255, 0.22);
+}
+
+/* G · Ultraviolett & Nebel */
+.app.pal-violet {
+  --bg: #f5f4f8;
+  --fg: #16131f;
+  --card: #ffffff;
+  --primary: #16131f;
+  --primary-fg: #ffffff;
+  --muted: #e9e6f1;
+  --muted-fg: #5e5970;
+  --accent: #6b4eff;
+  --accent-fg: #ffffff;
+  --accent-ink: #5537e6;
+  --data: #6b4eff;
+  --destructive: #e0263f;
+  --destructive-fg: #ffffff;
+  --border: #dcd8e6;
+  --input: #dcd8e6;
+  --sidebar: #faf9fc;
+  --sb-active: #e9e6f1;
+  --sb-active-fg: #16131f;
+  --ring: #6b4eff;
+  --ink: #16131f;
+  --sw-ring: rgba(22, 19, 31, 0.18);
+}
+.app.pal-violet.dark {
+  --bg: #0e0c14;
+  --fg: #ece9f5;
+  --card: #17141f;
+  --primary: #ece9f5;
+  --primary-fg: #0e0c14;
+  --muted: #221e2d;
+  --muted-fg: #9993ab;
+  --accent: #9b87ff;
+  --accent-fg: #0d0820;
+  --accent-ink: #b3a3ff;
+  --data: #9b87ff;
+  --destructive: #ff5f78;
+  --destructive-fg: #1f0510;
+  --border: rgba(236, 233, 245, 0.1);
+  --input: rgba(236, 233, 245, 0.14);
+  --sidebar: #121019;
+  --sb-active: #221e2d;
+  --sb-active-fg: #ece9f5;
+  --ring: #9b87ff;
+  --ink: rgba(236, 233, 245, 0.5);
+  --sw-ring: rgba(255, 255, 255, 0.22);
+}
+
+/* H · Rost & Beton (Low = Blau, damit es nicht mit dem Akzent kollidiert) */
+.app.pal-rust {
+  --bg: #eeedeb;
+  --fg: #1b1917;
+  --card: #fafaf8;
+  --primary: #1b1917;
+  --primary-fg: #ffffff;
+  --muted: #e0deda;
+  --muted-fg: #5d5852;
+  --accent: #b5462a;
+  --accent-fg: #ffffff;
+  --accent-ink: #a23d23;
+  --data: #b5462a;
+  --destructive: #2f5bd3;
+  --destructive-fg: #ffffff;
+  --border: #d2cfca;
+  --input: #d2cfca;
+  --sidebar: #f4f3f1;
+  --sb-active: #e0deda;
+  --sb-active-fg: #1b1917;
+  --ring: #b5462a;
+  --ink: #1b1917;
+  --sw-ring: rgba(27, 25, 23, 0.18);
+}
+.app.pal-rust.dark {
+  --bg: #161514;
+  --fg: #ece9e5;
+  --card: #201e1c;
+  --primary: #ece9e5;
+  --primary-fg: #161514;
+  --muted: #2b2826;
+  --muted-fg: #a29c95;
+  --accent: #e06c4a;
+  --accent-fg: #1a0904;
+  --accent-ink: #f08a6b;
+  --data: #e06c4a;
+  --destructive: #7c9bff;
+  --destructive-fg: #0a1230;
+  --border: rgba(236, 233, 229, 0.1);
+  --input: rgba(236, 233, 229, 0.14);
+  --sidebar: #1b1a18;
+  --sb-active: #2b2826;
+  --sb-active-fg: #ece9e5;
+  --ring: #e06c4a;
+  --ink: rgba(236, 233, 229, 0.5);
+  --sw-ring: rgba(255, 255, 255, 0.22);
+}
+
+/* palette-aware overrides of shared components */
+.app[class*='pal-'] a {
+  color: var(--accent-ink);
+}
+.app[class*='pal-'] .sec .n {
+  color: var(--accent-ink);
+}
+.app[class*='pal-'] .tag.acc {
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
+}
+.app[class*='pal-'] .nav.on .i {
+  color: var(--accent-ink);
+}
+.app[class*='pal-'] .meter > i {
+  background: var(--data);
+}
+.app[class*='pal-'] .meter.low > i {
+  background: var(--destructive);
+}
+.app[class*='pal-'] .cb {
+  background: var(--data);
+}
+.app[class*='pal-'] .cb.now {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--data) 0 2px,
+    transparent 2px 5px
+  );
+  box-shadow: inset 0 0 0 1px var(--data);
+}
+
+/* overview-only pieces (ported from Teil 1) */
+.ro2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+.ro2 > a {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px 18px;
+  color: var(--fg) !important;
+  border-left: 1px solid var(--border);
+  text-decoration: none !important;
+}
+.ro2 > a:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+.ro2 > a:hover {
+  background: color-mix(in oklab, var(--accent) 7%, transparent);
+}
+.label {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+}
+.label::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 13px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--ink);
+  background: var(--bg);
+}
+.lh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 8px 26px;
+}
+.perf {
+  border-top: 1px dashed var(--ink);
+  opacity: 0.45;
+}
+.lname {
+  font:
+    600 17px/1 'Barlow Condensed',
+    Geist,
+    sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.led {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+}
+.led:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.ai {
+  color: var(--accent-ink);
+}
