@@ -37,7 +37,7 @@ function BottomNav({
             className={cn(
               'text-muted-foreground focus-visible:ring-ring relative flex h-[60px] flex-1 flex-col items-center justify-center gap-1 font-mono text-[10px] font-medium tracking-[0.06em] uppercase outline-none focus-visible:ring-2 focus-visible:ring-inset',
               active &&
-                'text-foreground before:bg-accent [&_svg]:text-accent before:absolute before:inset-x-[22%] before:-top-px before:h-[3px]'
+                'text-foreground before:bg-accent [&_svg]:text-accent-ink before:absolute before:inset-x-[22%] before:-top-px before:h-[3px]'
             )}
           >
             {Icon && <Icon aria-hidden className="size-5" />}

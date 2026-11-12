@@ -29,4 +29,15 @@ describe('Meter', () => {
     expect(meter).toHaveAttribute('data-tone', 'low');
     expect(meter).toHaveAttribute('aria-valuenow', '9');
   });
+
+  // Fill levels use the data color; low switches to carmine, never orange.
+  it('fills with the data color, destructive when low', () => {
+    const fill = (c: HTMLElement) =>
+      c.querySelector('[role="meter"] .absolute');
+    const { container: normal } = render(<Default />);
+    expect(fill(normal)).toHaveClass('bg-data');
+    const { container: low } = render(<Low />);
+    expect(fill(low)).toHaveClass('bg-destructive');
+    expect(fill(low)).not.toHaveClass('bg-data');
+  });
 });

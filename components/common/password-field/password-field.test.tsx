@@ -21,13 +21,13 @@ describe('PasswordField', () => {
     await user.type(input, 'abc');
     expect(counter(container)).toHaveTextContent('3 / 12');
     expect(Default.args.onChange).toHaveBeenLastCalledWith('abc');
-    expect(counter(container)).not.toHaveClass('text-accent');
+    expect(counter(container)).not.toHaveClass('text-accent-ink');
   });
 
   it('marks the counter once the password is long enough', () => {
     const { container } = render(<LongEnough />);
     expect(counter(container)).toHaveTextContent('14 / 12');
-    expect(counter(container)).toHaveClass('text-accent');
+    expect(counter(container)).toHaveClass('text-accent-ink');
   });
 
   it('shows the error and marks the input invalid', () => {

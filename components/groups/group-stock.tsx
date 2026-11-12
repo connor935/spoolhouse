@@ -101,7 +101,7 @@ export function GroupStock({
                     <div className="flex items-center justify-between gap-2">
                       <Badge
                         variant="outline"
-                        className="border-accent/40 text-accent"
+                        className="border-accent-ink/40 text-accent-ink"
                       >
                         Lent to {s.lentTo.borrowerName}
                       </Badge>
@@ -121,7 +121,7 @@ export function GroupStock({
                   ) : s.pendingRequest ? (
                     <Badge
                       variant="outline"
-                      className="border-accent/40 text-accent w-fit"
+                      className="border-accent-ink/40 text-accent-ink w-fit"
                     >
                       Requested by {s.pendingRequest.borrowerName}
                     </Badge>
@@ -129,7 +129,7 @@ export function GroupStock({
                 ) : s.lentTo ? (
                   <Badge
                     variant="outline"
-                    className="border-accent/40 text-accent w-fit"
+                    className="border-accent-ink/40 text-accent-ink w-fit"
                   >
                     Lent to{' '}
                     {s.lentTo.borrowerId === currentUserId
@@ -141,7 +141,7 @@ export function GroupStock({
                     <div className="flex items-center justify-between gap-2">
                       <Badge
                         variant="outline"
-                        className="border-accent/40 text-accent"
+                        className="border-accent-ink/40 text-accent-ink"
                       >
                         Requested — awaiting approval
                       </Badge>

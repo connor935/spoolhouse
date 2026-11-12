@@ -46,7 +46,7 @@ function ActivityItem({
         className
       )}
     >
-      <span className={cn('kicker', unread && 'text-accent')}>
+      <span className={cn('kicker', unread && 'text-accent-ink')}>
         {unread && (
           <>
             <span aria-hidden>● </span>

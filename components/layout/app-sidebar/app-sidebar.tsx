@@ -171,7 +171,7 @@ function RailLink({ item, active }: { item: NavItem; active: boolean }) {
         className={cn(
           'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring relative grid size-10 flex-none place-items-center rounded-[8px] outline-none focus-visible:ring-2',
           active &&
-            'bg-sidebar-accent text-accent hover:bg-sidebar-accent hover:text-accent before:bg-accent before:absolute before:inset-y-2.5 before:-left-2 before:w-[3px] before:rounded-r-[3px]'
+            'bg-sidebar-accent text-accent-ink hover:bg-sidebar-accent hover:text-accent-ink before:bg-accent before:absolute before:inset-y-2.5 before:-left-2 before:w-[3px] before:rounded-r-[3px]'
         )}
       >
         {Icon && <Icon aria-hidden className="size-[18px]" />}

@@ -53,7 +53,7 @@ describe('RunwayTable', () => {
     expect(tag).toHaveClass('bg-destructive');
     const meters = container.querySelectorAll('[data-slot="runway-meter"] i');
     expect(meters[0]).toHaveClass('bg-destructive');
-    expect(meters[1]).toHaveClass('bg-accent');
+    expect(meters[1]).toHaveClass('bg-data');
   });
 
   it('puts out-of-stock rows first', () => {

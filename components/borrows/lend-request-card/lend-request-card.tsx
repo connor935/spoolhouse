@@ -100,7 +100,7 @@ function LendRequestCard({
       )}
     >
       <div className="kicker flex justify-between gap-3">
-        <span className="text-accent truncate">{groupName}</span>
+        <span className="text-accent-ink truncate">{groupName}</span>
         <time dateTime={dateTime} className="shrink-0">
           {time}
         </time>

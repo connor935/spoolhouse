@@ -24,7 +24,7 @@ describe('ActivityItem', () => {
     const item = screen.getByRole('listitem');
     expect(item).toHaveAttribute('data-unread', 'true');
     expect(item).toHaveTextContent(/Unread, 11:40/);
-    expect(screen.getByText('Request')).toHaveClass('text-accent');
+    expect(screen.getByText('Request')).toHaveClass('text-accent-ink');
   });
 
   it('uses a muted tag for borrows', () => {

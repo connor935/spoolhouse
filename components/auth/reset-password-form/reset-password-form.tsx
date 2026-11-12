@@ -50,7 +50,7 @@ function ResetPasswordForm({
           action={
             <Link
               href="/forgot-password"
-              className="kicker text-accent hover:underline"
+              className="kicker text-accent-ink hover:underline"
             >
               New link
             </Link>

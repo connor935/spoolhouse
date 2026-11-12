@@ -23,7 +23,7 @@ function NotFoundView({ className }: NotFoundViewProps) {
     >
       <span
         aria-hidden
-        className="display-h1 text-accent text-[120px] leading-[0.8] sm:text-[200px]"
+        className="display-h1 text-accent-ink text-[120px] leading-[0.8] sm:text-[200px]"
       >
         404
       </span>

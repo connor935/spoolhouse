@@ -80,7 +80,7 @@ function PasswordField({
         {minLength !== undefined && (
           <InputGroupAddon
             data-slot="password-counter"
-            className={cn('tabular', long && 'text-accent')}
+            className={cn('tabular', long && 'text-accent-ink')}
           >
             {value.length} / {minLength}
           </InputGroupAddon>

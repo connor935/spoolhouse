@@ -9,9 +9,9 @@ import { cn } from '@/lib/utils';
 export type StockShare = { type: string; grams: number };
 
 // Fills in fixed order, largest share first (Statistics board, section 03):
-// accent, primary, hatched ink, then muted — the slot "Other" folds into.
+// data color, primary, hatched ink, then muted — the slot "Other" folds into.
 const FILLS = [
-  { fill: 'bg-accent', text: 'text-accent-foreground' },
+  { fill: 'bg-data', text: 'text-accent-foreground' },
   { fill: 'bg-primary', text: 'text-primary-foreground' },
   {
     fill: 'bg-[repeating-linear-gradient(135deg,var(--color-foreground)_0_1.5px,transparent_1.5px_5px)] shadow-[inset_0_0_0_1px_var(--color-ink)]',

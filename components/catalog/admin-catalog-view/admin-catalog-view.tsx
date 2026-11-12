@@ -92,10 +92,7 @@ function AdminCatalogView({
         description={description}
         actions={
           pending > 0 ? (
-            <Link
-              href={reviewHref}
-              className={buttonVariants({ variant: 'accent' })}
-            >
+            <Link href={reviewHref} className={buttonVariants()}>
               <ClipboardCheckIcon />
               Review pending ({pending})
             </Link>

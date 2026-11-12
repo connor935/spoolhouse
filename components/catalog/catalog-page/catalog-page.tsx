@@ -58,7 +58,6 @@ function CatalogPage({
   useHotkeys({ r: () => onRequestOpenChange(true) });
   const requestButton = (
     <Button
-      variant="accent"
       className={compact ? 'h-11 w-full' : undefined}
       onClick={() => onRequestOpenChange(true)}
       aria-keyshortcuts="R"

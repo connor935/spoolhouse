@@ -23,10 +23,21 @@ describe('UsageBarChart', () => {
 
   it('hatches only the current month', () => {
     render(<Default />);
-    const hatched = bars().filter((b) => b.classList.contains('hatch-accent'));
+    const hatched = bars().filter((b) => b.classList.contains('hatch-data'));
     expect(hatched).toHaveLength(1);
     expect(hatched[0]).toBe(bars()[11]);
     expect(hatched[0]).toHaveAccessibleName(/month to date/);
+  });
+
+  it('fills past months with the data color and the peak with the accent', () => {
+    render(<Default />);
+    const all = bars();
+    // October 2026 (index 10) is the peak month in the Default fixture.
+    expect(all[10]).toHaveClass('bg-accent');
+    expect(all.filter((b) => b.classList.contains('bg-accent'))).toHaveLength(
+      1
+    );
+    expect(all[0]).toHaveClass('bg-data');
   });
 
   it('labels the value axis with three ticks', () => {

@@ -24,6 +24,6 @@ describe('SectionHeader', () => {
 
   it('omits the number when none is given', () => {
     const { container } = render(<WithoutNumber />);
-    expect(container.querySelector('.text-accent')).toBeNull();
+    expect(container.querySelector('.text-accent-ink')).toBeNull();
   });
 });

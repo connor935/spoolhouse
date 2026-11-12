@@ -58,7 +58,7 @@ function PropertiesView({
         title="Properties"
         description="Datasheet property definitions shown on materials (tensile strength, hardness, glass-transition temp, …). Any member can fill in a material's values; admins verify them."
         actions={
-          <Button variant="accent" onClick={onCreate}>
+          <Button onClick={onCreate}>
             <PlusIcon aria-hidden />
             New property
           </Button>

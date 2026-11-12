@@ -321,7 +321,7 @@ export const BoardCatalogMobile: Story = {
     return (
       <div className="flex flex-col gap-3 p-4">
         <span className="kicker">
-          <span className="text-accent">06</span> — Materials ·{' '}
+          <span className="text-accent-ink">06</span> — Materials ·{' '}
           {fmt(catalogCounts.matching)} of {fmt(catalogCounts.total)}
         </span>
         <div className="flex gap-2">

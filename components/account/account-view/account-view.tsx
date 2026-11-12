@@ -243,12 +243,7 @@ function AccountView({
                   <code className="bg-muted min-w-0 flex-1 rounded-[3px] px-2 py-1.5 font-mono text-xs break-all">
                     {createdToken.token}
                   </code>
-                  <Button
-                    type="button"
-                    variant="accent"
-                    size="sm"
-                    onClick={onCopyToken}
-                  >
+                  <Button type="button" size="sm" onClick={onCopyToken}>
                     {copied ? (
                       <CheckIcon aria-hidden />
                     ) : (
