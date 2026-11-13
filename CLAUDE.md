@@ -460,7 +460,7 @@ rule under "Domain rules".
 
 ## Known gaps / quirks (V0 export leftovers)
 
-- No README; a fresh DB shows the empty state until `npm run db:seed` (dev demo data, all removable with `-- --clean`)
+- A fresh DB shows the empty state until `npm run db:seed` (dev demo data, all removable with `-- --clean`)
 - Server-action error messages are masked in production builds, so client toasts use static
   messages naming the likely cause rather than the thrown text
 
