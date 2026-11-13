@@ -136,7 +136,8 @@ the local git hooks (see "Git hooks") and gates everything; only pushes to `main
 only starts the Deploy workflow in the private `server` repo (`gh workflow run`,
 `DEPLOY_DISPATCH_TOKEN` in the `production` environment) and waits for it — SSH key, host,
 user and paths live only there, never in this public repo. Images are
-tagged `:latest` **and** `:sha-<commit>` — roll back by pinning an older sha in the server's
+tagged `:latest` **and** `:sha-<commit>`; pushing a release tag `vX.Y.Z` (must equal `package.json`'s
+version) also publishes `:X.Y.Z`/`:X.Y`/`:X` without deploying or moving `:latest` — roll back by pinning an older sha in the server's
 compose file. The runtime image has a Docker `HEALTHCHECK` against `GET /api/health`
 (public, `select 1`, 503 when the DB is unreachable), and the deploy runs
 `docker compose up --wait`, so an unhealthy container fails the deploy job.
@@ -459,7 +460,7 @@ rule under "Domain rules".
 
 ## Known gaps / quirks (V0 export leftovers)
 
-- No README; a fresh DB shows the empty state until `npm run db:seed` (dev demo data, all removable with `-- --clean`)
+- A fresh DB shows the empty state until `npm run db:seed` (dev demo data, all removable with `-- --clean`)
 - Server-action error messages are masked in production builds, so client toasts use static
   messages naming the likely cause rather than the thrown text
 

@@ -2,6 +2,7 @@
   "name": "spoolhouse",
   "version": "2.0.0",
   "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "dev": "node scripts/with-local-db.mjs next dev",
     "build": "next build",
