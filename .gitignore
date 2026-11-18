@@ -20,6 +20,7 @@ data/
 
 .env
 .env.docker
+.claude/
 .claude-local/
 
 # Storybook build output
