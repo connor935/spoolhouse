@@ -20,6 +20,8 @@ import { TYPE_ITEMS } from '@/lib/catalog-filter-items';
 import { matchesTokens, searchTokens } from '@/lib/search';
 
 type ImportViewProps = {
+  /** GitHub page of the import source (SPOOLMANDB_REPO, lib/spoolmandb-source.ts). */
+  sourceUrl: string;
   manufacturers: ImportManufacturer[];
   query: string;
   onQueryChange: (query: string) => void;
@@ -40,6 +42,7 @@ type ImportViewProps = {
  * Retry, and a success note.
  */
 function ImportView({
+  sourceUrl,
   manufacturers,
   query,
   onQueryChange,
@@ -89,12 +92,12 @@ function ImportView({
           <>
             Seed the global catalogs from{' '}
             <a
-              href="https://github.com/Icezaza2543/SpoolmanDB-Community"
+              href={sourceUrl}
               className="hover:text-foreground underline"
               target="_blank"
               rel="noreferrer"
             >
-              SpoolmanDB-Community
+              {sourceUrl.split('/').pop()}
             </a>
             , one manufacturer after another. Importing is insert-only: existing
             entries are never overwritten, so re-running is safe and only adds

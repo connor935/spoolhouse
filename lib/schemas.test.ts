@@ -5,6 +5,7 @@ import {
   materialCatalogQuerySchema,
   adminMaterialQuerySchema,
   recentColorsLimitSchema,
+  upstreamImportSchema,
 } from '@/lib/schemas';
 
 describe('weighRegistrationSchema', () => {
@@ -158,5 +159,27 @@ describe('recentColorsLimitSchema', () => {
     expect(recentColorsLimitSchema.safeParse(4).success).toBe(true);
     for (const bad of [0, 13, 2.5, -1, '4', Number.NaN])
       expect(recentColorsLimitSchema.safeParse(bad).success).toBe(false);
+  });
+});
+
+describe('upstreamImportSchema', () => {
+  it('accepts an upstream slug with or without a type limit', () => {
+    expect(upstreamImportSchema.parse({ slug: 'AmazonBasics' })).toEqual({
+      slug: 'AmazonBasics',
+      types: undefined,
+    });
+    expect(
+      upstreamImportSchema.parse({ slug: 'bambu-lab', types: ['PETG'] }).types
+    ).toEqual(['PETG']);
+  });
+  it('refuses slugs that could steer the fetch URL', () => {
+    for (const slug of ['', '../x', 'a/b', 'a?b', 'a#b', '%2e%2e', 42])
+      expect(upstreamImportSchema.safeParse({ slug }).success).toBe(false);
+  });
+  it('bounds the type limit', () => {
+    for (const types of [[''], ['x'.repeat(41)], Array(21).fill('PLA'), 'PLA'])
+      expect(
+        upstreamImportSchema.safeParse({ slug: 'bambulab', types }).success
+      ).toBe(false);
   });
 });

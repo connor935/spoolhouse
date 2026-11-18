@@ -39,6 +39,9 @@ x-env: &env
   DATABASE_URL: postgres://spoolhouse:change-me@db:5432/spoolhouse
   BETTER_AUTH_SECRET: replace-with-output-of-openssl-rand-base64-32
   BETTER_AUTH_URL: http://localhost:3000 # the URL you open Spoolhouse at
+  # Optional: catalog import source (defaults shown), see Configuration
+  # SPOOLMANDB_REPO: Icezaza2543/SpoolmanDB-Community
+  # SPOOLMANDB_REF: main
 
 services:
   db:
@@ -75,23 +78,31 @@ docker compose run --rm tools npm run admin:create -- you@example.com "Your Name
 ```
 
 Database migrations run automatically when the app starts. Admins can create further accounts on
-`/admin/users` and import catalog data on `/admin/import`.
+`/admin/users` and import catalog data on `/admin/import`, or from the command line:
+
+```sh
+docker compose run --rm tools npm run db:import -- --manufacturer prusament --dry-run
+```
+
+Outside Docker, `npm run db:import` reads `DATABASE_URL` and the `SPOOLMANDB_*` variables from a
+`.env` file in the project root if one exists. Variables exported in the shell take precedence.
 
 ### Configuration
 
-| Variable                                                           | Default                                        | Purpose                                                                   |
-| ------------------------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------- |
-| `DATABASE_URL`                                                     | —                                              | PostgreSQL 13+ connection string (uses the bundled `pg_trgm` extension)   |
-| `BETTER_AUTH_SECRET`                                               | —                                              | Session signing secret, e.g. `openssl rand -base64 32`                    |
-| `BETTER_AUTH_URL`                                                  | —                                              | Public URL of the app                                                     |
-| `TRUSTED_ORIGINS`                                                  | —                                              | Extra comma-separated origins the app is reached at (LAN IP, …)           |
-| `ALLOW_SIGNUP`                                                     | `false`                                        | `true` opens public registration                                          |
-| `MINIMUM_PASSWORD_LENGTH`                                          | `12`                                           | Minimum password length                                                   |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`    | port `587`                                     | Password-reset mail. Without `SMTP_HOST`, mails are logged to the console |
-| `DATABASE_PASSWORD_FILE`                                           | —                                              | Alternative to `DATABASE_URL` for Docker secrets                          |
-| `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_NAME` | `postgres`, `5432`, `spoolhouse`, `spoolhouse` | Used together with `DATABASE_PASSWORD_FILE`                               |
+| Variable                                                           | Default                                        | Purpose                                                                             |
+| ------------------------------------------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                     | —                                              | PostgreSQL 13+ connection string (uses the bundled `pg_trgm` extension)             |
+| `BETTER_AUTH_SECRET`                                               | —                                              | Session signing secret, e.g. `openssl rand -base64 32`                              |
+| `BETTER_AUTH_URL`                                                  | —                                              | Public URL of the app                                                               |
+| `TRUSTED_ORIGINS`                                                  | —                                              | Extra comma-separated origins the app is reached at (LAN IP, …)                     |
+| `ALLOW_SIGNUP`                                                     | `false`                                        | `true` opens public registration                                                    |
+| `MINIMUM_PASSWORD_LENGTH`                                          | `12`                                           | Minimum password length                                                             |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`    | port `587`                                     | Password-reset mail. Without `SMTP_HOST`, mails are logged to the console           |
+| `DATABASE_PASSWORD_FILE`                                           | —                                              | Alternative to `DATABASE_URL` for Docker secrets                                    |
+| `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_NAME` | `postgres`, `5432`, `spoolhouse`, `spoolhouse` | Used together with `DATABASE_PASSWORD_FILE`                                         |
+| `SPOOLMANDB_REPO`, `SPOOLMANDB_REF`                                | `Icezaza2543/SpoolmanDB-Community`, `main`     | Source of the catalog import: a GitHub `owner/repo` and a branch, tag or commit sha |
 
-Image tags: `:2` follows the latest 2.x release, `:2.0.0` pins one, and `:latest` follows `main`.
+Image tags: `:2` follows the latest 2.x release, `:2.0.1` pins one, and `:latest` follows `main`.
 
 ## REST API
 

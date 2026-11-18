@@ -8,7 +8,10 @@ documented in [`api.md`](api.md).
 
 **Prerequisites:**
 
-- Node **26** (the exact version is in `.node-version`, which fnm and nvm pick up)
+- Node **26** (the exact version is in `.node-version`, which fnm and nvm pick up). It is
+  enforced: `package.json` `engines` (`^26.13.0`) plus `engine-strict` in `.npmrc` make
+  `npm install`/`npm ci` fail on any other Node; bump both together (`lib/node-version.test.ts`
+  checks they match)
 - npm
 - git
 
@@ -94,7 +97,7 @@ the same checks, so a bypass only moves the failure into your pull request.
 | `npm run db:migrate`                           | drizzle-kit: apply migrations by hand (normally automatic on start)                                                                                                                    |
 | `npm run db:studio`                            | drizzle-kit database browser (needs the database up)                                                                                                                                   |
 | `npm run db:seed`                              | Seed demo data: users, catalog, properties, spools + history, groups, lends (`scripts/seed-dev-data.ts`; `-- --reset` / `-- --clean`; refuses a non-local DB without `--allow-remote`) |
-| `npm run db:import -- --manufacturer <slug>`   | Import catalog data from SpoolmanDB                                                                                                                                                    |
+| `npm run db:import -- --manufacturer <slug>`   | Import catalog data from SpoolmanDB (`--type PETG,PLA`, `--dry-run`). Loads `.env` if present (shell variables win), so `DATABASE_URL` and `SPOOLMANDB_REPO`/`SPOOLMANDB_REF` apply    |
 | `npm run admin:create -- <email> <name>`       | Create or promote an admin                                                                                                                                                             |
 | `npm run token:create -- <email> <token-name>` | Create a REST API token                                                                                                                                                                |
 | `npm run prepare`                              | (Re)install the git hooks                                                                                                                                                              |
@@ -135,3 +138,17 @@ the same checks, so a bypass only moves the failure into your pull request.
   - [ ] if REST endpoints changed, `lib/openapi.ts` and `docs/api.md` are updated
 - CI (`.github/workflows/deploy.yml`, `check` job) runs typecheck, oxlint, `format:check`,
   `npm test` and the Storybook build, plus a full `next build` on PRs. Only `main` is deployed.
+
+## Releases
+
+A release ships with the PR that bumps the version. There is no separate release step:
+
+1. In the PR, bump the version: `npm version patch --no-git-tag-version` (or `minor`/`major`),
+   which updates `package.json` and `package-lock.json`.
+2. Merge to `main`. After the deploy succeeds, the `release` job in `deploy.yml` sees that
+   `v<version>` has no tag yet. It tags the images already built for that commit as `:X.Y.Z`,
+   `:X.Y` and `:X` (app and tools), then creates the GitHub release and its tag with generated
+   notes.
+
+Merges without a version bump release nothing. Pushing a `vX.Y.Z` tag by hand still works too: it
+builds and publishes the versioned images without deploying.

@@ -19,8 +19,10 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 // any background-job machinery. Imports are insert-only and idempotent, so
 // retrying from the failed manufacturer is safe.
 function ImportContainer({
+  sourceUrl,
   manufacturers,
 }: {
+  sourceUrl: string;
   manufacturers: UpstreamManufacturer[];
 }) {
   const router = useRouter();
@@ -66,6 +68,7 @@ function ImportContainer({
 
   return (
     <ImportView
+      sourceUrl={sourceUrl}
       manufacturers={manufacturers}
       query={query}
       onQueryChange={setQuery}

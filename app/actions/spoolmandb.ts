@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { catalogImports, materials } from '@/lib/db/schema';
 import { requireAdmin } from '@/lib/auth-session';
+import { parseOrThrow, upstreamImportSchema } from '@/lib/schemas';
 import {
   ManufacturerNotFound,
   importManufacturer,
@@ -100,12 +101,18 @@ export type ImportOutcome = {
 // sequentially: each call is a short unit of work (~1–2 s), which keeps progress
 // visible and the queue resumable without any background job machinery.
 export async function importManufacturerFromUpstream(
-  slug: string,
-  options: { types?: string[] } = {}
+  rawSlug: string,
+  rawOptions: { types?: string[] } = {}
 ): Promise<ImportOutcome> {
   await requireAdmin();
-  const typeFilter = options.types?.length
-    ? new Set(options.types.map((t) => t.toUpperCase()))
+  // Validated before the try: a rejected slug must not be recorded in
+  // catalog_imports (it would show up as a bogus row on /admin/import).
+  const { slug, types } = parseOrThrow(upstreamImportSchema, {
+    slug: rawSlug,
+    types: rawOptions.types,
+  });
+  const typeFilter = types?.length
+    ? new Set(types.map((t) => t.toUpperCase()))
     : null;
 
   try {

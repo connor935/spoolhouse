@@ -28,6 +28,7 @@ const meta = {
   component: ImportView,
   parameters: { layout: 'padded' },
   args: {
+    sourceUrl: 'https://github.com/Icezaza2543/SpoolmanDB-Community',
     manufacturers,
     query: '',
     onQueryChange: fn(),

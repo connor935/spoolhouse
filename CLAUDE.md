@@ -136,9 +136,13 @@ the local git hooks (see "Git hooks") and gates everything; only pushes to `main
 only starts the Deploy workflow in the private `server` repo (`gh workflow run`,
 `DEPLOY_DISPATCH_TOKEN` in the `production` environment) and waits for it — SSH key, host,
 user and paths live only there, never in this public repo. Images are
-tagged `:latest` **and** `:sha-<commit>`; pushing a release tag `vX.Y.Z` (must equal `package.json`'s
-version) also publishes `:X.Y.Z`/`:X.Y`/`:X` without deploying or moving `:latest` — roll back by pinning an older sha in the server's
-compose file. The runtime image has a Docker `HEALTHCHECK` against `GET /api/health`
+tagged `:latest` **and** `:sha-<commit>`. **Releases ship on merge**: a PR bumps the version
+(`npm version patch --no-git-tag-version`); after the deploy of that `main` commit succeeds, the
+`release` job sees `v<version>` has no tag yet, retags the commit's `:sha-` images as
+`:X.Y.Z`/`:X.Y`/`:X` (app + tools, no rebuild) and creates the GitHub release + tag (generated
+notes). Merges without a bump release nothing. Pushing a tag `vX.Y.Z` by hand (must equal
+`package.json`'s version) still publishes the versioned images without deploying or moving
+`:latest` — roll back by pinning an older sha in the server's compose file. The runtime image has a Docker `HEALTHCHECK` against `GET /api/health`
 (public, `select 1`, 503 when the DB is unreachable), and the deploy runs
 `docker compose up --wait`, so an unhealthy container fails the deploy job.
 
@@ -298,6 +302,7 @@ barrel; containers are tested with `vi.mock` on the action module and get no sto
 | `lib/property-value.ts`                                                          | Property value types + `normalizePropertyValue()` — the one place input is validated/canonicalised                                                                                                                                                                                                                |
 | `lib/search.ts`                                                                  | Token matching for client-side searches (`searchTokens`/`matchesTokens`/`matchRank`)                                                                                                                                                                                                                              |
 | `lib/spoolmandb.ts`                                                              | SpoolmanDB import core (fetch, dedupe, upsert) — used by the CLI **and** `/admin/import`                                                                                                                                                                                                                          |
+| `lib/spoolmandb-source.ts`                                                       | Import source config (`SPOOLMANDB_REPO`/`SPOOLMANDB_REF` → URLs) + `SLUG_PATTERN`/`isValidSlug` (DB-free, unit-tested)                                                                                                                                                                                            |
 | `app/actions/spoolmandb.ts`                                                      | Admin import actions (`getUpstreamManufacturers`, `importManufacturerFromUpstream`)                                                                                                                                                                                                                               |
 | `lib/utils.ts`                                                                   | `cn()` (clsx + tailwind-merge)                                                                                                                                                                                                                                                                                    |
 
@@ -441,7 +446,19 @@ NULL-backfills the extra columns; never renames/recolors), or inserts a new
 _renames_ change the key → old row lingers; delete it via `/admin/materials`.
 Runs against whatever database `DATABASE_URL` names, and starts the local PGlite
 host itself if nothing is serving it yet — so it works with or without a running
-dev server.
+dev server. The script runs `tsx --env-file-if-exists=.env`, so `.env` applies to it
+(exported shell variables win); the other CLI scripts deliberately don't load `.env`
+(a production `DATABASE_URL` there must never reach `db:seed --reset`).
+
+**Source & slug safety** (`lib/spoolmandb-source.ts`): the repo and ref come from
+`SPOOLMANDB_REPO` (`owner/repo`) / `SPOOLMANDB_REF` (branch, tag or sha), defaulting to
+`Icezaza2543/SpoolmanDB-Community` @ `main`; the list URL, the file URLs and the
+`/admin/import` header link are all derived from them (malformed values throw).
+A manufacturer slug becomes part of the fetch path, so it must match `SLUG_PATTERN`
+(`^[A-Za-z0-9][A-Za-z0-9_-]*$` — upstream has mixed-case names like `AmazonBasics`):
+checked in `importManufacturer` right before the `fetch` (covers the CLI; fixes
+CodeQL `js/request-forgery`) and by `upstreamImportSchema` at the server-action
+boundary, before anything is written to `catalog_imports`.
 
 **Admins can also import from the UI**: `/admin/import`
 (`components/admin/import-view/`) lists every upstream manufacturer with

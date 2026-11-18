@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { FILAMENT_TYPES } from '@/lib/filament';
 import { PROPERTY_VALUE_TYPES } from '@/lib/property-value';
+import { SLUG_PATTERN } from '@/lib/spoolmandb-source';
 
 // Shared validation for the two catalog tables (server actions, via
 // app/actions/materials.ts / spool-types.ts) and the /api/v1/spools request
@@ -165,6 +166,14 @@ export const materialPropertyValueSchema = z.object({
   materialId: idString('materialId'),
   propertyId: idString('propertyId'),
   value: z.string().trim().min(1, 'Value is required').max(200),
+});
+
+// /admin/import: one upstream manufacturer per call (importManufacturerFromUpstream).
+// The slug ends up in the fetch URL, so it is held to the upstream file-name
+// shape; the type limit is bounded like the catalog filters.
+export const upstreamImportSchema = z.object({
+  slug: z.string().regex(SLUG_PATTERN, 'Invalid manufacturer slug'),
+  types: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
 });
 
 // Maps the first Zod issue to the app's `{code, message}` REST error shape.

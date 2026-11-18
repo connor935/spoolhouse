@@ -195,3 +195,77 @@ jobs:
       - name: Wait for deploy
         # Output dropped: only the exit status matters here.
         run: gh run watch "$run_id" -R "$DEPLOY_REPO" --exit-status --interval 10 > /dev/null
+
+  # Release on merge: when main carries a package.json version that has no
+  # v<version> tag yet, publish it once the deploy succeeded — retag this
+  # commit's already-built images (:sha-<commit> → :X.Y.Z, :X.Y, :X; no rebuild,
+  # so the release is byte-identical to what was deployed) and create the GitHub
+  # release, which creates the tag. A tag made with GITHUB_TOKEN starts no
+  # workflow, so the tag-push path above doesn't build it a second time.
+  # Merges without a version bump release nothing.
+  release:
+    needs: deploy
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Two quick merges must not both see the same version as unreleased.
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      packages: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Nothing here pushes with git; gh uses GH_TOKEN.
+          persist-credentials: false
+
+      - name: Check for an unreleased version
+        id: version
+        run: |
+          version=$(jq -r .version package.json)
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::package.json version $version is not semver"; exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" > /dev/null; then
+            echo "v$version is already released, nothing to do."
+          else
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log in to the Container registry
+        if: steps.version.outputs.version
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Same naming as a pushed release tag: a pre-release only gets its own tag.
+      - name: Tag images with the version
+        if: steps.version.outputs.version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          case "$VERSION" in
+            *-*) names="$VERSION" ;;
+            *) names="$VERSION ${VERSION%.*} ${VERSION%%.*}" ;;
+          esac
+          for base in "$IMAGE_BASE" "$IMAGE_BASE-tools"; do
+            tags=""
+            for n in $names; do tags="$tags -t $base:$n"; done
+            docker buildx imagetools create $tags "$base:sha-$GITHUB_SHA"
+          done
+
+      - name: Create GitHub release
+        if: steps.version.outputs.version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          prerelease=""
+          case "$VERSION" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "v$VERSION" --target "$GITHUB_SHA" \
+            --title "Spoolhouse $VERSION" --generate-notes $prerelease
