@@ -8,6 +8,7 @@ data
 
 # Secrets & local env
 .env
+.env.docker
 .env*.local
 
 # VCS & tooling
