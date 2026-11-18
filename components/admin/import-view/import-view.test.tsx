@@ -11,6 +11,13 @@ const selectAll = () =>
   screen.getByRole('checkbox', { name: /select all visible/i });
 
 describe('ImportView', () => {
+  it('links to the configured SpoolmanDB source repo', () => {
+    render(<Default sourceUrl="https://github.com/me/SpoolmanDB-Fork" />);
+    expect(
+      screen.getByRole('link', { name: 'SpoolmanDB-Fork' })
+    ).toHaveAttribute('href', 'https://github.com/me/SpoolmanDB-Fork');
+  });
+
   it('imports the selection', async () => {
     const user = userEvent.setup();
     render(<Default />);

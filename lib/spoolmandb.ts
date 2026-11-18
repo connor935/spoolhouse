@@ -1,5 +1,6 @@
 // Seeding the global materials & spool-type catalogs from SpoolmanDB-Community
-// (https://github.com/Icezaza2543/SpoolmanDB-Community, MIT).
+// (https://github.com/Icezaza2543/SpoolmanDB-Community, MIT — or the fork/ref
+// set by SPOOLMANDB_REPO / SPOOLMANDB_REF, see lib/spoolmandb-source.ts).
 //
 // Consumes the clean SOURCE files (filaments/<manufacturer>.json), not the
 // compiled output (which expands color×diameter×weight×packaging into 50k+
@@ -36,6 +37,7 @@ import {
   normalizePropertyValue,
   type PropertyValueType,
 } from './property-value';
+import { spoolmandbSource } from './spoolmandb-source';
 
 // Property definition keys the importer seeds (must match drizzle/0001).
 const PROPERTY_KEYS = [
@@ -47,11 +49,6 @@ const PROPERTY_KEYS = [
 type PropertyKey = (typeof PROPERTY_KEYS)[number];
 // Formatted, unit-less values keyed by property (unit lives on the definition).
 type ExtraProps = Partial<Record<PropertyKey, string>>;
-
-const RAW_BASE =
-  'https://raw.githubusercontent.com/Icezaza2543/SpoolmanDB-Community/main/filaments';
-const CONTENTS_API =
-  'https://api.github.com/repos/Icezaza2543/SpoolmanDB-Community/contents/filaments';
 
 // --- SpoolmanDB source shapes (only the fields we consume) ---
 type SourceWeight = {
@@ -508,7 +505,7 @@ export async function upsertSpoolTypes(
 // NOTE: this hits the GitHub contents API, which allows only 60 unauthenticated
 // requests per hour per IP — cache the result rather than calling it per view.
 export async function listManufacturers(): Promise<string[]> {
-  const res = await fetch(CONTENTS_API, {
+  const res = await fetch(spoolmandbSource().manufacturerListUrl, {
     headers: { 'User-Agent': 'spoolhouse-import' },
   });
   if (!res.ok) return [];
@@ -606,7 +603,12 @@ export async function importManufacturer(
   }
 ): Promise<{ manufacturer: string; stats: ImportStats }> {
   const { ctx, typeFilter = null, dryRun = false } = options;
-  const res = await fetch(`${RAW_BASE}/${slug}.json`, {
+  // The slug becomes part of the fetch path: refuse anything that could steer
+  // the request (../, ?, #) before building the URL. A literal (= SLUG_PATTERN)
+  // so CodeQL sees the sanitizer next to the sink (js/request-forgery).
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(slug))
+    throw new Error(`Invalid manufacturer slug "${slug}"`);
+  const res = await fetch(spoolmandbSource().manufacturerFileUrl(slug), {
     headers: { 'User-Agent': 'spoolhouse-import' },
   });
   if (res.status === 404) throw new ManufacturerNotFound(slug);
